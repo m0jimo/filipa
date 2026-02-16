@@ -71,7 +71,8 @@ a while.
 
 **Try it online**: [https://m0jimo.github.io/filipa/](https://m0jimo.github.io/filipa/)
 
-Or download the built application and open `index.html` in your browser.
+Or **[download filipa.zip](https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip)**, extract it, and open
+`index.html` in your browser.
 
 # Application Development
 
@@ -122,25 +123,6 @@ After running `npm run build`, you can:
 - Zip the `dist/` folder
 - Send it to users who can extract and open `index.html` locally
 - Ideal for regulated environments where internet access is restricted
-
-## Deployment to GitHub
-
-```bash
-# Initialize git repository
-git init
-
-# Add all files
-git add .
-
-# Commit
-git commit -m "Initial commit"
-
-# Add remote repository
-git remote add origin https://github.com/m0jimo/filipa.git
-
-# Push to GitHub
-git push -u origin main
-```
 
 ## About the Name
 
