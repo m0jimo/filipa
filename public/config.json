@@ -1,0 +1,163 @@
+{
+  "theme": {
+    "primaryColor": "#0066cc",
+    "secondaryColor": "#5c9fd6",
+    "backgroundColor": "#ffffff",
+    "textColor": "#333333",
+    "darkMode": false
+  },
+  "defaultLanguage": "en",
+  "defaultQuestionSets": [],
+  "importMappings": {
+    "markdown": {
+      "name": "Unified Markdown Format",
+      "format": "markdown",
+      "description": "Simple, unified markdown format for questions and sessions",
+      "structure": {
+        "candidateSection": "^##\\s+Candidate Information$",
+        "sessionSection": "^##\\s+Session Information$",
+        "questionsSection": "^##\\s+Questions$",
+        "questionHeader": "^##\\s+Question\\s+(\\d+)",
+        "questionText": "^###\\s+Question$",
+        "expectedAnswer": "^###\\s+Expected Answer$",
+        "candidateAnswer": "^###\\s+Candidate's Answer$",
+        "interviewerNotes": "^###\\s+Interviewer's Notes$",
+        "candidateName": "^Candidate:\\s*(.*)$",
+        "candidateId": "^Candidate ID:\\s*(.*)$",
+        "sessionName": "^Session:\\s*(.*)$",
+        "sessionDate": "^Date:\\s*(.*)$",
+        "sessionInterviewers": "^Interviewers:\\s*(.*)$",
+        "questionId": "^Question ID:\\s*(.*)$",
+        "tags": "^Tags:\\s*(.*)$",
+        "difficulty": "^Difficulty:\\s*\\[([^\\]]+)\\]",
+        "questionType": "^Type:\\s*(.*)$",
+        "presented": "^Presented:\\s*(.*)$",
+        "answerRating": "^Answer Rating:\\s*(\\d+)",
+        "setHeader": "^##\\s+Question Set:\\s+(.+)$",
+        "setId": "^Set ID:\\s*(.*)$",
+        "setNotes": "^Notes:\\s*(.*)$"
+      }
+    },
+    "json": {
+      "name": "JSON Format",
+      "format": "json",
+      "description": "Simple JSON export format",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["version", "candidate", "session", "questions"],
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Export format version",
+            "default": "1.0.0"
+          },
+          "candidate": {
+            "type": "object",
+            "required": ["firstName", "lastName"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "GUID identifier; generated if omitted"
+              },
+              "firstName": { "type": "string" },
+              "lastName": { "type": "string" },
+              "notes": { "type": "string", "default": "" },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp"
+              }
+            }
+          },
+          "session": {
+            "type": "object",
+            "required": ["name", "date"],
+            "properties": {
+              "name": { "type": "string" },
+              "date": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp"
+              },
+              "interviewers": {
+                "type": "array",
+                "items": { "type": "string" },
+                "default": []
+              },
+              "notes": { "type": "string", "default": "" }
+            }
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["question"],
+              "properties": {
+                "order": {
+                  "type": "integer",
+                  "description": "Display order; defaults to array index if omitted"
+                },
+                "note": {
+                  "type": "string",
+                  "description": "Interviewer notes for this question",
+                  "default": ""
+                },
+                "questionRating": {
+                  "type": ["integer", "null"],
+                  "description": "Rating of candidate's answer",
+                  "default": null
+                },
+                "answer": {
+                  "type": "string",
+                  "description": "Candidate's answer",
+                  "default": ""
+                },
+                "question": {
+                  "type": "object",
+                  "required": ["question"],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "GUID identifier; generated if omitted"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "default": []
+                    },
+                    "questionType": {
+                      "type": "string",
+                      "enum": ["rating", "text"],
+                      "default": "text"
+                    },
+                    "question": { "type": "string" },
+                    "expectedAnswer": { "type": "string", "default": "" },
+                    "difficulty": {
+                      "type": "array",
+                      "items": { "type": "integer" },
+                      "description": "Difficulty levels this question applies to (e.g. [3,4,5])",
+                      "default": []
+                    },
+                    "hash": {
+                      "type": "string",
+                      "description": "DJB2 hash for duplicate detection; generated if omitted"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

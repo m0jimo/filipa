@@ -1,0 +1,48 @@
+{
+  "$schema": "Configuration file for Filipa interview assessment application",
+  "theme": {
+    "primaryColor": "#0066cc",
+    "secondaryColor": "#5c9fd6",
+    "backgroundColor": "#ffffff",
+    "textColor": "#333333",
+    "darkMode": false
+  },
+  "defaultLanguage": "en",
+  "defaultQuestionSets": [
+    "./questions/javascript-fundamentals.json",
+    "./questions/typescript-basics.json"
+  ],
+  "importMappings": {
+    "markdown": {
+      "format": "markdown",
+      "mapping": {
+        "question": "## Question\\n(.+?)\\n",
+        "expectedAnswer": "## Expected Answer\\n(.+?)\\n",
+        "tags": "Tags: (.+?)\\n",
+        "rating": "Rating: \\[(.+?)\\]",
+        "questionType": "Type: (.+?)\\n"
+      }
+    },
+    "json": {
+      "format": "json",
+      "mapping": {
+        "question": "question",
+        "expectedAnswer": "expectedAnswer",
+        "tags": "tags",
+        "rating": "rating",
+        "questionType": "questionType"
+      }
+    }
+  },
+  "_comments": {
+    "theme": "Customize colors to match your company branding. Use hex color codes.",
+    "primaryColor": "Main brand color used for buttons and highlights",
+    "secondaryColor": "Accent color for secondary elements",
+    "backgroundColor": "Main background color (light mode)",
+    "textColor": "Default text color",
+    "darkMode": "Enable dark mode by default (true/false)",
+    "defaultLanguage": "ISO language code (en, cs, etc.)",
+    "defaultQuestionSets": "Paths or URLs to JSON files with question sets to load on startup",
+    "importMappings": "Regex patterns for parsing markdown files and JSON field mappings"
+  }
+}
