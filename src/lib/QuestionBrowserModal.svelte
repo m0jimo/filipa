@@ -2,13 +2,16 @@
   import type { Question } from "./types";
   import { QuestionType } from "./types";
   import { SvelteSet } from "svelte/reactivity";
+  import SessionModal from "./SessionModal.svelte";
 
   let {
+    show = false,
     questions,
     existingQuestionIds = [],
     onAdd,
     onClose,
   }: {
+    show?: boolean;
     questions: Question[];
     existingQuestionIds?: string[];
     onAdd: (question: Question) => void;
@@ -73,259 +76,163 @@
     selectedTags = [];
   }
 
-  function handleModalClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (!target.closest(".multiselect-container")) {
+  function handleWindowClick(event: MouseEvent) {
+    if (!(event.target as HTMLElement).closest(".multiselect-container")) {
       showTypeDropdown = false;
       showTagDropdown = false;
     }
   }
-
-  function handleOverlayClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  }
-
-  function handleOverlayKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      onClose();
-    }
-    if ((event.key === "Enter" || event.key === " ") && event.target === event.currentTarget) {
-      event.preventDefault();
-      onClose();
-    }
-  }
 </script>
 
-<svelte:window onkeydown={handleOverlayKeydown} />
+<svelte:window onclick={handleWindowClick} />
 
-<div
-  class="modal-overlay"
-  role="button"
-  tabindex="0"
-  aria-label="Close modal"
-  onclick={handleOverlayClick}
-  onkeydown={handleOverlayKeydown}
->
-  <div
-    class="modal large"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="question-browser-title"
-    tabindex="-1"
-    onclick={(e) => {
-      e.stopPropagation();
-      handleModalClick(e);
-    }}
-    onkeydown={(e) => e.stopPropagation()}
-  >
-    <div class="modal-header">
-      <h2 id="question-browser-title">Add Questions from Catalog</h2>
-      <button type="button" class="close-btn" onclick={onClose}>&times;</button>
+<SessionModal {show} title="Add Questions from Catalog" size="large" onClose={onClose}>
+  <div class="filters">
+    <div class="filter-group">
+      <input
+        id="searchQuestionsBrowser"
+        name="input-search-questions-browser"
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Search questions..."
+        class="search-input"
+        autocomplete="off"
+        data-lpignore="true"
+        data-form-type="other"
+      />
     </div>
 
-    <div class="filters">
-      <div class="filter-group">
-        <input
-          id="searchQuestionsBrowser"
-          name="input-search-questions-browser"
-          type="text"
-          bind:value={searchQuery}
-          placeholder="Search questions..."
-          class="search-input"
-          autocomplete="off"
-          data-lpignore="true"
-          data-form-type="other"
-        />
-      </div>
-
-      <div class="filter-group multiselect-wrapper">
-        <label>Type:</label>
-        <div class="multiselect-container">
-          <button
-            class="multiselect-trigger"
-            onclick={() => (showTypeDropdown = !showTypeDropdown)}
-            type="button"
-          >
-            {selectedTypes.length === 0 ? "All Types" : `${selectedTypes.length} selected`}
-            <span class="dropdown-arrow">&#9660;</span>
-          </button>
-          {#if showTypeDropdown}
-            <div class="multiselect-dropdown">
-              <label class="multiselect-option">
-                <input
-                  type="checkbox"
-                  checked={selectedTypes.includes(QuestionType.Text)}
-                  onchange={() => toggleType(QuestionType.Text)}
-                />
-                <span>Text</span>
-              </label>
-              <label class="multiselect-option">
-                <input
-                  type="checkbox"
-                  checked={selectedTypes.includes(QuestionType.Rating)}
-                  onchange={() => toggleType(QuestionType.Rating)}
-                />
-                <span>Rating</span>
-              </label>
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <div class="filter-group multiselect-wrapper">
-        <label>Tag:</label>
-        <div class="multiselect-container">
-          <button
-            class="multiselect-trigger"
-            onclick={() => (showTagDropdown = !showTagDropdown)}
-            type="button"
-          >
-            {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} selected`}
-            <span class="dropdown-arrow">&#9660;</span>
-          </button>
-          {#if showTagDropdown}
-            <div class="multiselect-dropdown">
-              {#if allTags().length === 0}
-                <div class="multiselect-empty">No tags available</div>
-              {:else}
-                {#each allTags() as tag (tag)}
-                  <label class="multiselect-option">
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.includes(tag)}
-                      onchange={() => toggleTag(tag)}
-                    />
-                    <span>{tag}</span>
-                  </label>
-                {/each}
-              {/if}
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      {#if searchQuery || selectedTypes.length > 0 || selectedTags.length > 0}
-        <button type="button" onclick={clearFilters} class="clear-filters">Clear Filters</button>
-      {/if}
-
-      <div class="results-count">
-        {filteredQuestions().length} of {questions.length} questions
+    <div class="filter-group multiselect-wrapper">
+      <label>Type:</label>
+      <div class="multiselect-container">
+        <button
+          class="multiselect-trigger"
+          onclick={() => (showTypeDropdown = !showTypeDropdown)}
+          type="button"
+        >
+          {selectedTypes.length === 0 ? "All Types" : `${selectedTypes.length} selected`}
+          <span class="dropdown-arrow">&#9660;</span>
+        </button>
+        {#if showTypeDropdown}
+          <div class="multiselect-dropdown">
+            <label class="multiselect-option">
+              <input
+                type="checkbox"
+                checked={selectedTypes.includes(QuestionType.Text)}
+                onchange={() => toggleType(QuestionType.Text)}
+              />
+              <span>Text</span>
+            </label>
+            <label class="multiselect-option">
+              <input
+                type="checkbox"
+                checked={selectedTypes.includes(QuestionType.Rating)}
+                onchange={() => toggleType(QuestionType.Rating)}
+              />
+              <span>Rating</span>
+            </label>
+          </div>
+        {/if}
       </div>
     </div>
 
-    <div class="questions-grid">
-      {#each filteredQuestions() as question (question.id)}
-        <div class="question-card">
-          <div class="question-header">
-            <span
-              class="question-type"
-              class:rating={question.questionType === QuestionType.Rating}
-            >
-              {question.questionType}
-            </span>
-            {#if question.tags.length > 0}
-              <div class="tags">
-                {#each question.tags as tag (tag)}
-                  <span class="tag">{tag}</span>
-                {/each}
-              </div>
-            {/if}
-          </div>
-
-          <div class="question-content">
-            <h3>{question.question}</h3>
-            {#if question.expectedAnswer}
-              <details class="expected-answer">
-                <summary>Expected Answer</summary>
-                <p>{question.expectedAnswer}</p>
-              </details>
-            {/if}
-          </div>
-
-          {#if question.difficulty && question.difficulty.length > 0}
-            <div class="rating-info">
-              <small>Difficulty: {question.difficulty.join(", ")}</small>
-            </div>
-          {/if}
-
-          <div class="card-actions">
-            {#if existingQuestionIds.includes(question.id)}
-              <button type="button" class="action-btn add" disabled> Already in session </button>
+    <div class="filter-group multiselect-wrapper">
+      <label>Tag:</label>
+      <div class="multiselect-container">
+        <button
+          class="multiselect-trigger"
+          onclick={() => (showTagDropdown = !showTagDropdown)}
+          type="button"
+        >
+          {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} selected`}
+          <span class="dropdown-arrow">&#9660;</span>
+        </button>
+        {#if showTagDropdown}
+          <div class="multiselect-dropdown">
+            {#if allTags().length === 0}
+              <div class="multiselect-empty">No tags available</div>
             {:else}
-              <button type="button" onclick={() => onAdd(question)} class="action-btn add">
-                + Add to Session
-              </button>
+              {#each allTags() as tag (tag)}
+                <label class="multiselect-option">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag)}
+                    onchange={() => toggleTag(tag)}
+                  />
+                  <span>{tag}</span>
+                </label>
+              {/each}
             {/if}
           </div>
-        </div>
-      {/each}
+        {/if}
+      </div>
+    </div>
 
-      {#if filteredQuestions().length === 0}
-        <div class="empty-state">
-          <p>No questions found. Try adjusting your filters.</p>
-        </div>
-      {/if}
+    {#if searchQuery || selectedTypes.length > 0 || selectedTags.length > 0}
+      <button type="button" onclick={clearFilters} class="clear-filters">Clear Filters</button>
+    {/if}
+
+    <div class="results-count">
+      {filteredQuestions().length} of {questions.length} questions
     </div>
   </div>
-</div>
+
+  <div class="questions-grid">
+    {#each filteredQuestions() as question (question.id)}
+      <div class="question-card">
+        <div class="question-header">
+          <span
+            class="question-type"
+            class:rating={question.questionType === QuestionType.Rating}
+          >
+            {question.questionType}
+          </span>
+          {#if question.tags.length > 0}
+            <div class="tags">
+              {#each question.tags as tag (tag)}
+                <span class="tag">{tag}</span>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+        <div class="question-content">
+          <h3>{question.question}</h3>
+          {#if question.expectedAnswer}
+            <details class="expected-answer">
+              <summary>Expected Answer</summary>
+              <p>{question.expectedAnswer}</p>
+            </details>
+          {/if}
+        </div>
+
+        {#if question.difficulty && question.difficulty.length > 0}
+          <div class="rating-info">
+            <small>Difficulty: {question.difficulty.join(", ")}</small>
+          </div>
+        {/if}
+
+        <div class="card-actions">
+          {#if existingQuestionIds.includes(question.id)}
+            <button type="button" class="action-btn add" disabled> Already in session </button>
+          {:else}
+            <button type="button" onclick={() => onAdd(question)} class="action-btn add">
+              + Add to Session
+            </button>
+          {/if}
+        </div>
+      </div>
+    {/each}
+
+    {#if filteredQuestions().length === 0}
+      <div class="empty-state">
+        <p>No questions found. Try adjusting your filters.</p>
+      </div>
+    {/if}
+  </div>
+</SessionModal>
 
 <style>
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    cursor: pointer;
-  }
-
-  .modal {
-    background: white;
-    border-radius: 8px;
-    padding: 2rem;
-    max-width: 900px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    cursor: default;
-  }
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-
-  .modal-header h2 {
-    margin: 0;
-  }
-
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: 2rem;
-    cursor: pointer;
-    color: #999;
-    padding: 0;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .close-btn:hover {
-    color: #333;
-  }
-
   .filters {
     display: flex;
     gap: 1rem;
@@ -599,18 +506,6 @@
     text-align: center;
     padding: 3rem;
     color: #666;
-  }
-
-  :global([data-theme="dark"]) .modal {
-    background: #2a2a2a;
-  }
-
-  :global([data-theme="dark"]) .modal-header h2 {
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .close-btn:hover {
-    color: #ffffff;
   }
 
   :global([data-theme="dark"]) .filters {

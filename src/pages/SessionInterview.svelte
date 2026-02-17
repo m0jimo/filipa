@@ -717,14 +717,13 @@
 </SessionModal>
 
 <!-- Question Browser Modal -->
-{#if showQuestionBrowser}
-  <QuestionBrowserModal
-    questions={catalogQuestions}
-    existingQuestionIds={questions.map((sq) => sq.questionObj.id)}
-    onAdd={addQuestionToSession}
-    onClose={closeQuestionBrowser}
-  />
-{/if}
+<QuestionBrowserModal
+  show={showQuestionBrowser}
+  questions={catalogQuestions}
+  existingQuestionIds={questions.map((sq) => sq.questionObj.id)}
+  onAdd={addQuestionToSession}
+  onClose={closeQuestionBrowser}
+/>
 
 <!-- Session Notes Modal -->
 <SessionModal show={showNotesModal} title="Session Notes" onClose={closeNotesModal}>
