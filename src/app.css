@@ -7,6 +7,25 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ===== Design Tokens ===== */
+  --color-primary: #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-primary-dark: #4da3ff;
+  --color-primary-dark-hover: #66b3ff;
+
+  --color-text: #333;
+  --color-text-secondary: #666;
+  --color-text-muted: #a0a0a0;
+
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f5f5f5;
+  --color-bg-dark: #1a1a1a;
+  --color-bg-dark-2: #2a2a2a;
+  --color-bg-dark-3: #333;
+
+  --color-border: #ddd;
+  --color-border-dark: #444;
 }
 
 /* Light theme - default */
@@ -14,7 +33,7 @@
 :root[data-theme="light"] {
   color-scheme: light !important;
   color: #213547 !important;
-  background-color: #ffffff !important;
+  background-color: var(--color-bg) !important;
 }
 
 /* Dark theme - explicit override */
@@ -53,9 +72,9 @@ h1 {
 .question-card {
   display: block;
   padding: 1.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: white;
+  background: var(--color-bg);
   transition: all 0.2s;
 }
 
@@ -64,14 +83,14 @@ h1 {
 .session-card h3,
 .question-card h3 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--color-text);
 }
 
 .card .notes,
 .candidate-card .notes,
 .session-card .notes,
 .question-card .notes {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   margin: 0.5rem 0;
 }
@@ -117,8 +136,8 @@ h1 {
 
 .action-btn.edit {
   flex: 1;
-  background: #f5f5f5;
-  color: #333;
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
 }
 
 .action-btn.edit:hover {
@@ -165,7 +184,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--color-bg-dark);
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -211,7 +230,7 @@ input::-webkit-credentials-auto-fill-button {
 }
 
 :root[data-theme="dark"] button {
-  background-color: #1a1a1a;
+  background-color: var(--color-bg-dark);
 }
 
 /* ===== Common Component Styles ===== */
@@ -226,7 +245,7 @@ input::-webkit-credentials-auto-fill-button {
 
 /* Header Styles */
 header {
-  background: white;
+  background: var(--color-bg);
   border-bottom: 1px solid #e0e0e0;
   padding: 0.5rem 2rem;
   display: flex;
@@ -237,7 +256,7 @@ header {
 
 header h1 {
   margin: 0 0 0.25rem 0;
-  color: #1a1a1a;
+  color: var(--color-bg-dark);
   font-size: 1.75rem;
 }
 
@@ -258,7 +277,7 @@ header p {
 /* Button Variants */
 button.primary {
   padding: 0.75rem 1.5rem !important;
-  background: #0066cc !important;
+  background: var(--color-primary) !important;
   color: white !important;
   border: none !important;
   border-radius: 6px !important;
@@ -270,7 +289,7 @@ button.primary {
 }
 
 button.primary:hover:not(:disabled) {
-  background: #0052a3 !important;
+  background: var(--color-primary-hover) !important;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2) !important;
 }
@@ -278,7 +297,7 @@ button.primary:hover:not(:disabled) {
 button.secondary {
   padding: 0.75rem 1.5rem !important;
   background: #f8f9fa !important;
-  color: #333 !important;
+  color: var(--color-text) !important;
   border: none !important;
   border-radius: 6px !important;
   cursor: pointer;
@@ -315,7 +334,7 @@ button:disabled {
 /* Loading and Error States */
 .loading {
   text-align: center;
-  color: #666;
+  color: var(--color-text-secondary);
   padding: 2rem;
 }
 
@@ -335,7 +354,7 @@ button:disabled {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text);
 }
 
 .form-group input,
@@ -343,7 +362,7 @@ button:disabled {
 .form-group select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 1rem;
   font-family: inherit;
@@ -353,7 +372,7 @@ button:disabled {
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: var(--color-primary);
 }
 
 .form-group textarea {
@@ -363,7 +382,7 @@ button:disabled {
 .form-group small {
   display: block;
   margin-top: 0.25rem;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
@@ -377,7 +396,7 @@ button:disabled {
 
 .confirm-text {
   margin-bottom: 1.5rem;
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
@@ -385,7 +404,7 @@ button:disabled {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--color-text-secondary);
   background: #f9f9f9;
   border-radius: 8px;
 }
@@ -419,8 +438,8 @@ button:disabled {
 
 /* Dark theme - explicit overrides for all components */
 [data-theme="dark"] header {
-  background: #1a1a1a !important;
-  border-bottom-color: #333 !important;
+  background: var(--color-bg-dark) !important;
+  border-bottom-color: var(--color-bg-dark-3) !important;
 }
 
 [data-theme="dark"] header h1 {
@@ -428,7 +447,7 @@ button:disabled {
 }
 
 [data-theme="dark"] header p {
-  color: #a0a0a0 !important;
+  color: var(--color-text-muted) !important;
 }
 
 [data-theme="dark"] .error {
@@ -437,7 +456,7 @@ button:disabled {
 }
 
 [data-theme="dark"] .loading {
-  color: #a0a0a0 !important;
+  color: var(--color-text-muted) !important;
 }
 
 [data-theme="dark"] .form-group label {
@@ -447,36 +466,36 @@ button:disabled {
 [data-theme="dark"] .form-group input,
 [data-theme="dark"] .form-group textarea,
 [data-theme="dark"] .form-group select {
-  background: #1a1a1a !important;
-  border-color: #444 !important;
+  background: var(--color-bg-dark) !important;
+  border-color: var(--color-border-dark) !important;
   color: #ffffff !important;
 }
 
 [data-theme="dark"] .confirm-text {
-  color: #a0a0a0 !important;
+  color: var(--color-text-muted) !important;
 }
 
 [data-theme="dark"] .empty-state {
-  background: #2a2a2a !important;
-  color: #a0a0a0 !important;
+  background: var(--color-bg-dark-2) !important;
+  color: var(--color-text-muted) !important;
 }
 
 [data-theme="dark"] button.secondary {
-  background: #2a2a2a !important;
+  background: var(--color-bg-dark-2) !important;
   color: #ffffff !important;
 }
 
 [data-theme="dark"] button.secondary:hover:not(:disabled) {
-  background: #333 !important;
+  background: var(--color-bg-dark-3) !important;
 }
 
 [data-theme="dark"] button.primary {
-  background: #4da3ff !important;
+  background: var(--color-primary-dark) !important;
   color: #000000 !important;
 }
 
 [data-theme="dark"] button.primary:hover:not(:disabled) {
-  background: #66b3ff !important;
+  background: var(--color-primary-dark-hover) !important;
   box-shadow: 0 2px 8px rgba(77, 163, 255, 0.3) !important;
 }
 
@@ -493,8 +512,8 @@ button:disabled {
 [data-theme="dark"] .candidate-card,
 [data-theme="dark"] .session-card,
 [data-theme="dark"] .question-card {
-  background: #2a2a2a !important;
-  border-color: #333 !important;
+  background: var(--color-bg-dark-2) !important;
+  border-color: var(--color-bg-dark-3) !important;
 }
 
 [data-theme="dark"] .card h3,
@@ -508,7 +527,7 @@ button:disabled {
 [data-theme="dark"] .candidate-card .notes,
 [data-theme="dark"] .session-card .notes,
 [data-theme="dark"] .question-card .notes {
-  color: #a0a0a0 !important;
+  color: var(--color-text-muted) !important;
 }
 
 [data-theme="dark"] .card .date,
@@ -519,12 +538,12 @@ button:disabled {
 }
 
 [data-theme="dark"] .action-btn.edit {
-  background: #2a2a2a !important;
+  background: var(--color-bg-dark-2) !important;
   color: #ffffff !important;
 }
 
 [data-theme="dark"] .action-btn.edit:hover {
-  background: #333 !important;
+  background: var(--color-bg-dark-3) !important;
 }
 
 [data-theme="dark"] .action-btn.delete-narrow {
@@ -540,14 +559,14 @@ button:disabled {
 .view-toggle {
   display: flex;
   gap: 2px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .view-btn {
   padding: 0.35rem 0.6rem;
-  background: white;
+  background: var(--color-bg);
   border: none;
   cursor: pointer;
   font-size: 1rem;
@@ -557,30 +576,30 @@ button:disabled {
 
 .view-btn:hover {
   background: #f0f0f0;
-  color: #333;
+  color: var(--color-text);
 }
 
 .view-btn.active {
-  background: #0066cc;
+  background: var(--color-primary);
   color: white;
 }
 
 [data-theme="dark"] .view-toggle {
-  border-color: #444;
+  border-color: var(--color-border-dark);
 }
 
 [data-theme="dark"] .view-btn {
-  background: #1a1a1a;
+  background: var(--color-bg-dark);
   color: #888;
 }
 
 [data-theme="dark"] .view-btn:hover {
-  background: #2a2a2a;
+  background: var(--color-bg-dark-2);
   color: #ccc;
 }
 
 [data-theme="dark"] .view-btn.active {
-  background: #0066cc;
+  background: var(--color-primary);
   color: white;
 }
 
@@ -594,12 +613,12 @@ button:disabled {
 .questions-table thead th {
   text-align: left;
   padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid #ddd;
+  border-bottom: 2px solid var(--color-border);
   font-weight: 600;
   color: #555;
   position: sticky;
   top: 0;
-  background: white;
+  background: var(--color-bg);
   z-index: 1;
 }
 
@@ -622,13 +641,13 @@ button:disabled {
 }
 
 [data-theme="dark"] .questions-table thead th {
-  border-color: #444;
-  color: #a0a0a0;
-  background: #2a2a2a;
+  border-color: var(--color-border-dark);
+  color: var(--color-text-muted);
+  background: var(--color-bg-dark-2);
 }
 
 [data-theme="dark"] .questions-table tbody tr {
-  border-color: #2a2a2a;
+  border-color: var(--color-bg-dark-2);
 }
 
 [data-theme="dark"] .questions-table tbody tr:hover {
@@ -645,18 +664,18 @@ button:disabled {
 
 /* Explicit light theme overrides */
 [data-theme="light"] button.primary {
-  background: #0066cc !important;
+  background: var(--color-primary) !important;
   color: white !important;
 }
 
 [data-theme="light"] button.primary:hover:not(:disabled) {
-  background: #0052a3 !important;
+  background: var(--color-primary-hover) !important;
   box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2) !important;
 }
 
 [data-theme="light"] button.secondary {
   background: #f8f9fa !important;
-  color: #333 !important;
+  color: var(--color-text) !important;
 }
 
 [data-theme="light"] button.secondary:hover:not(:disabled) {
@@ -673,12 +692,12 @@ button:disabled {
 }
 
 [data-theme="light"] header {
-  background: white !important;
+  background: var(--color-bg) !important;
   border-bottom-color: #e0e0e0 !important;
 }
 
 [data-theme="light"] header h1 {
-  color: #1a1a1a !important;
+  color: var(--color-bg-dark) !important;
 }
 
 [data-theme="light"] header p {
@@ -691,50 +710,50 @@ button:disabled {
 }
 
 [data-theme="light"] .loading {
-  color: #666 !important;
+  color: var(--color-text-secondary) !important;
 }
 
 [data-theme="light"] .form-group label {
-  color: #333 !important;
+  color: var(--color-text) !important;
 }
 
 [data-theme="light"] .form-group input,
 [data-theme="light"] .form-group textarea,
 [data-theme="light"] .form-group select {
-  background: white !important;
-  border-color: #ddd !important;
-  color: #333 !important;
+  background: var(--color-bg) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text) !important;
 }
 
 [data-theme="light"] .confirm-text {
-  color: #666 !important;
+  color: var(--color-text-secondary) !important;
 }
 
 [data-theme="light"] .empty-state {
   background: #f9f9f9 !important;
-  color: #666 !important;
+  color: var(--color-text-secondary) !important;
 }
 
 [data-theme="light"] .card,
 [data-theme="light"] .candidate-card,
 [data-theme="light"] .session-card,
 [data-theme="light"] .question-card {
-  background: white !important;
-  border-color: #ddd !important;
+  background: var(--color-bg) !important;
+  border-color: var(--color-border) !important;
 }
 
 [data-theme="light"] .card h3,
 [data-theme="light"] .candidate-card h3,
 [data-theme="light"] .session-card h3,
 [data-theme="light"] .question-card h3 {
-  color: #333 !important;
+  color: var(--color-text) !important;
 }
 
 [data-theme="light"] .card .notes,
 [data-theme="light"] .candidate-card .notes,
 [data-theme="light"] .session-card .notes,
 [data-theme="light"] .question-card .notes {
-  color: #666 !important;
+  color: var(--color-text-secondary) !important;
 }
 
 [data-theme="light"] .card .date,
