@@ -226,13 +226,13 @@
   }
 
   .theme-toggle-btn {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 1rem;
     background: white;
     color: black;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 1.25rem;
+    font-size: 1rem;
     transition: all 0.2s;
   }
 
