@@ -114,6 +114,10 @@
 
       const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
       candidateWindow = window.open(url, "candidate_view_" + session.id, "width=1280,height=1024");
+      // Fallback: if popup was blocked (common on iPad/mobile), open as a regular new tab
+      if (!candidateWindow) {
+        candidateWindow = window.open(url, "_blank");
+      }
     }
   }
 
