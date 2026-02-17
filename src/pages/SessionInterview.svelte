@@ -97,6 +97,19 @@
 
   async function openCandidateView() {
     if (session) {
+      const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
+
+      // Open the window synchronously before any await, so Safari on iPad
+      // treats it as a direct user-gesture response and doesn't block it.
+      if (!candidateWindow || candidateWindow.closed) {
+        candidateWindow = window.open(url, "candidate_view_" + session.id, "width=1280,height=1024");
+        // Fallback: if popup was blocked (e.g. iPad Safari blocks sized popups),
+        // retry as a plain new tab — must still be before any await.
+        if (!candidateWindow) {
+          candidateWindow = window.open(url, "_blank");
+        }
+      }
+
       // Reset active question so candidate sees the welcome page
       session.currentQuestionIndex = -1;
       session.updatedAt = new Date();
@@ -110,13 +123,6 @@
       }
       if (candidateWindow && !candidateWindow.closed) {
         candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
-      }
-
-      const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
-      candidateWindow = window.open(url, "candidate_view_" + session.id, "width=1280,height=1024");
-      // Fallback: if popup was blocked (common on iPad/mobile), open as a regular new tab
-      if (!candidateWindow) {
-        candidateWindow = window.open(url, "_blank");
       }
     }
   }
