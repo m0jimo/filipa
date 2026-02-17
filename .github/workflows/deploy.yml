@@ -74,3 +74,5 @@ jobs:
           name: Latest Build
           prerelease: true
           files: filipa.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
