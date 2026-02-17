@@ -1915,51 +1915,13 @@ Type: text</code
     background: #388e3c !important;
   }
 
-  .view-toggle {
-    display: flex;
-    gap: 2px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .view-btn {
-    padding: 0.35rem 0.6rem;
-    background: white;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #888;
-    line-height: 1;
-  }
-
-  .view-btn:hover {
-    background: #f0f0f0;
-    color: #333;
-  }
-
-  .view-btn.active {
-    background: #0066cc;
-    color: white;
-  }
-
   .questions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
   }
 
-  .questions-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-  }
-
   .questions-table thead th {
-    text-align: left;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 2px solid #ddd;
-    font-weight: 600;
     color: #555;
     white-space: nowrap;
   }
@@ -1980,24 +1942,6 @@ Type: text</code
 
   .sort-arrow.inactive {
     opacity: 0.35;
-  }
-
-  .questions-table tbody tr {
-    border-bottom: 1px solid #eee;
-    transition: background 0.1s;
-  }
-
-  .questions-table tbody tr:hover {
-    background: #f8f8f8;
-  }
-
-  .questions-table tbody tr.selected {
-    background: #f1f8f4;
-  }
-
-  .questions-table td {
-    padding: 0.5rem 0.75rem;
-    vertical-align: middle;
   }
 
   .col-check {
@@ -2614,48 +2558,8 @@ Type: text</code
     color: #a0a0a0;
   }
 
-  :global([data-theme="dark"]) .view-toggle {
-    border-color: #444;
-  }
-
-  :global([data-theme="dark"]) .view-btn {
-    background: #1a1a1a;
-    color: #888;
-  }
-
-  :global([data-theme="dark"]) .view-btn:hover {
-    background: #2a2a2a;
-    color: #ccc;
-  }
-
-  :global([data-theme="dark"]) .view-btn.active {
-    background: #0066cc;
-    color: white;
-  }
-
-  :global([data-theme="dark"]) .questions-table thead th {
-    border-color: #444;
-    color: #a0a0a0;
-  }
-
   :global([data-theme="dark"]) .col-sortable:hover {
     color: #66aaff;
-  }
-
-  :global([data-theme="dark"]) .questions-table tbody tr {
-    border-color: #2a2a2a;
-  }
-
-  :global([data-theme="dark"]) .questions-table tbody tr:hover {
-    background: #1e1e1e;
-  }
-
-  :global([data-theme="dark"]) .questions-table tbody tr.selected {
-    background: #1a2e1a;
-  }
-
-  :global([data-theme="dark"]) .questions-table td {
-    color: #ddd;
   }
 
   :global([data-theme="dark"]) .col-question {
