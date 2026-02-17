@@ -684,50 +684,37 @@
 </div>
 
 <!-- Question Set Browser Modal -->
-{#if showQuestionSetBrowser}
-  <div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Select Question Set">
-    <div class="modal-content question-set-browser-modal">
-      <div class="modal-header">
-        <h2>Add Question Set</h2>
-        <button type="button" onclick={closeQuestionSetBrowser} class="close-btn" aria-label="Close"
-        >✕
-        </button
-        >
-      </div>
-      <div class="modal-body">
-        {#if questionSetBrowserLoading}
-          <p class="loading-text">Loading question sets...</p>
-        {:else if availableQuestionSets.length === 0}
-          <p class="empty-state">
-            No question sets found. Create question sets in the Question Sets section.
-          </p>
-        {:else}
-          <p class="helper-text">
-            Select a question set to add its questions to the session. Duplicates will be skipped.
-          </p>
-          <div class="question-set-list">
-            {#each availableQuestionSets as qs (qs.id)}
-              <div class="question-set-item">
-                <div class="question-set-info">
-                  <strong class="question-set-name">{qs.name}</strong>
-                  {#if qs.notes}
-                    <span class="question-set-notes">{qs.notes}</span>
-                  {/if}
-                  <span class="question-set-count"
-                  >{qs.questionIds.length} question{qs.questionIds.length !== 1 ? "s" : ""}</span
-                  >
-                </div>
-                <button type="button" class="primary" onclick={() => addQuestionSetToSession(qs)}>
-                  + Add to Session
-                </button>
-              </div>
-            {/each}
+<SessionModal show={showQuestionSetBrowser} title="Add Question Set" size="large" onClose={closeQuestionSetBrowser}>
+  {#if questionSetBrowserLoading}
+    <p class="loading-text">Loading question sets...</p>
+  {:else if availableQuestionSets.length === 0}
+    <p class="empty-state">
+      No question sets found. Create question sets in the Question Sets section.
+    </p>
+  {:else}
+    <p class="helper-text">
+      Select a question set to add its questions to the session. Duplicates will be skipped.
+    </p>
+    <div class="question-set-list">
+      {#each availableQuestionSets as qs (qs.id)}
+        <div class="question-set-item">
+          <div class="question-set-info">
+            <strong class="question-set-name">{qs.name}</strong>
+            {#if qs.notes}
+              <span class="question-set-notes">{qs.notes}</span>
+            {/if}
+            <span class="question-set-count"
+            >{qs.questionIds.length} question{qs.questionIds.length !== 1 ? "s" : ""}</span
+            >
           </div>
-        {/if}
-      </div>
+          <button type="button" class="primary" onclick={() => addQuestionSetToSession(qs)}>
+            + Add to Session
+          </button>
+        </div>
+      {/each}
     </div>
-  </div>
-{/if}
+  {/if}
+</SessionModal>
 
 <!-- Question Browser Modal -->
 {#if showQuestionBrowser}
@@ -1019,11 +1006,6 @@
 
   :global([data-theme="dark"]) .nav-btn:disabled {
     opacity: 0.4;
-  }
-
-  .question-set-browser-modal {
-    max-width: 600px;
-    width: 100%;
   }
 
   .helper-text {
