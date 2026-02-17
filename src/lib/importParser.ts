@@ -23,8 +23,9 @@ export interface ParsedImportData {
   questions: Array<{
     order: number;
     note: string;
-    questionRating: number | null;
+    questionRating: number | undefined;
     answer: string;
+    isPresented?: boolean;
     question: {
       id: string;
       tags: string[];
@@ -148,7 +149,7 @@ export function parseMarkdownWithConfig(
       currentQuestion = {
         order: order,
         note: "",
-        questionRating: null,
+        questionRating: undefined,
         answer: "",
         question: {
           id: generateId(),
@@ -317,23 +318,27 @@ export function parseJsonWithConfig(content: string): ParsedImportData {
       interviewers: jsonData.session.interviewers || [],
       notes: jsonData.session.notes || "",
     },
-    questions: jsonData.questions.map((q: Record<string, unknown>, index: number) => ({
-      order: q.order !== undefined ? q.order : index,
-      note: q.note || "",
-      questionRating: q.questionRating || null,
-      answer: q.answer || "",
-      question: {
-        id: q.question.id || generateId(),
-        tags: q.question.tags || [],
-        questionType: q.question.questionType || "text",
-        question: q.question.question,
-        expectedAnswer: q.question.expectedAnswer || "",
-        difficulty: Array.isArray(q.question.difficulty) ? q.question.difficulty : [],
-        hash: q.question.hash || "",
-        createdAt: q.question.createdAt || new Date().toISOString(),
-        updatedAt: q.question.updatedAt || new Date().toISOString(),
-      },
-    })),
+    questions: jsonData.questions.map((q: Record<string, unknown>, index: number) => {
+      const qObj = (q.question ?? {}) as Record<string, unknown>;
+      return {
+        order: q.order !== undefined ? (q.order as number) : index,
+        note: (q.note as string) || "",
+        questionRating: (q.questionRating as number) || undefined,
+        answer: (q.answer as string) || "",
+        isPresented: (q.isPresented as boolean) || false,
+        question: {
+          id: (qObj.id as string) || generateId(),
+          tags: Array.isArray(qObj.tags) ? (qObj.tags as string[]) : [],
+          questionType: (qObj.questionType as string) || "text",
+          question: (qObj.question as string) || "",
+          expectedAnswer: (qObj.expectedAnswer as string) || "",
+          difficulty: Array.isArray(qObj.difficulty) ? (qObj.difficulty as number[]) : [],
+          hash: (qObj.hash as string) || "",
+          createdAt: (qObj.createdAt as string) || new Date().toISOString(),
+          updatedAt: (qObj.updatedAt as string) || new Date().toISOString(),
+        },
+      };
+    }),
   };
 
   return data;

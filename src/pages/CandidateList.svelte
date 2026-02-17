@@ -414,7 +414,7 @@
         firstName: String(data.candidate.firstName),
         lastName: String(data.candidate.lastName),
         notes: String(data.candidate.notes || ""),
-        createdAt: new Date(data.candidate.createdAt),
+        createdAt: new Date(data.candidate.createdAt ?? now),
         updatedAt: now,
       };
       console.log("💾 About to create candidate:", candidate);
@@ -523,9 +523,9 @@
       const sessionQuestion: SessionQuestion = {
         id: generateId(),
         sessionId: session.id,
-        order: questionData.order,
+        order: questionData.order ?? i,
         note: questionData.note || "",
-        questionRating: questionData.questionRating || null,
+        questionRating: questionData.questionRating ?? 0,
         answer: questionData.answer || "",
         isPresented: false,
         questionObj: question,

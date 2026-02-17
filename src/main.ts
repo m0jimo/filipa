@@ -16,7 +16,7 @@ async function init() {
 }
 
 // Expose database reset function for debugging
-(window as Window & { resetFilipaDB: () => Promise<void> }).resetFilipaDB = async () => {
+(window as unknown as { resetFilipaDB: () => Promise<void> }).resetFilipaDB = async () => {
   try {
     await resetDatabase();
     console.log("Database reset successful. Please reload the page.");
