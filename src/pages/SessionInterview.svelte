@@ -7,6 +7,7 @@
   import QuestionBrowserModal from "../lib/QuestionBrowserModal.svelte";
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
+  import SessionModal from "../lib/SessionModal.svelte";
 
   let {params = {sessionId: ""}}: { params: { sessionId: string } } = $props();
 
@@ -739,30 +740,19 @@
 {/if}
 
 <!-- Session Notes Modal -->
-{#if showNotesModal}
-  <div class="modal-overlay" onclick={closeNotesModal}>
-    <div class="modal-content notes-modal" onclick={(e) => e.stopPropagation()}>
-      <div class="modal-header">
-        <h2>Session Notes</h2>
-        <button type="button" onclick={closeNotesModal} class="close-btn" aria-label="Close"
-        >✕
-        </button
-        >
-      </div>
-      <div class="modal-body">
-        <textarea
-          bind:value={sessionNotes}
-          placeholder="Add notes about this interview session..."
-          rows="12"
-        ></textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" onclick={closeNotesModal} class="secondary">Cancel</button>
-        <button type="button" onclick={saveSessionNotes} class="primary">Save Notes</button>
-      </div>
-    </div>
+<SessionModal show={showNotesModal} title="Session Notes" onClose={closeNotesModal}>
+  <div class="form-group">
+    <textarea
+      bind:value={sessionNotes}
+      placeholder="Add notes about this interview session..."
+      rows="12"
+    ></textarea>
   </div>
-{/if}
+  <div class="modal-actions">
+    <button type="button" onclick={closeNotesModal} class="secondary">Cancel</button>
+    <button type="button" onclick={saveSessionNotes} class="primary">Save Notes</button>
+  </div>
+</SessionModal>
 
 <style>
   .session-interview {
@@ -982,88 +972,6 @@
   }
 
   /* Modal Styles */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1rem;
-  }
-
-  .modal-content {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    max-width: 600px;
-    width: 100%;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid #ddd;
-  }
-
-  .modal-header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-  }
-
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #666;
-    cursor: pointer;
-    padding: 0.25rem;
-    line-height: 1;
-  }
-
-  .close-btn:hover {
-    color: #333;
-  }
-
-  .modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
-  }
-
-  .modal-body textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-family: inherit;
-    resize: vertical;
-    box-sizing: border-box;
-    max-width: 100%;
-  }
-
-  .modal-body textarea:focus {
-    outline: none;
-    border-color: #0066cc;
-  }
-
-  .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    padding: 1.5rem;
-    border-top: 1px solid #ddd;
-  }
-
   button.secondary {
     padding: 0.75rem 1.5rem;
     background: #f5f5f5;
@@ -1100,36 +1008,6 @@
   .nav-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  :global([data-theme="dark"]) .modal-content {
-    background: #2a2a2a;
-  }
-
-  :global([data-theme="dark"]) .modal-header {
-    border-bottom-color: #444;
-  }
-
-  :global([data-theme="dark"]) .modal-header h2 {
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .close-btn {
-    color: #a0a0a0;
-  }
-
-  :global([data-theme="dark"]) .close-btn:hover {
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .modal-body textarea {
-    background: #1a1a1a;
-    border-color: #444;
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .modal-footer {
-    border-top-color: #444;
   }
 
   :global([data-theme="dark"]) button.secondary {

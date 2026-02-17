@@ -172,6 +172,11 @@
     min-height: 0;
   }
 
+  .modal-content :global(textarea) {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   /* Pull modal-actions out of the scrollable padding so background covers full width */
   .modal :global(.modal-actions) {
     position: sticky;
