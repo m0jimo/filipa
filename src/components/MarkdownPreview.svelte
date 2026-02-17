@@ -1,8 +1,21 @@
 <script lang="ts" context="module">
   import { Marked } from "marked";
   import { markedHighlight } from "marked-highlight";
-  import hljs from "highlight.js";
+  import hljs from "highlight.js/lib/core";
+  import javascript from "highlight.js/lib/languages/javascript";
+  import typescript from "highlight.js/lib/languages/typescript";
+  import python from "highlight.js/lib/languages/python";
+  import java from "highlight.js/lib/languages/java";
+  import sql from "highlight.js/lib/languages/sql";
+  import csharp from "highlight.js/lib/languages/csharp";
   import "highlight.js/styles/github.css";
+
+  hljs.registerLanguage("javascript", javascript);
+  hljs.registerLanguage("typescript", typescript);
+  hljs.registerLanguage("python", python);
+  hljs.registerLanguage("java", java);
+  hljs.registerLanguage("sql", sql);
+  hljs.registerLanguage("csharp", csharp);
 
   // Create and configure marked instance once at module level
   const markedInstance = new Marked(
