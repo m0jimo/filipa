@@ -569,14 +569,6 @@
 
   <header>
     <div></div>
-    <div class="header-actions">
-      {#if !loading && candidates.length > 0}
-        <button onclick={triggerImport} class="secondary" disabled={importing}>
-          {importing ? "Importing..." : "📥 Import"}
-        </button>
-        <button onclick={openCreateModal} class="primary">+ Add Candidate</button>
-      {/if}
-    </div>
   </header>
 
   {#if loading}
@@ -596,7 +588,15 @@
     </div>
   {:else}
     <div class="candidates">
-      <h2>Candidates ({candidates.length})</h2>
+      <div class="section-header">
+        <h2>Candidates ({candidates.length})</h2>
+        <div class="header-buttons">
+          <button onclick={triggerImport} class="secondary" disabled={importing}>
+            {importing ? "Importing..." : "📥 Import"}
+          </button>
+          <button onclick={openCreateModal} class="primary">+ Add Candidate</button>
+        </div>
+      </div>
       <div class="candidate-grid">
         {#each candidates as candidate (candidate.id)}
           <div class="candidate-card-wrapper">
@@ -912,7 +912,10 @@
   .candidate-list {
   }
 
-  .candidate-list > header,
+  .candidate-list > header {
+    min-height: calc(0.9rem * 1.5);
+  }
+
   .candidate-list > :not(:global(.navigation-tabs)):not(:global(.breadcrumbs)):not(header) {
     padding: 1rem;
   }
@@ -924,10 +927,26 @@
     margin-top: 1.5rem;
   }
 
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-header h2 {
+    margin: 0;
+  }
+
+  .header-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
   .candidate-grid {
     display: grid;
     gap: 1rem;
-    margin-top: 1rem;
   }
 
   .candidate-card-wrapper {

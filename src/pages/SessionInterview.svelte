@@ -1,28 +1,14 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import {onDestroy, onMount} from "svelte";
   import candidateWindowSvg from "../assets/filipa-candidate-window.svg";
-  import {
-    sessionDB,
-    sessionQuestionDB,
-    questionDB,
-    questionSetDB,
-    candidateDB,
-    generateId,
-  } from "../lib/db";
-  import type {
-    Session,
-    SessionQuestion,
-    Question,
-    QuestionSet,
-    Candidate,
-    FilipaUpdateMessage,
-  } from "../lib/types";
+  import {candidateDB, generateId, questionDB, questionSetDB, sessionDB, sessionQuestionDB} from "../lib/db";
+  import type {Candidate, FilipaUpdateMessage, Question, QuestionSet, Session, SessionQuestion} from "../lib/types";
   import SessionQuestionItem from "../lib/SessionQuestionItem.svelte";
   import QuestionBrowserModal from "../lib/QuestionBrowserModal.svelte";
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
 
-  let { params = { sessionId: "" } }: { params: { sessionId: string } } = $props();
+  let {params = {sessionId: ""}}: { params: { sessionId: string } } = $props();
 
   let session: Session | null = $state(null);
   let candidate: Candidate | null = $state(null);
@@ -119,10 +105,10 @@
 
       // Broadcast reset to any already-open candidate window
       if (sessionChannel) {
-        sessionChannel.postMessage({ type: "filipa-question-update", sessionId: session.id });
+        sessionChannel.postMessage({type: "filipa-question-update", sessionId: session.id});
       }
       if (candidateWindow && !candidateWindow.closed) {
-        candidateWindow.postMessage({ type: "filipa-question-update", sessionId: session.id }, "*");
+        candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
       }
 
       const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
@@ -192,7 +178,7 @@
           expectedAnswer: question.expectedAnswer,
           difficulty: question.difficulty ? [...question.difficulty] : [],
           createdAt: new Date(question.createdAt),
-          updatedAt: new Date(question.updatedAt),
+          updatedAt: new Date(question.updatedAt)
         };
 
         const newSessionQuestion: SessionQuestion = {
@@ -205,7 +191,7 @@
           answer: "",
           isPresented: false,
           createdAt: now,
-          updatedAt: now,
+          updatedAt: now
         };
 
         await sessionQuestionDB.create(newSessionQuestion);
@@ -235,7 +221,7 @@
         expectedAnswer: question.expectedAnswer,
         difficulty: question.difficulty ? [...question.difficulty] : [],
         createdAt: new Date(question.createdAt),
-        updatedAt: new Date(question.updatedAt),
+        updatedAt: new Date(question.updatedAt)
       };
 
       const newSessionQuestion: SessionQuestion = {
@@ -248,7 +234,7 @@
         answer: "",
         isPresented: false,
         createdAt: now,
-        updatedAt: now,
+        updatedAt: now
       };
 
       await sessionQuestionDB.create(newSessionQuestion);
@@ -347,7 +333,7 @@
         expectedAnswer: sq.questionObj.expectedAnswer,
         difficulty: sq.questionObj.difficulty ? [...sq.questionObj.difficulty] : [],
         createdAt: new Date(sq.questionObj.createdAt),
-        updatedAt: new Date(sq.questionObj.updatedAt),
+        updatedAt: new Date(sq.questionObj.updatedAt)
       },
       order: sq.order,
       note: sq.note,
@@ -355,7 +341,7 @@
       answer: sq.answer,
       isPresented: sq.isPresented,
       createdAt: new Date(sq.createdAt),
-      updatedAt: new Date(sq.updatedAt),
+      updatedAt: new Date(sq.updatedAt)
     };
   }
 
@@ -370,7 +356,7 @@
       notes: s.notes,
       currentQuestionIndex: s.currentQuestionIndex,
       createdAt: new Date(s.createdAt),
-      updatedAt: new Date(s.updatedAt),
+      updatedAt: new Date(s.updatedAt)
     };
   }
 
@@ -417,14 +403,14 @@
         const message: FilipaUpdateMessage = {
           type: "filipa-question-update",
           sessionId: session.id,
-          timestamp: Date.now(),
+          timestamp: Date.now()
         };
         sessionChannel.postMessage(message);
       }
 
       // Notify candidate window instantly via postMessage
       if (candidateWindow && !candidateWindow.closed) {
-        candidateWindow.postMessage({ type: "filipa-question-update", sessionId: session.id }, "*");
+        candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
       }
 
       // Don't reload - just trigger reactivity by reassigning
@@ -540,13 +526,13 @@
 
 <div class="page session-interview">
   {#if loading}
-    <Navigation />
+    <Navigation/>
     <p class="loading">Loading...</p>
   {:else if error}
-    <Navigation />
+    <Navigation/>
     <p class="error">Error: {error}</p>
   {:else if session}
-    <Navigation />
+    <Navigation/>
     <Breadcrumbs
       items={[
         { label: "Home", href: "/" },
@@ -579,21 +565,21 @@
             <span class="stat-item-inline">
               <span class="stat-label-inline">Presented:</span>
               <span class="stat-value-inline"
-                >{questions.filter((q) => q.isPresented).length}/{questions.length}</span
+              >{questions.filter((q) => q.isPresented).length}/{questions.length}</span
               >
             </span>
             <span class="stat-separator">•</span>
             <span class="stat-item-inline">
               <span class="stat-label-inline">Answered:</span>
               <span class="stat-value-inline"
-                >{questions.filter((q) => q.answer).length}/{questions.length}</span
+              >{questions.filter((q) => q.answer).length}/{questions.length}</span
               >
             </span>
             <span class="stat-separator">•</span>
             <span class="stat-item-inline">
               <span class="stat-label-inline">Rated:</span>
               <span class="stat-value-inline"
-                >{questions.filter((q) => q.questionRating > 0).length}
+              >{questions.filter((q) => q.questionRating > 0).length}
                 /{questions.length}</span
               >
             </span>
@@ -620,10 +606,12 @@
           </div>
           <button type="button" onclick={openNotesModal} class="secondary">📝 Session Notes</button>
           <button type="button" onclick={openQuestionSetBrowser} class="primary"
-            >+ Add Question Set</button
+          >+ Add Question Set
+          </button
           >
           <button type="button" onclick={openQuestionBrowser} class="primary"
-            >+ Add Questions</button
+          >+ Add Questions
+          </button
           >
 
           {#if questions.length > 0}
@@ -663,7 +651,8 @@
             <h3>No questions yet</h3>
             <p>Add questions from the catalog to start preparing the interview.</p>
             <button type="button" onclick={openQuestionBrowser} class="primary"
-              >+ Add Questions</button
+            >+ Add Questions
+            </button
             >
           </div>
         {:else}
@@ -700,7 +689,8 @@
       <div class="modal-header">
         <h2>Add Question Set</h2>
         <button type="button" onclick={closeQuestionSetBrowser} class="close-btn" aria-label="Close"
-          >✕</button
+        >✕
+        </button
         >
       </div>
       <div class="modal-body">
@@ -723,7 +713,7 @@
                     <span class="question-set-notes">{qs.notes}</span>
                   {/if}
                   <span class="question-set-count"
-                    >{qs.questionIds.length} question{qs.questionIds.length !== 1 ? "s" : ""}</span
+                  >{qs.questionIds.length} question{qs.questionIds.length !== 1 ? "s" : ""}</span
                   >
                 </div>
                 <button type="button" class="primary" onclick={() => addQuestionSetToSession(qs)}>
@@ -755,7 +745,8 @@
       <div class="modal-header">
         <h2>Session Notes</h2>
         <button type="button" onclick={closeNotesModal} class="close-btn" aria-label="Close"
-          >✕</button
+        >✕
+        </button
         >
       </div>
       <div class="modal-body">
@@ -798,12 +789,6 @@
     color: #6c757d;
     margin: 0;
     font-size: 0.9rem;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
   }
 
   .window-status-container {
