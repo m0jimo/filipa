@@ -1128,8 +1128,6 @@
 </SessionModal>
 
 <style>
-  .candidate-detail {
-  }
 
   .notes {
     color: #6c757d;

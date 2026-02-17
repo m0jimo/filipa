@@ -755,8 +755,6 @@
 </SessionModal>
 
 <style>
-  .session-interview {
-  }
 
   h1 {
     display: flex;
@@ -971,7 +969,6 @@
     color: #666;
   }
 
-  /* Modal Styles */
   button.secondary {
     padding: 0.75rem 1.5rem;
     background: #f5f5f5;

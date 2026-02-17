@@ -1576,8 +1576,6 @@ Type: text</code
 </SessionModal>
 
 <style>
-  .question-catalog {
-  }
 
   .required {
     color: #d32f2f;
