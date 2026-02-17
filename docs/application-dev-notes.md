@@ -4,6 +4,7 @@
 
 - defined linters, typescript rules
 - configure CSS framework (e.g. Pico) for the same UI/UX across application
+- create CSS variables
 - if letting AI generate CSS classes, strictly insist on reusable classes from one location
 - add Svelte skills (Claude), best practices
 
