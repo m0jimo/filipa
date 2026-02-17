@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 questions
+
+# Claude Code
+.claude/settings.local.json
