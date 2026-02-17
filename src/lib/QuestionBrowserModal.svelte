@@ -11,7 +11,7 @@
     onAdd,
     onClose,
   }: {
-    show?: boolean;
+    show: boolean;
     questions: Question[];
     existingQuestionIds?: string[];
     onAdd: (question: Question) => void;
