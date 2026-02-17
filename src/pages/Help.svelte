@@ -107,7 +107,7 @@
   .fallback h2 {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text);
     margin-bottom: 0.75rem;
   }
 
@@ -132,7 +132,7 @@
   }
 
   .fallback a {
-    color: #0066cc;
+    color: var(--color-primary);
     text-decoration: none;
   }
 
@@ -144,7 +144,7 @@
     display: inline-block;
     margin-left: 0.5rem;
     padding: 0.3rem 0.85rem;
-    background: #0066cc;
+    background: var(--color-primary);
     color: #fff;
     border-radius: 6px;
     font-size: 0.9rem;
@@ -154,7 +154,7 @@
   }
 
   .file-btn:hover {
-    background: #0052a3;
+    background: var(--color-primary-hover);
   }
 
   .file-btn input {
@@ -177,7 +177,7 @@
   }
 
   :global([data-theme="dark"]) .fallback a {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .loading {

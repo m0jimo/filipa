@@ -1097,7 +1097,7 @@
     align-items: flex-start;
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-radius: 8px;
     flex-wrap: wrap;
   }
@@ -1109,7 +1109,7 @@
     margin-left: auto;
     font-size: 0.9rem;
     font-weight: 500;
-    color: #333;
+    color: var(--color-text);
     cursor: pointer;
     user-select: none;
   }
@@ -1128,7 +1128,7 @@
   }
 
   .set-card {
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 1.5rem;
     background: white;
@@ -1141,12 +1141,12 @@
   }
 
   .set-card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
   .set-card.selected {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
   }
 
@@ -1179,7 +1179,7 @@
   .set-notes {
     margin: 0;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.5;
     flex: 1;
     overflow: hidden;
@@ -1200,7 +1200,7 @@
 
   .confirm-text {
     line-height: 1.6;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   /* Export button */
@@ -1223,7 +1223,7 @@
   /* Export modal */
   .export-description {
     margin-bottom: 1.5rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.6;
   }
 
@@ -1239,14 +1239,14 @@
     align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .format-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #f8f9fa;
   }
 
@@ -1259,7 +1259,7 @@
   }
 
   .format-option input[type="radio"]:checked + .format-content {
-    color: #0066cc;
+    color: var(--color-primary);
   }
 
   .format-content {
@@ -1270,13 +1270,13 @@
     display: block;
     margin-bottom: 0.5rem;
     font-size: 1rem;
-    color: #333;
+    color: var(--color-text);
   }
 
   .format-content p {
     margin: 0;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.4;
   }
 
@@ -1415,16 +1415,16 @@
 
   /* Dark mode */
   :global([data-theme="dark"]) .set-card {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .set-card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   :global([data-theme="dark"]) .set-card.selected {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   :global([data-theme="dark"]) .set-name {
@@ -1437,19 +1437,19 @@
   }
 
   :global([data-theme="dark"]) .set-notes {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .set-date {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .confirm-text {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .filters {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .select-all-checkbox {
@@ -1466,16 +1466,16 @@
   }
 
   :global([data-theme="dark"]) .export-description {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .format-option {
-    border-color: #444;
-    background: #2a2a2a;
+    border-color: var(--color-border-dark);
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .format-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #333;
   }
 
@@ -1484,17 +1484,17 @@
   }
 
   :global([data-theme="dark"]) .format-content p {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .import-intro p,
   :global([data-theme="dark"]) .confirm-text {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .preview-item {
-    border-color: #444;
-    background: #1a1a1a;
+    border-color: var(--color-border-dark);
+    background: var(--color-bg-dark);
   }
 
   :global([data-theme="dark"]) .preview-item.duplicate {

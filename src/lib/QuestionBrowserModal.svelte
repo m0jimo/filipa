@@ -239,7 +239,7 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding: 1rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-radius: 8px;
     flex-wrap: wrap;
   }
@@ -252,7 +252,7 @@
 
   .filter-group label {
     font-weight: 500;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
   }
 
@@ -260,14 +260,14 @@
     flex: 1;
     min-width: 200px;
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 1rem;
   }
 
   .search-input:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .multiselect-wrapper {
@@ -284,7 +284,7 @@
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
     background: white;
@@ -294,12 +294,12 @@
   }
 
   .multiselect-trigger:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .dropdown-arrow {
     font-size: 0.7rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .multiselect-dropdown {
@@ -308,7 +308,7 @@
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
@@ -327,7 +327,7 @@
   }
 
   .multiselect-option:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
   }
 
   .multiselect-option input[type="checkbox"] {
@@ -350,18 +350,18 @@
   .clear-filters {
     padding: 0.5rem 1rem;
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.9rem;
   }
 
   .clear-filters:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
   }
 
   .results-count {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
     margin-left: auto;
@@ -378,7 +378,7 @@
 
   .question-card {
     padding: 1.5rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     background: white;
     transition: all 0.2s;
@@ -388,7 +388,7 @@
   }
 
   .question-card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
@@ -423,8 +423,8 @@
 
   .tag {
     padding: 0.25rem 0.5rem;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
     border-radius: 3px;
     font-size: 0.75rem;
   }
@@ -435,7 +435,7 @@
 
   .question-content h3 {
     margin: 0 0 0.5rem 0;
-    color: #333;
+    color: var(--color-text);
     font-size: 1rem;
     line-height: 1.4;
   }
@@ -446,7 +446,7 @@
 
   .expected-answer summary {
     cursor: pointer;
-    color: #0066cc;
+    color: var(--color-primary);
     font-size: 0.85rem;
     font-weight: 500;
   }
@@ -457,14 +457,14 @@
 
   .expected-answer p {
     margin: 0.5rem 0 0 0;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     line-height: 1.5;
   }
 
   .rating-info {
     margin-bottom: 1rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .card-actions {
@@ -505,44 +505,44 @@
     grid-column: 1 / -1;
     text-align: center;
     padding: 3rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .filters {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .filter-group label {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .search-input {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .multiselect-trigger {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .multiselect-trigger:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   :global([data-theme="dark"]) .dropdown-arrow {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .multiselect-dropdown {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .multiselect-option:hover {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .multiselect-option span {
@@ -550,7 +550,7 @@
   }
 
   :global([data-theme="dark"]) .multiselect-empty {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .clear-filters {
@@ -564,12 +564,12 @@
   }
 
   :global([data-theme="dark"]) .results-count {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .question-card {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .question-card:hover {
@@ -582,19 +582,19 @@
 
   :global([data-theme="dark"]) .tag {
     background: #3a3a3a;
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .expected-answer p {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .action-btn.add:disabled {
     background: #3a3a3a;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .empty-state {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 </style>

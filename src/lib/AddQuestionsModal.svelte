@@ -485,7 +485,7 @@
     gap: 0.75rem;
     margin-bottom: 1rem;
     padding: 1rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-radius: 8px;
   }
 
@@ -498,7 +498,7 @@
 
   .search-input {
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
     min-width: 200px;
@@ -507,7 +507,7 @@
 
   .search-input:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .multiselect-wrapper {
@@ -524,7 +524,7 @@
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
     background: white;
@@ -534,12 +534,12 @@
   }
 
   .multiselect-trigger:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .dropdown-arrow {
     font-size: 0.7rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .multiselect-dropdown {
@@ -547,7 +547,7 @@
     top: calc(100% + 4px);
     left: 0;
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
@@ -566,7 +566,7 @@
   }
 
   .multiselect-option:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
   }
 
   .difficulty-dropdown {
@@ -583,7 +583,7 @@
   .clear-filters {
     padding: 0.5rem 0.75rem;
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
@@ -591,12 +591,12 @@
   }
 
   .clear-filters:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-color: #aaa;
   }
 
   .results-count {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
     white-space: nowrap;
@@ -608,7 +608,7 @@
     gap: 0.5rem;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #333;
+    color: var(--color-text);
     cursor: pointer;
     user-select: none;
     margin-left: auto;
@@ -629,7 +629,7 @@
 
   .tag-search-input {
     padding: 0.4rem 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.85rem;
     width: 160px;
@@ -637,7 +637,7 @@
 
   .tag-search-input:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .tag-toggle-btn {
@@ -652,8 +652,8 @@
   }
 
   .tag-toggle-btn:hover {
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .tag-chips {
@@ -674,17 +674,17 @@
       background 0.15s,
       border-color 0.15s,
       color 0.15s;
-    color: #444;
+    color: var(--color-border-dark);
   }
 
   .tag-chip:hover {
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .tag-chip.selected {
-    background: #0066cc;
-    border-color: #0066cc;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
   }
 
@@ -708,7 +708,7 @@
   }
 
   .picker-card:hover:not(.already-in-set) {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
@@ -756,8 +756,8 @@
 
   .tag {
     padding: 0.2rem 0.5rem;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
     border-radius: 3px;
     font-size: 0.75rem;
   }
@@ -844,7 +844,7 @@
   }
 
   .col-question {
-    color: #333;
+    color: var(--color-text);
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -868,24 +868,24 @@
 
   /* Dark mode */
   :global([data-theme="dark"]) .picker-filters {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .search-input {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .multiselect-trigger {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #e0e0e0;
   }
 
   :global([data-theme="dark"]) .multiselect-dropdown {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .multiselect-option {
@@ -893,17 +893,17 @@
   }
 
   :global([data-theme="dark"]) .multiselect-option:hover {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .clear-filters {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border-color: #555;
     color: #ccc;
   }
 
   :global([data-theme="dark"]) .results-count {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .select-all-label {
@@ -911,26 +911,26 @@
   }
 
   :global([data-theme="dark"]) .tag-search-input {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .tag-toggle-btn {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border-color: #555;
     color: #ccc;
   }
 
   :global([data-theme="dark"]) .tag-chip {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border-color: #555;
     color: #ccc;
   }
 
   :global([data-theme="dark"]) .tag-chip.selected {
-    background: #0066cc;
-    border-color: #0066cc;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
   }
 
@@ -952,12 +952,12 @@
   }
 
   :global([data-theme="dark"]) .tag {
-    background: #333;
-    color: #a0a0a0;
+    background: var(--color-bg-dark-3);
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .already-badge {
-    background: #333;
+    background: var(--color-bg-dark-3);
     color: #777;
   }
 
@@ -970,6 +970,6 @@
   }
 
   :global([data-theme="dark"]) .picker-empty {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 </style>

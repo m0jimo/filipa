@@ -1174,13 +1174,13 @@
   }
 
   .interviewers {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     margin: 0.5rem 0;
   }
 
   .session-notes {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     margin-top: 0.5rem;
   }
@@ -1201,19 +1201,19 @@
 
   .action-btn.start-interview {
     flex: 2;
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
     font-weight: 600;
   }
 
   .action-btn.start-interview:hover {
-    background: #0052a3;
+    background: var(--color-primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
   }
 
   .modal-description {
-    color: #666;
+    color: var(--color-text-secondary);
     margin-bottom: 1.5rem;
     line-height: 1.5;
   }
@@ -1237,7 +1237,7 @@
   }
 
   .format-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #f8f9fa;
   }
 
@@ -1250,11 +1250,11 @@
   }
 
   .format-option input[type="radio"]:checked ~ .format-content {
-    color: #0066cc;
+    color: var(--color-primary);
   }
 
   .format-option:has(input[type="radio"]:checked) {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #e8f4f8;
   }
 
@@ -1270,7 +1270,7 @@
 
   .format-content p {
     margin: 0;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     line-height: 1.4;
   }
@@ -1285,7 +1285,7 @@
   }
 
   .file-selected {
-    color: #0066cc;
+    color: var(--color-primary);
     font-size: 0.9rem;
     margin-top: 0.5rem;
     font-weight: 500;
@@ -1310,7 +1310,7 @@
 
   .import-info li {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
     margin-bottom: 0.25rem;
   }
 
@@ -1322,17 +1322,17 @@
   }
 
   :global([data-theme="dark"]) .notes {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   /* Session-card dark theme styles now in app.css */
 
   :global([data-theme="dark"]) .interviewers {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .session-notes {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   /* Action btn edit/delete dark theme now in app.css */
@@ -1347,23 +1347,23 @@
   }
 
   :global([data-theme="dark"]) .format-option {
-    border-color: #444;
-    background: #2a2a2a;
+    border-color: var(--color-border-dark);
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .format-option:hover {
-    border-color: #4da3ff;
+    border-color: var(--color-primary-dark);
     background: #333;
   }
 
   :global([data-theme="dark"]) .format-option:has(input[type="radio"]:checked) {
-    border-color: #4da3ff;
+    border-color: var(--color-primary-dark);
     background: #1a3a4a;
   }
 
   :global([data-theme="dark"]) .format-content p,
   :global([data-theme="dark"]) .modal-description {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .import-error {
@@ -1372,15 +1372,15 @@
   }
 
   :global([data-theme="dark"]) .file-selected {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .import-info {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border: 1px solid #444;
   }
 
   :global([data-theme="dark"]) .import-info li {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 </style>

@@ -51,7 +51,7 @@
   }
 
   a {
-    color: #0066cc;
+    color: var(--color-primary);
     text-decoration: none;
     transition: all 0.2s;
     padding: 0.25rem 0.5rem;
@@ -64,7 +64,7 @@
   }
 
   .current {
-    color: #333;
+    color: var(--color-text);
     font-weight: 500;
     padding: 0.25rem 0.5rem;
   }
@@ -86,16 +86,16 @@
   }
 
   :global([data-theme="dark"]) .breadcrumbs {
-    background: #2a2a2a;
-    border-bottom-color: #333;
+    background: var(--color-bg-dark-2);
+    border-bottom-color: var(--color-text);
   }
 
   :global([data-theme="dark"]) a {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) a:hover {
-    background: #333;
+    background: var(--color-bg-dark-3);
   }
 
   :global([data-theme="dark"]) .current {
@@ -103,6 +103,6 @@
   }
 
   :global([data-theme="dark"]) .separator {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 </style>

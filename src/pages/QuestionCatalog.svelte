@@ -1584,7 +1584,7 @@ Type: text</code
 
   .confirm-text {
     line-height: 1.6;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .confirm-text strong {
@@ -1593,7 +1593,7 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .confirm-text {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .confirm-text strong {
@@ -1611,7 +1611,7 @@ Type: text</code
     align-items: flex-start;
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-radius: 8px;
     flex-wrap: wrap;
   }
@@ -1624,7 +1624,7 @@ Type: text</code
 
   .filter-group label {
     font-weight: 500;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     white-space: nowrap;
   }
@@ -1649,7 +1649,7 @@ Type: text</code
 
   .tag-search-input {
     padding: 0.4rem 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.85rem;
     width: 180px;
@@ -1657,7 +1657,7 @@ Type: text</code
 
   .tag-search-input:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .tag-toggle-btn {
@@ -1672,8 +1672,8 @@ Type: text</code
   }
 
   .tag-toggle-btn:hover {
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .tag-chips {
@@ -1697,13 +1697,13 @@ Type: text</code
   }
 
   .tag-chip:hover {
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .tag-chip.selected {
-    background: #0066cc;
-    border-color: #0066cc;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
   }
 
@@ -1714,7 +1714,7 @@ Type: text</code
 
   .search-input {
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 1rem;
     min-width: 250px;
@@ -1722,12 +1722,12 @@ Type: text</code
 
   .search-input:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   select {
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
     background: white;
@@ -1736,7 +1736,7 @@ Type: text</code
 
   select:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .multiselect-wrapper {
@@ -1753,7 +1753,7 @@ Type: text</code
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
     background: white;
@@ -1763,12 +1763,12 @@ Type: text</code
   }
 
   .multiselect-trigger:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .dropdown-arrow {
     font-size: 0.7rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .multiselect-dropdown {
@@ -1777,7 +1777,7 @@ Type: text</code
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
@@ -1796,7 +1796,7 @@ Type: text</code
   }
 
   .multiselect-option:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
   }
 
   .multiselect-option input[type="checkbox"] {
@@ -1830,18 +1830,18 @@ Type: text</code
   .clear-filters {
     padding: 0.5rem 1rem;
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.9rem;
   }
 
   .clear-filters:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
   }
 
   .results-count {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
     align-self: center;
@@ -1854,7 +1854,7 @@ Type: text</code
     margin-left: auto;
     font-size: 0.9rem;
     font-weight: 500;
-    color: #333;
+    color: var(--color-text);
     cursor: pointer;
     user-select: none;
   }
@@ -1932,7 +1932,7 @@ Type: text</code
   }
 
   .col-sortable:hover {
-    color: #0066cc;
+    color: var(--color-primary);
   }
 
   .sort-arrow {
@@ -1959,7 +1959,7 @@ Type: text</code
   }
 
   .col-question {
-    color: #333;
+    color: var(--color-text);
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2008,7 +2008,7 @@ Type: text</code
   }
 
   .question-card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
@@ -2049,8 +2049,8 @@ Type: text</code
 
   .tag {
     padding: 0.25rem 0.5rem;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
     border-radius: 3px;
     font-size: 0.75rem;
   }
@@ -2103,7 +2103,7 @@ Type: text</code
 
   .expected-answer summary {
     cursor: pointer;
-    color: #0066cc;
+    color: var(--color-primary);
     font-size: 0.85rem;
     font-weight: 500;
   }
@@ -2122,7 +2122,7 @@ Type: text</code
 
   .expected-answer-content :global(.markdown-preview) {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .expected-answer-content :global(.markdown-preview h1),
@@ -2135,7 +2135,7 @@ Type: text</code
 
   .rating-info {
     margin-bottom: 1rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .question-meta {
@@ -2146,7 +2146,7 @@ Type: text</code
 
   .col-created {
     white-space: nowrap;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
   }
 
@@ -2170,7 +2170,7 @@ Type: text</code
 
   .import-instructions p {
     margin-bottom: 1rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .format-examples {
@@ -2180,23 +2180,23 @@ Type: text</code
   .format-examples details {
     margin-bottom: 1rem;
     padding: 0.5rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
   }
 
   .format-examples summary {
     cursor: pointer;
     font-weight: 500;
-    color: #0066cc;
+    color: var(--color-primary);
     padding: 0.5rem;
   }
 
   .format-examples summary:hover {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
   }
 
   .import-instructions pre {
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     padding: 1rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -2207,7 +2207,7 @@ Type: text</code
   .import-instructions code {
     font-family: "Courier New", monospace;
     font-size: 0.85rem;
-    color: #333;
+    color: var(--color-text);
     text-align: left;
     display: block;
   }
@@ -2222,7 +2222,7 @@ Type: text</code
 
   .import-results h3 {
     margin: 0 0 1.5rem 0;
-    color: #333;
+    color: var(--color-text);
   }
 
   .result-summary {
@@ -2275,12 +2275,12 @@ Type: text</code
 
   .import-preview h3 {
     margin: 0 0 1.5rem 0;
-    color: #333;
+    color: var(--color-text);
   }
 
   .import-preview h4 {
     margin: 1.5rem 0 1rem 0;
-    color: #333;
+    color: var(--color-text);
   }
 
   .preview-questions {
@@ -2304,7 +2304,7 @@ Type: text</code
     gap: 0.5rem;
     font-size: 0.9rem;
     font-weight: 500;
-    color: #333;
+    color: var(--color-text);
     cursor: pointer;
     user-select: none;
   }
@@ -2318,14 +2318,14 @@ Type: text</code
   .preview-question-card {
     padding: 1.5rem;
     margin-bottom: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     background: white;
     transition: all 0.2s;
   }
 
   .preview-question-card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
@@ -2382,14 +2382,14 @@ Type: text</code
 
   .preview-question-text {
     margin: 0 0 0.5rem 0;
-    color: #333;
+    color: var(--color-text);
     font-size: 1rem;
     line-height: 1.4;
   }
 
   .preview-rating {
     margin: 0;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .duplicate-badge {
@@ -2404,7 +2404,7 @@ Type: text</code
   /* Export Modal Styles */
   .export-description {
     margin-bottom: 1.5rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.6;
   }
 
@@ -2420,14 +2420,14 @@ Type: text</code
     align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .format-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #f8f9fa;
   }
 
@@ -2440,7 +2440,7 @@ Type: text</code
   }
 
   .format-option input[type="radio"]:checked + .format-content {
-    color: #0066cc;
+    color: var(--color-primary);
   }
 
   .format-content {
@@ -2451,13 +2451,13 @@ Type: text</code
     display: block;
     margin-bottom: 0.5rem;
     font-size: 1rem;
-    color: #333;
+    color: var(--color-text);
   }
 
   .format-content p {
     margin: 0;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.4;
   }
 
@@ -2483,65 +2483,65 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .filters {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .filter-group label {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .search-input {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) select {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .tag-search-input {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .tag-search-input:focus {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   :global([data-theme="dark"]) .tag-toggle-btn {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border-color: #555;
     color: #ccc;
   }
 
   :global([data-theme="dark"]) .tag-toggle-btn:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     color: #66aaff;
   }
 
   :global([data-theme="dark"]) .tag-chip {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border-color: #555;
     color: #ccc;
   }
 
   :global([data-theme="dark"]) .tag-chip:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     color: #66aaff;
   }
 
   :global([data-theme="dark"]) .tag-chip.selected {
-    background: #0066cc;
-    border-color: #0066cc;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
   }
 
   :global([data-theme="dark"]) .tag-filter-empty {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .clear-filters {
@@ -2555,7 +2555,7 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .results-count {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .col-sortable:hover {
@@ -2567,7 +2567,7 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .icon-btn:hover {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .icon-btn.delete-icon:hover {
@@ -2589,11 +2589,11 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .expected-answer-content {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .expected-answer-content :global(.markdown-preview) {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   /* Action btn dark theme now in app.css */
@@ -2608,16 +2608,16 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .export-description {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .format-option {
-    border-color: #444;
-    background: #2a2a2a;
+    border-color: var(--color-border-dark);
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .format-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #333;
   }
 
@@ -2626,16 +2626,16 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .format-content p {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .import-instructions p {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .format-examples details {
-    border-color: #444;
-    background: #2a2a2a;
+    border-color: var(--color-border-dark);
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .format-examples summary {
@@ -2647,7 +2647,7 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .import-instructions pre {
-    background: #1a1a1a;
+    background: var(--color-bg-dark);
     border: 1px solid #444;
   }
 
@@ -2662,12 +2662,12 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .preview-question-card {
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .preview-question-card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
   }
 
@@ -2682,7 +2682,7 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .preview-rating {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .preview-number {
@@ -2701,7 +2701,7 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .preview-questions-header {
-    border-bottom-color: #444;
+    border-bottom-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .select-all-label {
@@ -2742,7 +2742,7 @@ Type: text</code
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     transition:
       background 0.15s,
       border-color 0.15s,
@@ -2751,8 +2751,8 @@ Type: text</code
 
   .question-sets-link:hover {
     background: #e8f0fe;
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .question-sets-icon {
@@ -2762,14 +2762,14 @@ Type: text</code
   }
 
   :global([data-theme="dark"]) .question-sets-link {
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
     color: #ccc;
   }
 
   :global([data-theme="dark"]) .question-sets-link:hover {
     background: #1a2a3a;
-    border-color: #4da3ff;
-    color: #4da3ff;
+    border-color: var(--color-primary-dark);
+    color: var(--color-primary-dark);
   }
 </style>

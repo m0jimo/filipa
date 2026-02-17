@@ -162,7 +162,7 @@
   .modal-header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: #1a1a1a;
+    color: var(--color-bg-dark);
   }
 
   .modal-content {
@@ -206,18 +206,18 @@
   }
 
   .close-btn:hover {
-    color: #333;
+    color: var(--color-text);
   }
 
   .close-btn:focus-visible {
-    outline: 2px solid #0066cc;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
     border-radius: 4px;
   }
 
   /* Dark mode support */
   :global([data-theme="dark"]) .modal {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .modal-header h2 {
@@ -229,11 +229,11 @@
   }
 
   :global([data-theme="dark"]) .close-btn:focus-visible {
-    outline-color: #4da3ff;
+    outline-color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .modal :global(.modal-actions) {
-    background: #2a2a2a;
-    border-top-color: #444;
+    background: var(--color-bg-dark-2);
+    border-top-color: var(--color-border-dark);
   }
 </style>

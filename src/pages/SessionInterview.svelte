@@ -750,7 +750,7 @@
   }
 
   h1 .candidate-name {
-    color: #0066cc;
+    color: var(--color-primary);
     font-weight: 600;
   }
 
@@ -825,7 +825,7 @@
 
   .stats {
     padding: 1rem 1.5rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-radius: 8px;
     flex: 1;
     min-width: 200px;
@@ -839,7 +839,7 @@
   .stats h3 {
     margin: 0 0 0.5rem 0;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
     font-weight: 600;
   }
 
@@ -858,12 +858,12 @@
   }
 
   .stat-label-inline {
-    color: #666;
+    color: var(--color-text-secondary);
     font-weight: 500;
   }
 
   .stat-value-inline {
-    color: #0066cc;
+    color: var(--color-primary);
     font-weight: 700;
   }
 
@@ -914,15 +914,15 @@
   }
 
   :global([data-theme="dark"]) h1 .candidate-name {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) h1 .separator {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .meta {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .window-status.open {
@@ -936,30 +936,30 @@
   }
 
   :global([data-theme="dark"]) .stats {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .stats h3 {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .stat-label-inline {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .stat-value-inline {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .stat-separator {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   button.secondary {
     padding: 0.75rem 1.5rem;
-    background: #f5f5f5;
-    color: #333;
-    border: 1px solid #ddd;
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     cursor: pointer;
     font-size: 1rem;

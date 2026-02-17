@@ -280,7 +280,7 @@
 
   .editor-label {
     font-weight: 600;
-    color: #333;
+    color: var(--color-text);
   }
 
   .required {
@@ -292,7 +292,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 0.5rem;
     gap: 1rem;
   }
@@ -304,8 +304,8 @@
 
   .command-btn {
     padding: 0.25rem 0.5rem;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.75rem;
@@ -323,7 +323,7 @@
   .command-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-color: #ddd;
   }
 
@@ -334,8 +334,8 @@
 
   .mode-btn {
     padding: 0.25rem 0.5rem;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.75rem;
@@ -351,9 +351,9 @@
   }
 
   .mode-btn.active {
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .editor-content {
@@ -382,7 +382,7 @@
   .editor-textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-family: "Courier New", monospace;
     font-size: 0.9rem;
@@ -392,14 +392,14 @@
 
   .editor-textarea:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
   }
 
   .preview-pane {
     flex: 1;
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     background: #fafafa;
     overflow-y: auto;
@@ -414,7 +414,7 @@
   }
 
   .help-text {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
     margin-top: -0.25rem;
   }
@@ -425,7 +425,7 @@
   }
 
   :global([data-theme="dark"]) .toolbar {
-    border-bottom-color: #444;
+    border-bottom-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .command-btn {
@@ -436,7 +436,7 @@
 
   :global([data-theme="dark"]) .command-btn:hover:not(:disabled) {
     background: #4a4a4a;
-    border-color: #666;
+    border-color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .command-btn:disabled {
@@ -452,35 +452,35 @@
 
   :global([data-theme="dark"]) .mode-btn:hover {
     background: #4a4a4a;
-    border-color: #666;
+    border-color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .mode-btn.active {
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   :global([data-theme="dark"]) .editor-textarea {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
   :global([data-theme="dark"]) .editor-textarea:focus {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   :global([data-theme="dark"]) .preview-pane {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .preview-empty {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .help-text {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 </style>

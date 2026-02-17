@@ -119,14 +119,14 @@
   .app-title {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #0066cc;
+    color: var(--color-primary);
     line-height: 1.2;
   }
 
   .app-subtitle {
     font-size: 0.75rem;
     font-weight: 500;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1;
   }
 
@@ -145,13 +145,13 @@
     transition: all 0.2s;
     margin: auto 0;
     margin-left: 0.25rem;
-    color: #444;
+    color: var(--color-border-dark);
   }
 
   .theme-toggle:hover {
     transform: scale(1.1);
     background: #f0f4ff;
-    color: #0066cc;
+    color: var(--color-primary);
   }
 
   .theme-toggle:active {
@@ -203,26 +203,26 @@
   }
 
   :global([data-theme="dark"]) .navigation-tabs {
-    background: #1a1a1a;
-    border-bottom-color: #333;
+    background: var(--color-bg-dark);
+    border-bottom-color: var(--color-bg-dark-3);
   }
 
   :global([data-theme="dark"]) .app-title {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .app-subtitle {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .theme-toggle {
     background: none;
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .theme-toggle:hover {
     background: #1a2a3a;
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   .github-link {
@@ -232,14 +232,14 @@
     margin-left: 0.5rem;
     padding: 0.4rem;
     border-radius: 6px;
-    color: #444;
+    color: var(--color-border-dark);
     transition:
       color 0.2s,
       background 0.2s;
   }
 
   .github-link:hover {
-    color: #0066cc;
+    color: var(--color-primary);
     background: #f0f4ff;
   }
 
@@ -250,11 +250,11 @@
   }
 
   :global([data-theme="dark"]) .github-link {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .github-link:hover {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
     background: #1a2a3a;
   }
 
@@ -265,7 +265,7 @@
     margin-left: 0.5rem;
     padding: 0.4rem;
     border-radius: 6px;
-    color: #444;
+    color: var(--color-border-dark);
     transition:
       color 0.2s,
       background 0.2s;
@@ -273,7 +273,7 @@
   }
 
   .settings-link:hover {
-    color: #0066cc;
+    color: var(--color-primary);
     background: #f0f4ff;
   }
 
@@ -284,11 +284,11 @@
   }
 
   :global([data-theme="dark"]) .settings-link {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .settings-link:hover {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
     background: #1a2a3a;
   }
 
@@ -299,7 +299,7 @@
     margin-left: 0.5rem;
     padding: 0.4rem;
     border-radius: 6px;
-    color: #444;
+    color: var(--color-border-dark);
     transition:
       color 0.2s,
       background 0.2s;
@@ -307,7 +307,7 @@
   }
 
   .help-link:hover {
-    color: #0066cc;
+    color: var(--color-primary);
     background: #f0f4ff;
   }
 
@@ -318,11 +318,11 @@
   }
 
   :global([data-theme="dark"]) .help-link {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .help-link:hover {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
     background: #1a2a3a;
   }
 </style>

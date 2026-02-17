@@ -245,13 +245,13 @@
   h1 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #0066cc;
+    color: var(--color-primary);
     margin-bottom: 2rem;
   }
 
   .settings-section {
     background: #fff;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
@@ -278,7 +278,7 @@
   }
 
   dt {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
   }
 
@@ -366,11 +366,11 @@
 
   :global([data-theme="dark"]) .settings-section {
     background: #1e1e1e;
-    border-color: #333;
+    border-color: var(--color-text);
   }
 
   :global([data-theme="dark"]) h1 {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) h2 {
@@ -379,7 +379,7 @@
 
   :global([data-theme="dark"]) p,
   :global([data-theme="dark"]) dt {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) dd {
@@ -387,9 +387,9 @@
   }
 
   :global([data-theme="dark"]) .confirm-input {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     color: #e0e0e0;
-    border-color: #444;
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .danger-zone-toggle {
@@ -410,6 +410,6 @@
   }
 
   :global([data-theme="dark"]) .danger-confirm label {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 </style>

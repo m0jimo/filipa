@@ -200,7 +200,7 @@
 
   header {
     padding: 1.5rem 2rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-bottom: 2px solid #ddd;
     display: flex;
     justify-content: space-between;
@@ -215,7 +215,7 @@
 
   .meta {
     margin: 0;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
   }
 
@@ -238,7 +238,7 @@
 
   .theme-toggle-btn:hover {
     transform: scale(1.1);
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .theme-toggle-btn:active {
@@ -253,7 +253,7 @@
 
   .font-controls button {
     padding: 0.5rem 1rem;
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
     border: none;
     border-radius: 4px;
@@ -263,13 +263,13 @@
   }
 
   .font-controls button:hover {
-    background: #0052a3;
+    background: var(--color-primary-hover);
   }
 
   .font-size-label {
     min-width: 50px;
     text-align: center;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
   }
 
@@ -373,7 +373,7 @@
   }
 
   .waiting-state p {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 1.1rem;
     line-height: 1.6;
     margin: 0.5rem 0;
@@ -400,7 +400,7 @@
     left: 0;
     right: 0;
     padding: 1rem 2rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-top: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
@@ -410,7 +410,7 @@
 
   footer p {
     margin: 0;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
   }
 
@@ -423,12 +423,12 @@
   }
 
   :global([data-theme="dark"]) .candidate-view {
-    background: #1a1a1a;
+    background: var(--color-bg-dark);
   }
 
   :global([data-theme="dark"]) header {
-    background: #2a2a2a;
-    border-bottom-color: #444;
+    background: var(--color-bg-dark-2);
+    border-bottom-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .session-info h1 {
@@ -436,27 +436,27 @@
   }
 
   :global([data-theme="dark"]) .meta {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .theme-toggle-btn {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     color: white;
-    border-color: #444;
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .theme-toggle-btn:hover {
-    border-color: #4da3ff;
+    border-color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .font-size-label {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .question-text {
     color: #ffffff;
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .question-text :global(.markdown-preview) {
@@ -474,19 +474,19 @@
   }
 
   :global([data-theme="dark"]) .waiting-state p {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .waiting-hint {
-    color: #666 !important;
+    color: var(--color-text-secondary) !important;
   }
 
   :global([data-theme="dark"]) footer {
-    background: #2a2a2a;
-    border-top-color: #444;
+    background: var(--color-bg-dark-2);
+    border-top-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) footer p {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 </style>

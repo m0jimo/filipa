@@ -52,7 +52,7 @@
 <style>
   .markdown-preview {
     line-height: 1.6;
-    color: #333;
+    color: var(--color-text);
   }
 
   .markdown-preview :global(h1),
@@ -122,10 +122,10 @@
   }
 
   .markdown-preview :global(blockquote) {
-    border-left: 4px solid #ddd;
+    border-left: 4px solid var(--color-border);
     padding-left: 1em;
     margin-left: 0;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .markdown-preview :global(ul),
@@ -155,7 +155,7 @@
 
   .markdown-preview :global(th),
   .markdown-preview :global(td) {
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     padding: 0.5em;
     text-align: left;
   }
@@ -188,7 +188,7 @@
   :global([data-theme="dark"]) .markdown-preview :global(h5),
   :global([data-theme="dark"]) .markdown-preview :global(h6) {
     color: #ffffff;
-    border-bottom-color: #444;
+    border-bottom-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(code) {
@@ -198,7 +198,7 @@
 
   :global([data-theme="dark"]) .markdown-preview :global(pre) {
     background-color: #1e1e1e;
-    border-color: #444;
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(pre code) {
@@ -207,7 +207,7 @@
 
   :global([data-theme="dark"]) .markdown-preview :global(blockquote) {
     border-left-color: #555;
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(a) {
@@ -215,12 +215,12 @@
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(table) {
-    border-color: #444;
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(th),
   :global([data-theme="dark"]) .markdown-preview :global(td) {
-    border-color: #444;
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(th) {
@@ -228,6 +228,6 @@
   }
 
   :global([data-theme="dark"]) .markdown-preview :global(hr) {
-    border-top-color: #444;
+    border-top-color: var(--color-border-dark);
   }
 </style>

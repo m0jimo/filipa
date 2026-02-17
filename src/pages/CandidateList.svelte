@@ -966,13 +966,13 @@
 
   .action-btn.select-interview {
     flex: 2;
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
     font-weight: 600;
   }
 
   .action-btn.select-interview:hover {
-    background: #0052a3;
+    background: var(--color-primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
   }
@@ -995,7 +995,7 @@
 
   .conflict-intro {
     margin-bottom: 1.5rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.5;
   }
 
@@ -1009,7 +1009,7 @@
 
   .conflict-section h3 {
     margin: 0 0 0.5rem 0;
-    color: #333;
+    color: var(--color-text);
     font-size: 1rem;
   }
 
@@ -1028,7 +1028,7 @@
 
   .conflict-list li {
     margin: 0.5rem 0;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
   }
 
@@ -1057,12 +1057,12 @@
   }
 
   .radio-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #f0f7ff;
   }
 
   .radio-option:has(input:checked) {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #e3f2fd;
   }
 
@@ -1079,21 +1079,21 @@
   }
 
   .radio-content strong {
-    color: #333;
+    color: var(--color-text);
     font-size: 0.9rem;
   }
 
   .radio-content span {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.8rem;
   }
 
   :global([data-theme="dark"]) .conflict-intro {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .conflict-section {
-    background: #1a1a1a;
+    background: var(--color-bg-dark);
     border-left-color: #ff9800;
   }
 
@@ -1106,7 +1106,7 @@
   }
 
   :global([data-theme="dark"]) .conflict-list li {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .conflict-list li.more-items {
@@ -1114,17 +1114,17 @@
   }
 
   :global([data-theme="dark"]) .radio-option {
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .radio-option:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #1a3a5a;
   }
 
   :global([data-theme="dark"]) .radio-option:has(input:checked) {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     background: #1a3a5a;
   }
 
@@ -1133,6 +1133,6 @@
   }
 
   :global([data-theme="dark"]) .radio-content span {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 </style>

@@ -508,7 +508,7 @@
 
   .set-notes {
     margin: 0;
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.95rem;
     max-width: 600px;
   }
@@ -523,7 +523,7 @@
   .section-toolbar h2 {
     margin: 0;
     font-size: 1.1rem;
-    color: #333;
+    color: var(--color-text);
   }
 
   .toolbar-right {
@@ -560,7 +560,7 @@
 
   .reorder-btn {
     background: none;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 3px;
     padding: 0.2rem 0.45rem;
     cursor: pointer;
@@ -575,8 +575,8 @@
 
   .reorder-btn:hover:not(:disabled) {
     background: #f0f0f0;
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .reorder-btn:disabled {
@@ -632,8 +632,8 @@
 
   .tag {
     padding: 0.2rem 0.5rem;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
     border-radius: 3px;
     font-size: 0.75rem;
   }
@@ -663,7 +663,7 @@
 
   .expected-answer summary {
     cursor: pointer;
-    color: #0066cc;
+    color: var(--color-primary);
     font-size: 0.85rem;
     font-weight: 500;
   }
@@ -682,7 +682,7 @@
 
   .expected-answer-content :global(.markdown-preview) {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .rating-info {
@@ -722,7 +722,7 @@
   }
 
   .col-question {
-    color: #333;
+    color: var(--color-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -774,7 +774,7 @@
 
   .confirm-text {
     line-height: 1.6;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .confirm-text strong {
@@ -793,7 +793,7 @@
   }
 
   :global([data-theme="dark"]) .set-notes {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .section-toolbar h2 {
@@ -801,18 +801,18 @@
   }
 
   :global([data-theme="dark"]) .reorder-btn {
-    border-color: #444;
+    border-color: var(--color-border-dark);
     color: #888;
   }
 
   :global([data-theme="dark"]) .reorder-btn:hover:not(:disabled) {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
     border-color: #66aaff;
     color: #66aaff;
   }
 
   :global([data-theme="dark"]) .order-label {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .question-type {
@@ -827,7 +827,7 @@
 
   :global([data-theme="dark"]) .tag {
     background: #333;
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .question-text::after {
@@ -835,15 +835,15 @@
   }
 
   :global([data-theme="dark"]) .expected-answer summary {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .expected-answer-content {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .expected-answer-content :global(.markdown-preview) {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .rating-info {
@@ -851,7 +851,7 @@
   }
 
   :global([data-theme="dark"]) .card-actions {
-    border-top-color: #333;
+    border-top-color: var(--color-text);
   }
 
   :global([data-theme="dark"]) .col-question {
@@ -859,15 +859,15 @@
   }
 
   :global([data-theme="dark"]) .col-order {
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   :global([data-theme="dark"]) .icon-btn:hover:not(:disabled) {
-    background: #2a2a2a;
+    background: var(--color-bg-dark-2);
   }
 
   :global([data-theme="dark"]) .confirm-text {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .confirm-text strong {

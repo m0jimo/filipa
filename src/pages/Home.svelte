@@ -56,7 +56,7 @@
   }
 
   .card:hover {
-    border-color: #0066cc;
+    border-color: var(--color-primary);
     box-shadow: 0 4px 16px rgba(0, 102, 204, 0.15);
     transform: translateY(-2px);
   }
@@ -70,11 +70,11 @@
   .card-label {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text);
   }
 
   .card:hover .card-label {
-    color: #0066cc;
+    color: var(--color-primary);
   }
 
   @media (max-width: 600px) {
@@ -89,13 +89,13 @@
   }
 
   :global([data-theme="dark"]) .card {
-    background: #1a1a1a;
-    border-color: #333;
+    background: var(--color-bg-dark);
+    border-color: var(--color-text);
     color: #e0e0e0;
   }
 
   :global([data-theme="dark"]) .card:hover {
-    border-color: #4da3ff;
+    border-color: var(--color-primary-dark);
     box-shadow: 0 4px 16px rgba(77, 163, 255, 0.15);
   }
 
@@ -104,6 +104,6 @@
   }
 
   :global([data-theme="dark"]) .card:hover .card-label {
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 </style>

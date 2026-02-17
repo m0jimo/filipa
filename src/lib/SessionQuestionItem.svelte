@@ -262,7 +262,7 @@
 <style>
   .question-item {
     padding: 1.5rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     background: white;
     margin-bottom: 1rem;
@@ -274,7 +274,7 @@
   }
 
   .question-item.active {
-    border: 3px solid #0066cc;
+    border: 3px solid var(--color-primary);
     background: #f0f8ff;
     box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
   }
@@ -300,7 +300,7 @@
 
   .question-number {
     padding: 0.25rem 0.75rem;
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
     border-radius: 4px;
     font-weight: bold;
@@ -371,19 +371,19 @@
   }
 
   .action-btn-header.present {
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
   }
 
   .action-btn-header.present:hover:not(:disabled) {
-    background: #0052a3;
+    background: var(--color-primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2);
   }
 
   .action-btn-header.present.answered {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
   }
 
   .action-btn-header.present.answered:hover {
@@ -410,8 +410,8 @@
 
   .icon-btn {
     padding: 0.25rem 0.5rem;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
@@ -458,7 +458,7 @@
     left: 0;
     right: 0;
     height: 40px;
-    background: linear-gradient(to bottom, transparent, white);
+    background: linear-gradient(to bottom, transparent, var(--color-bg));
     pointer-events: none;
     transition: opacity 0.3s ease;
   }
@@ -474,12 +474,12 @@
   .expand-btn {
     width: 100%;
     padding: 0.5rem 0.75rem;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
-    color: #0066cc;
+    color: var(--color-primary);
     transition: all 0.2s;
     margin-bottom: 0.5rem;
     text-align: center;
@@ -488,11 +488,11 @@
 
   .expand-btn:hover {
     background: #e0e0e0;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .question-text :global(.markdown-preview) {
-    color: #333;
+    color: var(--color-text);
     font-size: 1rem;
   }
 
@@ -520,8 +520,8 @@
 
   .tag {
     padding: 0.25rem 0.5rem;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
     border-radius: 3px;
     font-size: 0.75rem;
   }
@@ -534,11 +534,11 @@
 
   .expected-answer summary {
     cursor: pointer;
-    color: #0066cc;
+    color: var(--color-primary);
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0.5rem;
-    background: #f5f5f5;
+    background: var(--color-bg-subtle);
     border-radius: 4px;
   }
 
@@ -554,7 +554,7 @@
   }
 
   .expected-answer-content :global(.markdown-preview) {
-    color: #666;
+    color: var(--color-text-secondary);
     font-size: 0.95rem;
   }
 
@@ -585,19 +585,19 @@
   }
 
   .action-btn.present {
-    background: #0066cc;
+    background: var(--color-primary);
     color: white;
   }
 
   .action-btn.present:hover:not(:disabled) {
-    background: #0052a3;
+    background: var(--color-primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2);
   }
 
   .action-btn.present.answered {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
   }
 
   .action-btn.present.answered:hover {
@@ -623,8 +623,8 @@
   }
 
   .action-btn.record {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
   }
 
   .action-btn.record:hover {
@@ -668,7 +668,7 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #333;
+    color: var(--color-text);
     font-size: 0.9rem;
   }
 
@@ -676,7 +676,7 @@
   .form-group select {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 1rem;
     font-family: inherit;
@@ -686,7 +686,7 @@
   .form-group textarea:focus,
   .form-group select:focus {
     outline: none;
-    border-color: #0066cc;
+    border-color: var(--color-primary);
   }
 
   .form-group textarea {
@@ -730,13 +730,13 @@
   }
 
   :global([data-theme="dark"]) .question-item {
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .question-item.active {
     background: #1a2a3a;
-    border-color: #4da3ff;
+    border-color: var(--color-primary-dark);
     box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.15);
   }
 
@@ -751,7 +751,7 @@
   }
 
   :global([data-theme="dark"]) .question-text::after {
-    background: linear-gradient(to bottom, transparent, #2a2a2a);
+    background: linear-gradient(to bottom, transparent, var(--color-bg-dark-2));
   }
 
   :global([data-theme="dark"]) .question-item.active .question-text::after {
@@ -761,12 +761,12 @@
   :global([data-theme="dark"]) .expand-btn {
     background: #3a3a3a;
     border-color: #555;
-    color: #4da3ff;
+    color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .expand-btn:hover {
     background: #4a4a4a;
-    border-color: #4da3ff;
+    border-color: var(--color-primary-dark);
   }
 
   :global([data-theme="dark"]) .question-text :global(.markdown-preview) {
@@ -781,11 +781,11 @@
 
   :global([data-theme="dark"]) .tag {
     background: #3a3a3a;
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .expected-answer {
-    border-top-color: #444;
+    border-top-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .expected-answer summary {
@@ -793,11 +793,11 @@
   }
 
   :global([data-theme="dark"]) .expected-answer-content {
-    background: #1a1a1a;
+    background: var(--color-bg-dark);
   }
 
   :global([data-theme="dark"]) .expected-answer-content :global(.markdown-preview) {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .expected-answer-content :global(.markdown-preview h1),
@@ -885,8 +885,8 @@
   }
 
   :global([data-theme="dark"]) .recording-form {
-    background: #1a1a1a;
-    border-color: #444;
+    background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .form-group label {
@@ -895,8 +895,8 @@
 
   :global([data-theme="dark"]) .form-group textarea,
   :global([data-theme="dark"]) .form-group select {
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
     color: #ffffff;
   }
 
