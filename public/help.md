@@ -37,11 +37,7 @@ Each question has:
 
 Images can be inserted directly into the question text using the image file selector in the editor toolbar. The image is embedded as a Base64 data URI — no external hosting needed, and it works fully offline. The image will be visible in both the interviewer view and the candidate window during the session.
 
-**Import questions** using the import button — accepts `.json` or `.md` files.
-
-Sample files:
-- [`./sample-questions.json`](./sample-questions.json) — JSON format
-- [`./sample-questions.md`](./sample-questions.md) — Markdown format
+**Import questions** using the import button — accepts `.json` or `.md` files. See the [Sample Files & Import Examples](#sample-files--import-examples) section for downloadable samples.
 
 ---
 
@@ -54,8 +50,7 @@ Question Sets let you bundle related questions together for a specific interview
 - Reorder questions
 - Import/export sets as a Markdown file
 
-Sample file:
-- [`./sample-question-sets.md`](./sample-question-sets.md) — Markdown question sets format
+See the [Sample Files & Import Examples](#sample-files--import-examples) section for a downloadable sample.
 
 ---
 
@@ -152,6 +147,32 @@ The JSON format mirrors the full data model.
 ```
 
 Fields marked optional: `id`, `hash`, `createdAt`, `updatedAt` — generated automatically if omitted.
+
+---
+
+## Sample Files & Import Examples
+
+Download any of the sample files below and use the **Import** button in the corresponding section to try it out.
+
+| File | Import Into | Format |
+|------|-------------|--------|
+| [`sample-questions.json`](./sample-questions.json) | Questions Catalog | JSON |
+| [`sample-questions.md`](./sample-questions.md) | Questions Catalog | Markdown |
+| [`sample-question-sets.md`](./sample-question-sets.md) | Question Sets | Markdown |
+
+### How to import
+
+**Questions Catalog:**
+1. Go to **Questions Catalog**
+2. Click the **Import** button
+3. Select `sample-questions.json` or `sample-questions.md`
+
+**Question Sets:**
+1. Go to **Question Sets**
+2. Click the **Import** button
+3. Select `sample-question-sets.md`
+
+> **Note:** Importing questions does not overwrite existing data — new questions are added alongside existing ones. Question sets reference questions by ID, so import the questions first before importing sets.
 
 ---
 
