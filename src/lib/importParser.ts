@@ -9,8 +9,7 @@ export interface ParsedImportData {
   version: string;
   candidate: {
     id: string;
-    firstName: string;
-    lastName: string;
+    displayName: string;
     notes?: string;
     createdAt: string;
   };
@@ -58,8 +57,7 @@ export function parseMarkdownWithConfig(
     version: "1.0.0",
     candidate: {
       id: generateId(),
-      firstName: "Imported",
-      lastName: "Candidate",
+      displayName: "Imported Candidate",
       notes: "",
       createdAt: new Date().toISOString(),
     },
@@ -94,9 +92,7 @@ export function parseMarkdownWithConfig(
     if (structure.candidateName) {
       const nameMatch = line.match(new RegExp(structure.candidateName));
       if (nameMatch) {
-        const name = nameMatch[1].trim().split(" ");
-        data.candidate.firstName = name[0];
-        data.candidate.lastName = name.slice(1).join(" ");
+        data.candidate.displayName = nameMatch[1].trim();
         continue;
       }
     }
@@ -307,8 +303,7 @@ export function parseJsonWithConfig(content: string): ParsedImportData {
     version: jsonData.version || "1.0.0",
     candidate: {
       id: jsonData.candidate.id || generateId(),
-      firstName: jsonData.candidate.firstName,
-      lastName: jsonData.candidate.lastName,
+      displayName: jsonData.candidate.displayName,
       notes: jsonData.candidate.notes || "",
       createdAt: jsonData.candidate.createdAt,
     },

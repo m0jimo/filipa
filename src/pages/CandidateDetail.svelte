@@ -68,7 +68,7 @@
 
   // Edit candidate modal
   let showEditCandidateModal = $state(false);
-  let candidateFormData = $state({ firstName: "", lastName: "", notes: "" });
+  let candidateFormData = $state({ displayName: "", notes: "" });
 
   // Export session modal
   let showExportModal = $state(false);
@@ -219,8 +219,8 @@
   async function handleCandidateSubmit(event: Event) {
     event.preventDefault();
 
-    if (!candidateFormData.firstName.trim() || !candidateFormData.lastName.trim()) {
-      alert("Please enter both first and last name");
+    if (!candidateFormData.displayName.trim()) {
+      alert("Please enter a display name");
       return;
     }
 
@@ -229,8 +229,7 @@
       if (candidate) {
         const updated: Candidate = {
           ...candidate,
-          firstName: candidateFormData.firstName.trim(),
-          lastName: candidateFormData.lastName.trim(),
+          displayName: candidateFormData.displayName.trim(),
           notes: candidateFormData.notes.trim(),
           updatedAt: new Date(),
         };
@@ -287,11 +286,11 @@
 
       if (exportFormat === "json") {
         content = generateJsonExport(candidate, session, sessionQuestions);
-        filename = `interview-${candidate.lastName}-${session.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.json`;
+        filename = `interview-${candidate.displayName.replace(/\s+/g, "-")}-${session.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.json`;
         mimeType = "application/json";
       } else {
         content = generateMarkdownExport(candidate, session, sessionQuestions);
-        filename = `interview-${candidate.lastName}-${session.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.md`;
+        filename = `interview-${candidate.displayName.replace(/\s+/g, "-")}-${session.name.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.md`;
         mimeType = "text/markdown";
       }
 
@@ -324,8 +323,7 @@
       exportedAt: new Date().toISOString(),
       candidate: {
         id: candidate.id,
-        firstName: candidate.firstName,
-        lastName: candidate.lastName,
+        displayName: candidate.displayName,
         notes: candidate.notes,
         createdAt: candidate.createdAt.toISOString(),
         updatedAt: candidate.updatedAt.toISOString(),
@@ -378,7 +376,7 @@
     // Header with session/candidate info
     lines.push("# Interview Session Export");
     lines.push("");
-    lines.push(`Candidate: ${candidate.firstName} ${candidate.lastName}`);
+    lines.push(`Candidate: ${candidate.displayName}`);
     lines.push(`Candidate ID: ${candidate.id}`);
     lines.push(`Session: ${session.name}`);
     lines.push(`Date: ${new Date(session.date).toLocaleDateString()}`);
@@ -780,7 +778,7 @@
       items={[
         { label: "Home", href: "/" },
         { label: "Candidates", href: "/candidates" },
-        { label: `${candidate.firstName} ${candidate.lastName}` },
+        { label: candidate.displayName },
       ]}
     />
 
@@ -946,29 +944,14 @@
 >
   <form onsubmit={handleCandidateSubmit} autocomplete="off" data-form-type="other">
     <div class="form-group">
-      <label for="candidateFirstName">First Name *</label>
+      <label for="candidateDisplayName">Display Name *</label>
       <input
-        id="candidateFirstName"
-        name="candidate-first-name"
+        id="candidateDisplayName"
+        name="candidate-display-name"
         type="text"
-        bind:value={candidateFormData.firstName}
+        bind:value={candidateFormData.displayName}
         required
-        placeholder="Enter first name"
-        autocomplete="off"
-        data-lpignore="true"
-        data-form-type="other"
-      />
-    </div>
-
-    <div class="form-group">
-      <label for="candidateLastName">Last Name *</label>
-      <input
-        id="candidateLastName"
-        name="candidate-last-name"
-        type="text"
-        bind:value={candidateFormData.lastName}
-        required
-        placeholder="Enter last name"
+        placeholder="Enter display name"
         autocomplete="off"
         data-lpignore="true"
         data-form-type="other"

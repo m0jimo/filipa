@@ -35,8 +35,7 @@
   interface ImportData {
     candidate: {
       id: string;
-      firstName: string;
-      lastName: string;
+      displayName: string;
       notes?: string;
       createdAt?: string | Date;
     };
@@ -57,7 +56,7 @@
   // Modal state
   let showModal = $state(false);
   let editingCandidate: Candidate | null = $state(null);
-  let formData = $state({ firstName: "", lastName: "", notes: "" });
+  let formData = $state({ displayName: "", notes: "" });
   let saving = $state(false);
 
   // Delete confirmation
@@ -102,7 +101,7 @@
 
   function openCreateModal() {
     editingCandidate = null;
-    formData = { firstName: "", lastName: "", notes: "" };
+    formData = { displayName: "", notes: "" };
     showModal = true;
   }
 
@@ -111,8 +110,7 @@
     event.stopPropagation();
     editingCandidate = candidate;
     formData = {
-      firstName: candidate.firstName,
-      lastName: candidate.lastName,
+      displayName: candidate.displayName,
       notes: candidate.notes,
     };
     showModal = true;
@@ -121,14 +119,14 @@
   function closeModal() {
     showModal = false;
     editingCandidate = null;
-    formData = { firstName: "", lastName: "", notes: "" };
+    formData = { displayName: "", notes: "" };
   }
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
 
-    if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      alert("Please enter both first and last name");
+    if (!formData.displayName.trim()) {
+      alert("Please enter a display name");
       return;
     }
 
@@ -140,8 +138,7 @@
         // Update existing candidate
         const updated: Candidate = {
           ...editingCandidate,
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
+          displayName: formData.displayName.trim(),
           notes: formData.notes.trim(),
           updatedAt: now,
         };
@@ -150,8 +147,7 @@
         // Create new candidate
         const newCandidate: Candidate = {
           id: generateId(),
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
+          displayName: formData.displayName.trim(),
           notes: formData.notes.trim(),
           createdAt: now,
           updatedAt: now,
@@ -236,7 +232,7 @@
   async function detectConflicts(data: ImportData) {
     const conflicts = {
       candidateExists: false,
-      candidateName: `${data.candidate.firstName} ${data.candidate.lastName}`,
+      candidateName: data.candidate.displayName,
       questionsExist: [] as Array<{ id: string; question: string }>,
       pendingImportData: data,
     };
@@ -279,7 +275,7 @@
       // Reload candidates list and show success message
       await loadCandidates();
 
-      const candidateName = `${importedData.candidate.firstName} ${importedData.candidate.lastName}`;
+      const candidateName = importedData.candidate.displayName;
       const sessionName = importedData.session.name;
       alert(
         `Import successful!\n\nCandidate: ${candidateName}\nSession: ${sessionName}\nQuestions: ${importedData.questions.length}`
@@ -379,8 +375,7 @@
         // Update existing candidate
         candidate = {
           ...existingCandidate,
-          firstName: String(data.candidate.firstName),
-          lastName: String(data.candidate.lastName),
+          displayName: String(data.candidate.displayName),
           notes: String(data.candidate.notes || ""),
           updatedAt: now,
         };
@@ -392,8 +387,7 @@
         // Create new candidate with different ID
         candidate = {
           id: generateId(),
-          firstName: String(data.candidate.firstName),
-          lastName: String(data.candidate.lastName),
+          displayName: String(data.candidate.displayName),
           notes: String(data.candidate.notes || ""),
           createdAt: now,
           updatedAt: now,
@@ -411,8 +405,7 @@
       // Candidate doesn't exist, create new one
       candidate = {
         id: String(data.candidate.id),
-        firstName: String(data.candidate.firstName),
-        lastName: String(data.candidate.lastName),
+        displayName: String(data.candidate.displayName),
         notes: String(data.candidate.notes || ""),
         createdAt: new Date(data.candidate.createdAt ?? now),
         updatedAt: now,
@@ -601,7 +594,7 @@
         {#each candidates as candidate (candidate.id)}
           <div class="candidate-card-wrapper">
             <div class="candidate-card">
-              <h3>{candidate.firstName} {candidate.lastName}</h3>
+              <h3>{candidate.displayName}</h3>
               {#if candidate.notes}
                 <p class="notes">{candidate.notes}</p>
               {/if}
@@ -653,29 +646,14 @@
 >
   <form onsubmit={handleSubmit} autocomplete="off" data-form-type="other">
     <div class="form-group">
-      <label for="newCandidateFirstName">First Name *</label>
+      <label for="newCandidateDisplayName">Display Name *</label>
       <input
-        id="newCandidateFirstName"
-        name="new-candidate-first-name"
+        id="newCandidateDisplayName"
+        name="new-candidate-display-name"
         type="text"
-        bind:value={formData.firstName}
+        bind:value={formData.displayName}
         required
-        placeholder="Enter first name"
-        autocomplete="off"
-        data-lpignore="true"
-        data-form-type="other"
-      />
-    </div>
-
-    <div class="form-group">
-      <label for="newCandidateLastName">Last Name *</label>
-      <input
-        id="newCandidateLastName"
-        name="new-candidate-last-name"
-        type="text"
-        bind:value={formData.lastName}
-        required
-        placeholder="Enter last name"
+        placeholder="Enter display name"
         autocomplete="off"
         data-lpignore="true"
         data-form-type="other"

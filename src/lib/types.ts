@@ -26,10 +26,8 @@ export enum QuestionType {
 export interface Candidate {
   /** Unique identifier (GUID) */
   id: string;
-  /** Candidate's first name */
-  firstName: string;
-  /** Candidate's last name */
-  lastName: string;
+  /** Candidate's display name */
+  displayName: string;
   /** General notes about the candidate */
   notes: string;
   /** Timestamp when candidate was created */

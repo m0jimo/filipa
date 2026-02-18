@@ -549,7 +549,7 @@
         { label: "Home", href: "/" },
         { label: "Candidates", href: "/candidates" },
         {
-          label: candidate ? `${candidate.firstName} ${candidate.lastName}` : "Candidate",
+          label: candidate ? candidate.displayName : "Candidate",
           href: `/candidate/${session.candidateId}`,
         },
         { label: session.name },

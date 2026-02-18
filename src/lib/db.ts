@@ -17,7 +17,7 @@ import type {
 // ============================================================================
 
 const DB_NAME = "FilipaDB";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 // Object store names
 export const STORES = {
@@ -63,7 +63,7 @@ export async function initDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.CANDIDATES)) {
         const candidateStore = db.createObjectStore(STORES.CANDIDATES, { keyPath: "id" });
         candidateStore.createIndex("createdAt", "createdAt", { unique: false });
-        candidateStore.createIndex("lastName", "lastName", { unique: false });
+        candidateStore.createIndex("displayName", "displayName", { unique: false });
       }
 
       if (!db.objectStoreNames.contains(STORES.SESSIONS)) {

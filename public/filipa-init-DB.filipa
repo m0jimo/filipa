@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-02-18T16:34:46.331Z",
+  "exportedAt": "2026-02-18T17:23:04.559Z",
   "indexedDB": {
     "candidates": [
       {
@@ -9,7 +9,8 @@
         "lastName": "Doe",
         "notes": "Introduction to Filipa app.",
         "createdAt": "2026-02-16T16:48:04.309Z",
-        "updatedAt": "2026-02-16T16:48:04.309Z"
+        "updatedAt": "2026-02-18T17:22:15.595Z",
+        "displayName": "Johny Firpo"
       }
     ],
     "config": [
@@ -184,20 +185,20 @@
         "id": "7c6e8c53-857d-43a7-8293-9ae41a0eaf47",
         "candidateId": "9415c0c8-5d26-40c7-9a5c-ad62c0af3097",
         "interviewers": [
-          "Johny Firpo"
+          "Charlie Firpo"
         ],
         "name": "Introduction - Phase I.",
         "date": "2026-02-16T00:00:00.000Z",
         "notes": "Notes about the Interview Session",
         "currentQuestionIndex": 0,
         "createdAt": "2026-02-16T16:49:21.580Z",
-        "updatedAt": "2026-02-18T16:32:32.017Z"
+        "updatedAt": "2026-02-18T17:22:52.014Z"
       }
     ]
   },
   "localStorage": {
     "theme": "light",
     "candidate-theme": "light",
-    "userSettings": "{\"questionFilters\":{\"selectedTypes\":[],\"selectedTags\":[],\"selectedDifficulties\":[]},\"editorViewModes\":{}}"
+    "userSettings": "{\"questionFilters\":{\"selectedTypes\":[],\"selectedTags\":[],\"selectedDifficulties\":[]},\"editorViewModes\":{},\"showWelcomeCard\":false}"
   }
 }
