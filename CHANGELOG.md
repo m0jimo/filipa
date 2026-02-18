@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] — 2026-02-18
+
+### Added
+
+- add QR code for online app to help page
+- add patch release script and unify release.js bump logic
+- release script
+
+
 ## [0.2.0] — 2026-02-18
 
 ### Added
