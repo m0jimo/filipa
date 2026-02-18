@@ -73,6 +73,11 @@
         <a href="#/settings" use:link class="step-link">import a backup</a>
         from the Settings page.
       </p>
+      <p class="welcome-note">
+        Want to use Filipa offline?
+        <a href="https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip" target="_blank" rel="noopener noreferrer" class="step-link">Download the latest build</a>
+        — unzip and open <code>dist/index.html</code> directly in your browser, no server needed.
+      </p>
       <div class="welcome-footer">
         <label class="dont-show-label">
           <input type="checkbox" onchange={handleDontShow}/>
@@ -184,6 +189,14 @@
     font-size: 0.875rem;
     color: #555;
     margin: 0;
+  }
+
+  .welcome-note code {
+    font-family: monospace;
+    background: #ddeeff;
+    border-radius: 3px;
+    padding: 0.1em 0.3em;
+    font-size: 0.85em;
   }
 
   .welcome-footer {
@@ -305,6 +318,11 @@
 
   :global([data-theme="dark"]) .welcome-note {
     color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .welcome-note code {
+    background: #1e3a55;
+    color: #a8d4ff;
   }
 
   :global([data-theme="dark"]) .welcome-footer {
