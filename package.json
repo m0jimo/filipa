@@ -1,7 +1,7 @@
 {
   "name": "filipa",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
     "deploy": "npm run build && npx gh-pages -d dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"src/**/*.{ts,svelte,css}\" \"*.{js,ts}\" && eslint . --fix"
+    "format": "prettier --write \"src/**/*.{ts,svelte,css}\" \"*.{js,ts}\" && eslint . --fix",
+    "release": "node scripts/release.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

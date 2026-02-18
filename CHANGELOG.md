@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] — 2026-02-18
+
+### Added
+
+- make sidebar action buttons responsive row on small screens
+- add offline download note to welcome card
+- replace firstName/lastName with single displayName on Candidate
+- add first-run welcome card with getting started guide
+- identify candidate window with title and header label
+- show app version badge and fix GitHub link opening in new tab
+- ignore local settings
+- page heading style
+- link to online app
+
+### Fixed
+
+- align home page cards to top and simplify welcome card visibility logic
+- disable marked breaks and add proseWrap never to prevent unwanted line breaks in help docs
+- replace broken in-page anchor links with plain text in help.md
+- add make_latest flag to release action
+- pass GITHUB_TOKEN explicitly to release action
+- match theme toggle button size to font size buttons in candidate view
+- open candidate window before await to preserve user gesture on iPad
+- fallback to new tab when popup is blocked on iPad/mobile
+- resolve pre-existing TypeScript errors
+- make show prop required in QuestionBrowserModal type definition
+- missing logo
+
+### Performance
+
+- replace full highlight.js bundle with selective language imports
+
+### Changed
+
+- replace inline modal frame in QuestionBrowserModal with SessionModal
+- replace inline question-set browser modal with SessionModal
+- replace inline Session Notes modal with SessionModal component
+
+### Documentation
+
+- development notes
+- add consolidated sample files & import examples section to help.md
+- fix grammar, spelling, and wording in README and dev notes
+- link for application download
+
+### Style
+
+- replace hardcoded color values with CSS custom properties
+- introduce CSS custom properties for colors in app.css
+- consolidate shared view-toggle and questions-table CSS into app.css
+- remove empty CSS selectors and orphaned comment
+
+### Other
+
+- build application
+
+
 ## [0.1.0] — 2026-02-16
 
 ### Added
