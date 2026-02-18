@@ -43,7 +43,7 @@ embedded as a Base64 data URI — no external hosting needed, and it works fully
 both the interviewer view and the candidate window during the session.
 
 **Import questions** using the import button — accepts `.json` or `.md` files. See
-the [Sample Files & Import Examples](#sample-files--import-examples) section for downloadable samples.
+the **Sample Files & Import Examples** section below for downloadable samples.
 
 ---
 
@@ -56,7 +56,7 @@ Question Sets let you bundle related questions together for a specific interview
 - Reorder questions
 - Import/export sets as a Markdown file
 
-See the [Sample Files & Import Examples](#sample-files--import-examples) section for a downloadable sample.
+See the **Sample Files & Import Examples** section below for a downloadable sample.
 
 ---
 
