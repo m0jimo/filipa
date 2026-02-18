@@ -3,6 +3,7 @@
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import { exportDatabase, importDatabase, clearDatabase } from "../lib/db";
+  import { userSettings } from "../lib/userSettings";
 
   const LOCAL_STORAGE_KEYS = ["theme", "candidate-theme", "userSettings"] as const;
 
@@ -164,6 +165,19 @@
           <dd>{stats.storageUsed} / {stats.storageQuota}</dd>
         </dl>
       {/if}
+    </section>
+
+    <section class="settings-section">
+      <h2>User Interface</h2>
+      <div class="toggle-row">
+        <label for="welcome-card-toggle" class="toggle-label">Show welcome card on startup</label>
+        <input
+          id="welcome-card-toggle"
+          type="checkbox"
+          checked={$userSettings.showWelcomeCard}
+          onchange={(e) => userSettings.setShowWelcomeCard((e.target as HTMLInputElement).checked)}
+        />
+      </div>
     </section>
 
     <section class="settings-section">
@@ -410,6 +424,22 @@
   }
 
   :global([data-theme="dark"]) .danger-confirm label {
+    color: var(--color-text-muted);
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .toggle-label {
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  :global([data-theme="dark"]) .toggle-label {
     color: var(--color-text-muted);
   }
 </style>

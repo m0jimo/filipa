@@ -461,6 +461,24 @@ export async function exportDatabase(): Promise<Record<string, unknown[]>> {
 }
 
 /**
+ * Returns true when none of the main content stores contain any records.
+ */
+export async function isDatabaseEmpty(): Promise<boolean> {
+  const db = await getDB();
+  const contentStores = [STORES.CANDIDATES, STORES.QUESTIONS, STORES.QUESTION_SETS, STORES.SESSIONS];
+  for (const storeName of contentStores) {
+    const n = await new Promise<number>((resolve, reject) => {
+      const tx = db.transaction(storeName, "readonly");
+      const req = tx.objectStore(storeName).count();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    if (n > 0) return false;
+  }
+  return true;
+}
+
+/**
  * Import data into database (merge mode)
  */
 export async function importDatabase(data: Record<string, unknown[]>): Promise<void> {

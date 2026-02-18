@@ -54,6 +54,7 @@ export default defineConfig({
   base: "./", // This is the key change - use relative paths
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __INIT_DB__: JSON.stringify(JSON.parse(fs.readFileSync("./public/filipa-init-DB.filipa", "utf-8"))),
   },
   build: {
     outDir: "dist",

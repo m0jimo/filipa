@@ -16,6 +16,7 @@ export interface UserSettings {
   questionFilters: QuestionFilters;
   questionViewMode: QuestionViewMode;
   editorViewModes: Record<string, EditorViewMode>;
+  showWelcomeCard: boolean;
 }
 
 const defaults: UserSettings = {
@@ -26,6 +27,7 @@ const defaults: UserSettings = {
   },
   questionViewMode: "cards",
   editorViewModes: {},
+  showWelcomeCard: true,
 };
 
 const VALID_EDITOR_MODES: EditorViewMode[] = ["raw", "split", "preview"];
@@ -59,6 +61,7 @@ const load = (): UserSettings => {
       },
       questionViewMode: loadViewMode(),
       editorViewModes,
+      showWelcomeCard: parsed.showWelcomeCard ?? true,
     };
   } catch {
     return structuredClone(defaults);
@@ -111,6 +114,13 @@ const createUserSettingsStore = () => {
           ...current,
           editorViewModes: { ...current.editorViewModes, [editorId]: mode },
         };
+        save(next);
+        return next;
+      });
+    },
+    setShowWelcomeCard: (val: boolean) => {
+      update((current) => {
+        const next = { ...current, showWelcomeCard: val };
         save(next);
         return next;
       });
