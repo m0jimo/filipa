@@ -28,10 +28,10 @@
   </button>
   <a
     href="https://github.com/m0jimo/filipa"
-    target="_blank"
     rel="noopener noreferrer"
     class="github-link"
     title="View on GitHub"
+    onclick={(e) => { e.preventDefault(); window.open("https://github.com/m0jimo/filipa", "_blank"); }}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

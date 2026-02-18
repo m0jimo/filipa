@@ -3,6 +3,10 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { viteSingleFile } from "vite-plugin-singlefile";
 import fs from "fs";
 import path from "path";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const pkg = require("./package.json") as { version: string };
 
 /**
  * Vite plugin that inlines public/*.svg files into the built output
@@ -48,6 +52,9 @@ const inlineSvgAssets = () => {
 export default defineConfig({
   plugins: [svelte(), inlineSvgAssets(), viteSingleFile()],
   base: "./", // This is the key change - use relative paths
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   build: {
     outDir: "dist",
     assetsDir: "assets",

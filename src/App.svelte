@@ -37,11 +37,24 @@
   <Router {routes} />
 </main>
 
+<span class="app-version">v{__APP_VERSION__}</span>
+
 <style>
   main {
     width: 100%;
     min-height: 100vh;
     background-color: inherit;
     color: inherit;
+  }
+
+  .app-version {
+    position: fixed;
+    bottom: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.7rem;
+    color: color-mix(in srgb, currentColor 30%, transparent);
+    pointer-events: none;
+    user-select: none;
+    z-index: 9999;
   }
 </style>
