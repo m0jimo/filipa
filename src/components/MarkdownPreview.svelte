@@ -41,7 +41,7 @@
   );
 
   markedInstance.setOptions({
-    breaks: true,
+    breaks: false,
     gfm: true,
   });
 </script>
