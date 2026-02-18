@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/release.js — bump minor version, update CHANGELOG, commit, and tag
+// Usage: node scripts/release.js [minor|patch]  (default: minor)
 
 import { execSync } from "child_process";
 import { readFileSync, writeFileSync } from "fs";
@@ -23,26 +24,35 @@ const today = () => {
 
 // ── bump version ───────────────────────────────────────────────────────────
 
+const bumpType = process.argv[2] ?? "minor";
+if (bumpType !== "minor" && bumpType !== "patch") {
+  console.error(`Invalid bump type "${bumpType}". Use "minor" or "patch".`);
+  process.exit(1);
+}
+
 const pkgPath = resolve(root, "package.json");
 const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
 const [major, minor, patch] = pkg.version.split(".").map(Number);
-const newVersion = `${major}.${minor + 1}.${patch}`;
+
+const newVersion =
+  bumpType === "minor"
+    ? `${major}.${minor + 1}.0`
+    : `${major}.${minor}.${patch + 1}`;
 
 pkg.version = newVersion;
 writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
-console.log(`Version bumped: ${major}.${minor}.${patch} → ${newVersion}`);
+console.log(`Version bumped (${bumpType}): ${major}.${minor}.${patch} → ${newVersion}`);
 
 // ── collect commits since last version tag (or all if no tag) ─────────────
 
 let logRange;
 try {
-  // look for a tag matching the previous version pattern vMAJOR.MINOR.PATCH
   const prevVersion = `${major}.${minor}.${patch}`;
   const tagName = `v${prevVersion}`;
   run(`git rev-parse ${tagName}`); // throws if tag doesn't exist
   logRange = `${tagName}..HEAD`;
 } catch {
-  // no tag found — try to find the commit that last touched package.json version
+  // no tag found — use commit that last touched package.json as boundary
   try {
     const lastVersionCommit = run(
       `git log --oneline --follow -n 1 -- package.json`
@@ -53,10 +63,7 @@ try {
   }
 }
 
-const rawLog = run(
-  `git log ${logRange} --pretty=format:"%s" --no-merges`
-);
-
+const rawLog = run(`git log ${logRange} --pretty=format:"%s" --no-merges`);
 const commits = rawLog ? rawLog.split("\n").filter(Boolean) : [];
 
 // ── group commits by conventional-commit type ──────────────────────────────
@@ -123,7 +130,7 @@ entry += "\n";
 const separatorIndex = existingChangelog.indexOf("---\n");
 let newChangelog;
 if (separatorIndex !== -1) {
-  const before = existingChangelog.slice(0, separatorIndex + 4); // includes "---\n"
+  const before = existingChangelog.slice(0, separatorIndex + 4);
   const after = existingChangelog.slice(separatorIndex + 4);
   newChangelog = `${before}\n${entry}${after}`;
 } else {

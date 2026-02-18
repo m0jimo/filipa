@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,svelte,css}\" \"*.{js,ts}\" && eslint . --fix",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js minor",
+    "release:patch": "node scripts/release.js patch"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
