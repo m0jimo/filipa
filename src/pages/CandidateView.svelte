@@ -119,6 +119,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Filipa – Candidate Window</title>
+</svelte:head>
+
 <div class="candidate-view">
   {#if loading}
     <div class="loading">
@@ -131,7 +135,7 @@
   {:else if session}
     <header>
       <div class="session-info">
-        <h1>Interview Session</h1>
+        <h1>Filipa <span class="window-label">— Candidate Window</span></h1>
         <p class="meta">
           {session.name} • {new Date(session.date).toLocaleDateString()}
         </p>
@@ -211,6 +215,12 @@
     margin: 0 0 0.25rem 0;
     font-size: 1.5rem;
     color: black;
+  }
+
+  .window-label {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
   }
 
   .meta {
@@ -433,6 +443,10 @@
 
   :global([data-theme="dark"]) .session-info h1 {
     color: #ffffff;
+  }
+
+  :global([data-theme="dark"]) .window-label {
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .meta {
