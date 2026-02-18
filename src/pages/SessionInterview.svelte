@@ -596,34 +596,26 @@
             </span>
           </div>
         </div>
-        <!-- make buttons full side bar width        -->
-        <div style="display:flex;flex-direction:column;gap:0.5rem;">
-          <button type="button" onclick={openCandidateView} class="primary">
-            <img
-              src={candidateWindowSvg}
-              alt=""
-              style="width:1.2em;height:1.2em;vertical-align:middle;margin-right:0.4em;"
-            /> Show Welcome Page
-          </button>
-          <!-- keep horizontal space for showing window-status        -->
-          <div class="window-status-container">
-            {#if candidateWindowOpen}
-              <span class="window-status open">● Candidate Window Open</span>
-            {:else if candidateWindow}
-              <span class="window-status closed">● Candidate Window Closed</span>
-            {:else}
-              <span class="window-status-placeholder"></span>
-            {/if}
+        <div class="sidebar-actions">
+          <div class="action-buttons">
+            <button type="button" onclick={openCandidateView} class="primary"><img src={candidateWindowSvg} alt=""
+                                                                                   style="width:1.2em;height:1.2em;vertical-align:middle;margin-right:0.4em;"/>
+              Welcome Page
+            </button>
+            <button type="button" onclick={openNotesModal} class="secondary">📝 Session Notes</button>
+            <button type="button" onclick={openQuestionSetBrowser} class="primary">+ Add Question Set</button>
+            <button type="button" onclick={openQuestionBrowser} class="primary">+ Add Questions</button>
+            <div class="window-status-container">
+              {#if candidateWindowOpen}
+                <span class="window-status open">● Candidate Window</span>
+              {:else if candidateWindow}
+                <span class="window-status closed">● Candidate Window</span>
+              {:else}
+                <span class="window-status-placeholder"></span>
+              {/if}
+            </div>
           </div>
-          <button type="button" onclick={openNotesModal} class="secondary">📝 Session Notes</button>
-          <button type="button" onclick={openQuestionSetBrowser} class="primary"
-          >+ Add Question Set
-          </button
-          >
-          <button type="button" onclick={openQuestionBrowser} class="primary"
-          >+ Add Questions
-          </button
-          >
+          <!-- keep horizontal space for showing window-status        -->
 
           {#if questions.length > 0}
             <div class="navigation-buttons">
@@ -841,7 +833,7 @@
     min-width: 200px;
   }
 
-  .sidebar button.primary {
+  .sidebar :not(.action-buttons) > button.primary {
     width: 100%;
     white-space: nowrap;
   }
@@ -907,6 +899,18 @@
     align-items: stretch;
   }
 
+  .sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   /* Responsive Design */
   @media (max-width: 968px) {
     .header-actions button.primary {
@@ -919,7 +923,28 @@
     }
 
     .sidebar {
-      position: static;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-direction: column;
+      background: var(--color-bg);
+      padding: 0.5rem 0;
+    }
+
+    :global(.action-buttons) {
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto;
+    }
+
+    :global(.action-buttons button.primary),
+    :global(.action-buttons button.secondary) {
+      flex: 0 0 auto !important;
+      width: auto !important;
+      min-width: 0 !important;
+      padding: 0.5rem 0.75rem !important;
+      font-size: 0.85rem !important;
+      white-space: nowrap !important;
     }
   }
 
@@ -981,7 +1006,7 @@
     background: #e0e0e0;
   }
 
-  .sidebar button.secondary {
+  .sidebar :not(.action-buttons) > button.secondary {
     width: 100%;
     white-space: nowrap;
   }
