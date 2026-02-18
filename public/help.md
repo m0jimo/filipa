@@ -7,6 +7,10 @@ Filipa is an interview assessment tool for IT developer candidates. All data is 
 Download the [latest build](https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip) —
 unzip and open `dist/index.html` directly in your browser, no server needed.
 
+Or scan the QR code to open the online version:
+
+<img src="./filipa-qr.svg" alt="Filipa QR code" width="160">
+
 ---
 
 ## Features Overview
