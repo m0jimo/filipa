@@ -3,17 +3,11 @@
   import Navigation from "../lib/Navigation.svelte";
   import questionCatalogSvg from "../assets/filipa-question-catalog.svg";
   import interviewerWindowSvg from "../assets/filipa-interviewer-window.svg";
-  import {onMount} from "svelte";
   import {userSettings} from "../lib/userSettings";
-  import {importDatabase, isDatabaseEmpty} from "../lib/db";
+  import {importDatabase} from "../lib/db";
 
-  let dbEmpty = $state(true);
   let fadingOut = $state(false);
-  let showCard = $derived($userSettings.showWelcomeCard && dbEmpty);
-
-  onMount(async () => {
-    dbEmpty = await isDatabaseEmpty();
-  });
+  let showCard = $derived($userSettings.showWelcomeCard);
 
   const handleDontShow = (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
@@ -227,11 +221,10 @@
   }
 
   .cards-container {
-    flex: 1;
     display: flex;
     flex-direction: row;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     gap: 2rem;
     padding: 3rem 2rem;
   }

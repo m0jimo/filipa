@@ -1,7 +1,11 @@
 # Filipa — Help & Documentation
 
-Filipa is an interview assessment tool for IT developer candidates. It runs fully offline — no server required. All data
-is stored in your browser's IndexedDB.
+Filipa is an interview assessment tool for IT developer candidates. All data is stored in your browser's IndexedDB.
+
+## Want to use Filipa offline?
+
+Download the [latest build](https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip) —
+unzip and open `dist/index.html` directly in your browser, no server needed.
 
 ---
 
@@ -135,7 +139,10 @@ The JSON format mirrors the full data model.
   "session": {
     "name": "Technical Interview",
     "date": "2026-02-16T09:00:00.000Z",
-    "interviewers": ["Alice", "Bob"]
+    "interviewers": [
+      "Alice",
+      "Bob"
+    ]
   },
   "questions": [
     {
@@ -146,8 +153,15 @@ The JSON format mirrors the full data model.
       "question": {
         "question": "What is a closure in JavaScript?",
         "expectedAnswer": "A function that captures its lexical scope.",
-        "tags": ["javascript", "fundamentals"],
-        "difficulty": [3, 4, 5],
+        "tags": [
+          "javascript",
+          "fundamentals"
+        ],
+        "difficulty": [
+          3,
+          4,
+          5
+        ],
         "questionType": "text"
       }
     }
