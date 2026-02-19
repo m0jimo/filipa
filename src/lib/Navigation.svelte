@@ -1,8 +1,6 @@
 <script lang="ts">
   import { link } from "svelte-spa-router";
   import { themeStore } from "./themeStore";
-  import filipaLogoSvg from "../assets/filipaLogo.svg";
-
   let {
     showAppName = true,
   }: {
@@ -14,7 +12,29 @@
   {#if showAppName}
     <div class="app-name">
       <a href="/" use:link class="app-brand">
-        <img src={filipaLogoSvg} alt="Filipa logo" class="app-logo" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="app-logo" aria-label="Filipa logo" role="img">
+          <circle cx="50" cy="50" r="48" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+          <rect x="32" y="22" width="22" height="28" rx="1.5" fill="white" stroke="none"/>
+          <rect x="32" y="22" width="22" height="4" rx="1.5" fill="#e5e7eb" stroke="none"/>
+          <circle cx="35" cy="24" r="0.8" fill="#ef4444"/>
+          <circle cx="37.5" cy="24" r="0.8" fill="#fbbf24"/>
+          <circle cx="40" cy="24" r="0.8" fill="#22c55e"/>
+          <line x1="35" y1="30" x2="51" y2="30" stroke="#9ca3af" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="35" y1="34" x2="51" y2="34" stroke="#9ca3af" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="35" y1="38" x2="47" y2="38" stroke="#9ca3af" stroke-width="1.2" stroke-linecap="round"/>
+          <rect x="45" y="28" width="30" height="38" rx="2" fill="white" stroke="none"/>
+          <rect x="45" y="28" width="30" height="4" rx="2" fill="#e5e7eb" stroke="none"/>
+          <circle cx="48" cy="30" r="0.8" fill="#ef4444"/>
+          <circle cx="50.5" cy="30" r="0.8" fill="#fbbf24"/>
+          <circle cx="53" cy="30" r="0.8" fill="#22c55e"/>
+          <line x1="50" y1="38" x2="70" y2="38" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="50" y1="44" x2="70" y2="44" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="70" y2="50" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 52 56 L 56 61 L 68 50" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="42" cy="80" r="2.5" fill="white"/>
+          <circle cx="50" cy="80" r="2.5" fill="white"/>
+          <circle cx="58" cy="80" r="2.5" fill="white"/>
+        </svg>
         <div class="app-brand-text">
           <span class="app-title">Filipa</span>
           <span class="app-subtitle">Interview Application</span>
