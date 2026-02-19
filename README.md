@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/filipaLogo.svg" alt="Filipa logo" width="96" height="96" />
+  <img src="docs/filipaLogo.svg" alt="Filipa logo" width="96" height="96" />
 
 # Filipa
 
@@ -78,7 +78,8 @@ Or **[download filipa.zip](https://github.com/m0jimo/filipa/releases/download/la
 
 ## About the Name
 
-*Filipa* comes from a Czech phrase "mit filipa" which is an idiom used to describe somebody who is smart, sharp or with good
+*Filipa* comes from a Czech phrase "mit filipa" which is an idiom used to describe somebody who is smart, sharp or with
+good
 practical sense. Filip/Filipa is also first name for male/female.
 
 # Application Development
