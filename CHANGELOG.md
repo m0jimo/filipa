@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.6] — 2026-02-19
+
+### Chore
+
+- missing logo for README.md
+
+
 ## [0.3.5] — 2026-02-19
 
 _No changes recorded._
