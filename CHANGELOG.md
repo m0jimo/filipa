@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] — 2026-02-19
+
+### Added
+
+- improve welcome card and help page offline info
+- add per-candidate stats to candidate cards on Candidates page
+- add manual session ordering on Interview Sessions page
+- add session stats to candidate pages and fix legacy displayName
+- RatingSlider component
+
+### Documentation
+
+- Claude instructions
+
+
 ## [0.2.1] — 2026-02-18
 
 ### Added
