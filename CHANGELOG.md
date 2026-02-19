@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.4] — 2026-02-19
+
+### Fixed
+
+- remove auto-push from release script
+
+### Chore
+
+- files locations for build needs
+
+
 ## [0.3.3] — 2026-02-19
 
 ### Documentation
