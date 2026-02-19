@@ -2,6 +2,7 @@
   import type { Session, SessionQuestion } from "./types";
   import { QuestionType } from "./types";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
+  import RatingSlider from "../components/RatingSlider.svelte";
 
   let {
     question,
@@ -210,27 +211,11 @@
       </div>
 
       <div class="form-group">
-        <label for="rating-{question.id}">Rating (0-10)</label>
-        <select
-          id="rating-{question.id}"
+        <RatingSlider
           bind:value={question.questionRating}
           onchange={() => onSaveAnswer(question)}
-        >
-          <option value={0}>Not rated</option>
-          <option value={1}>1 - Poor</option>
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-          <option value={5}>5 - Average</option>
-          <option value={6}>6</option>
-          <option value={7}>7</option>
-          <option value={8}>8</option>
-          <option value={9}>9</option>
-          <option value={10}>10 - Excellent</option>
-        </select>
-        {#if question.questionRating > 0}
-          <div class="rating-display">{question.questionRating}/10</div>
-        {/if}
+          label="Rating (0-10)"
+        />
       </div>
 
       <div class="form-group">
@@ -691,13 +676,6 @@
 
   .form-group textarea {
     resize: vertical;
-  }
-
-  .rating-display {
-    margin-top: 0.5rem;
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #f57c00;
   }
 
   .save-indicator {
