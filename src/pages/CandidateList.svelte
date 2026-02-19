@@ -49,6 +49,14 @@
     questions: ImportQuestionItem[];
   }
 
+  interface CandidateStats {
+    sessions: number;
+    total: number;
+    answered: number;
+    ratedCount: number;
+    ratingSum: number;
+  }
+
   interface OverallStats {
     totalCandidates: number;
     totalSessions: number;
@@ -59,6 +67,7 @@
   }
 
   let candidates: Candidate[] = $state([]);
+  let candidateStats: Record<string, CandidateStats> = $state({});
   let overallStats = $state<OverallStats | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
@@ -103,26 +112,46 @@
       // Sort by creation date, newest first
       candidates.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-      // Compute overall stats across all candidates
+      // Compute per-candidate and overall stats
       const allSessions = await sessionDB.list();
+      const perCandidate: Record<string, CandidateStats> = {};
       let totalQuestions = 0;
       let totalAnswered = 0;
       let ratedCount = 0;
       let ratingSum = 0;
 
+      // Initialize per-candidate stats
+      for (const c of candidates) {
+        perCandidate[c.id] = { sessions: 0, total: 0, answered: 0, ratedCount: 0, ratingSum: 0 };
+      }
+
       await Promise.all(
         allSessions.map(async (session) => {
           const questions = await sessionQuestionDB.listBySessionId(session.id);
-          totalQuestions += questions.length;
-          totalAnswered += questions.filter(
+          const answered = questions.filter(
             (q) => (q.answer && q.answer.trim().length > 0) || q.questionRating > 0 || (q.note && q.note.trim().length > 0)
           ).length;
           const rated = questions.filter((q) => q.questionRating > 0);
+          const sessionRatingSum = rated.reduce((sum, q) => sum + q.questionRating, 0);
+
+          totalQuestions += questions.length;
+          totalAnswered += answered;
           ratedCount += rated.length;
-          ratingSum += rated.reduce((sum, q) => sum + q.questionRating, 0);
+          ratingSum += sessionRatingSum;
+
+          // Accumulate per-candidate
+          const cs = perCandidate[session.candidateId];
+          if (cs) {
+            cs.sessions += 1;
+            cs.total += questions.length;
+            cs.answered += answered;
+            cs.ratedCount += rated.length;
+            cs.ratingSum += sessionRatingSum;
+          }
         })
       );
 
+      candidateStats = perCandidate;
       overallStats = {
         totalCandidates: candidates.length,
         totalSessions: allSessions.length,
@@ -645,13 +674,34 @@
         {#each candidates as candidate (candidate.id)}
           <div class="candidate-card-wrapper">
             <div class="candidate-card">
-              <h3>{candidate.displayName}</h3>
-              {#if candidate.notes}
-                <p class="notes">{candidate.notes}</p>
+              <div class="candidate-card-main">
+                <h3>{candidate.displayName}</h3>
+                {#if candidate.notes}
+                  <p class="notes">{candidate.notes}</p>
+                {/if}
+                <p class="date">
+                  Added: {new Date(candidate.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              {#if candidateStats[candidate.id]?.sessions > 0}
+                {@const cs = candidateStats[candidate.id]}
+                <div class="candidate-stats">
+                  <div class="cs-row">
+                    <span class="cs-label">Sessions</span>
+                    <span class="cs-value">{cs.sessions}</span>
+                  </div>
+                  <div class="cs-row">
+                    <span class="cs-label">Answered</span>
+                    <span class="cs-value">{cs.answered}/{cs.total}</span>
+                  </div>
+                  {#if cs.ratedCount > 0}
+                    <div class="cs-row">
+                      <span class="cs-label">Avg rating</span>
+                      <span class="cs-value cs-rating">{(cs.ratingSum / cs.ratedCount).toFixed(1)}/10</span>
+                    </div>
+                  {/if}
+                </div>
               {/if}
-              <p class="date">
-                Added: {new Date(candidate.createdAt).toLocaleDateString()}
-              </p>
             </div>
             <div class="card-actions">
               <button
@@ -999,6 +1049,61 @@
 
   .candidate-card-wrapper {
     position: relative;
+  }
+
+  /* Candidate card layout */
+  .candidate-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .candidate-card-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .candidate-stats {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-subtle);
+    border-radius: 6px;
+    border-left: 2px solid var(--color-border);
+    font-size: 0.8rem;
+    align-self: center;
+    min-width: 7rem;
+  }
+
+  .cs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cs-label {
+    color: var(--color-text-muted);
+  }
+
+  .cs-value {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .cs-rating {
+    color: var(--color-primary);
+  }
+
+  :global([data-theme="dark"]) .candidate-stats {
+    background: var(--color-bg-dark-2);
+    border-left-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .cs-rating {
+    color: var(--color-primary-dark);
   }
 
   /* Component-specific card styling - base styles now in app.css */
