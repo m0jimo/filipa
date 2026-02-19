@@ -11,6 +11,14 @@
   } from "../lib/db";
   import type { Candidate, Session, SessionQuestion } from "../lib/types";
   import { QuestionType } from "../lib/types";
+
+  interface SessionSummary {
+    total: number;
+    answered: number;
+    ratedCount: number;
+    ratingSum: number;
+    textAnsweredCount: number;
+  }
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
@@ -49,6 +57,7 @@
 
   let candidate: Candidate | null = $state(null);
   let sessions: Session[] = $state([]);
+  let sessionSummaries: Record<string, SessionSummary> = $state({});
   let loading = $state(true);
   let error = $state<string | null>(null);
 
@@ -104,12 +113,51 @@
       sessions = await sessionDB.listByCandidateId(candidateId);
       // Sort by date, newest first
       sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // Load stats for each session
+      const summaries: Record<string, SessionSummary> = {};
+      await Promise.all(
+        sessions.map(async (session) => {
+          const questions = await sessionQuestionDB.listBySessionId(session.id);
+          summaries[session.id] = computeSessionSummary(questions);
+        })
+      );
+      sessionSummaries = summaries;
+
       loading = false;
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to load candidate";
       loading = false;
     }
   }
+
+  const computeSessionSummary = (questions: SessionQuestion[]): SessionSummary => {
+    const total = questions.length;
+    const answered = questions.filter(
+      (q) => (q.answer && q.answer.trim().length > 0) || q.questionRating > 0 || (q.note && q.note.trim().length > 0)
+    ).length;
+    const rated = questions.filter((q) => q.questionRating > 0);
+    const ratedCount = rated.length;
+    const ratingSum = rated.reduce((sum, q) => sum + q.questionRating, 0);
+    const textAnsweredCount = questions.filter(
+      (q) =>
+        q.questionObj.questionType === QuestionType.Text &&
+        q.answer &&
+        q.answer.trim().length > 0
+    ).length;
+    return { total, answered, ratedCount, ratingSum, textAnsweredCount };
+  };
+
+  const aggregateStats = $derived.by(() => {
+    const summaryList = Object.values(sessionSummaries);
+    const totalSessions = sessions.length;
+    const totalQuestions = summaryList.reduce((s, x) => s + x.total, 0);
+    const totalAnswered = summaryList.reduce((s, x) => s + x.answered, 0);
+    const totalRatedCount = summaryList.reduce((s, x) => s + x.ratedCount, 0);
+    const totalRatingSum = summaryList.reduce((s, x) => s + x.ratingSum, 0);
+    const avgRating = totalRatedCount > 0 ? totalRatingSum / totalRatedCount : null;
+    return { totalSessions, totalQuestions, totalAnswered, avgRating };
+  });
 
   function openCreateSessionModal() {
     editingSession = null;
@@ -790,6 +838,23 @@
           <p class="notes">Candidate Details</p>
         {/if}
       </div>
+      {#if sessions.length > 0}
+        <div class="header-stats">
+          <span class="stat-item">
+            {aggregateStats.totalSessions} session{aggregateStats.totalSessions !== 1 ? "s" : ""}
+          </span>
+          <span class="stat-sep">·</span>
+          <span class="stat-item">
+            {aggregateStats.totalAnswered}/{aggregateStats.totalQuestions} answered
+          </span>
+          {#if aggregateStats.avgRating !== null}
+            <span class="stat-sep">·</span>
+            <span class="stat-item stat-rating">
+              avg rating {aggregateStats.avgRating.toFixed(1)}/10
+            </span>
+          {/if}
+        </div>
+      {/if}
     </header>
 
     <section class="sessions">
@@ -811,17 +876,38 @@
           {#each sessions as session (session.id)}
             <div class="session-card-wrapper">
               <div class="session-card">
-                <h3>{session.name}</h3>
-                <p class="date">
-                  {new Date(session.date).toLocaleDateString()}
-                </p>
-                {#if session.interviewers.length > 0}
-                  <p class="interviewers">
-                    Interviewers: {session.interviewers.join(", ")}
+                <div class="session-card-main">
+                  <h3>{session.name}</h3>
+                  <p class="date">
+                    {new Date(session.date).toLocaleDateString()}
                   </p>
-                {/if}
-                {#if session.notes}
-                  <p class="session-notes">{session.notes}</p>
+                  {#if session.interviewers.length > 0}
+                    <p class="interviewers">
+                      Interviewers: {session.interviewers.join(", ")}
+                    </p>
+                  {/if}
+                  {#if session.notes}
+                    <p class="session-notes">{session.notes}</p>
+                  {/if}
+                </div>
+                {#if sessionSummaries[session.id]}
+                  {@const s = sessionSummaries[session.id]}
+                  <div class="session-stats">
+                    {#if s.total === 0}
+                      <span class="s-stat s-empty">no questions</span>
+                    {:else}
+                      <div class="s-row">
+                        <span class="s-label">Answered</span>
+                        <span class="s-value">{s.answered}/{s.total}</span>
+                      </div>
+                      {#if s.ratedCount > 0}
+                        <div class="s-row">
+                          <span class="s-label">Avg rating</span>
+                          <span class="s-value s-rating">{(s.ratingSum / s.ratedCount).toFixed(1)}/10</span>
+                        </div>
+                      {/if}
+                    {/if}
+                  </div>
                 {/if}
               </div>
               <div class="card-actions">
@@ -1365,5 +1451,104 @@
 
   :global([data-theme="dark"]) .import-info li {
     color: var(--color-text-muted);
+  }
+
+  /* Header stats */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+  }
+
+  .header-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-subtle);
+    border-radius: 6px;
+    padding: 0.25rem 0.75rem;
+  }
+
+  .stat-sep {
+    color: var(--color-text-muted);
+  }
+
+  .stat-rating {
+    color: var(--color-primary);
+    font-weight: 500;
+  }
+
+  /* Session card layout */
+  .session-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .session-card-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Per-session stats panel */
+  .session-stats {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-subtle);
+    border-radius: 6px;
+    border-left: 2px solid var(--color-border);
+    font-size: 0.8rem;
+    align-self: center;
+    min-width: 7rem;
+  }
+
+  .s-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .s-label {
+    color: var(--color-text-muted);
+  }
+
+  .s-value {
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .s-rating {
+    color: var(--color-primary);
+  }
+
+  .s-empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  :global([data-theme="dark"]) .header-stats {
+    background: var(--color-bg-dark-2);
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .stat-rating {
+    color: var(--color-primary-dark);
+  }
+
+  :global([data-theme="dark"]) .session-stats {
+    background: var(--color-bg-dark-2);
+    border-left-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .s-rating {
+    color: var(--color-primary-dark);
   }
 </style>

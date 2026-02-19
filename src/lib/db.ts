@@ -314,13 +314,22 @@ async function clear(storeName: string): Promise<void> {
 // Candidate Operations
 // ============================================================================
 
+const normalizeCandidate = (candidate: Candidate | null): Candidate | null => {
+  if (!candidate) return null;
+  if (candidate.displayName) return candidate;
+  // Backfill displayName from legacy firstName/lastName fields
+  const raw = candidate as unknown as Record<string, string>;
+  const fallback = [raw["firstName"], raw["lastName"]].filter(Boolean).join(" ").trim();
+  return { ...candidate, displayName: fallback || "Unknown" };
+};
+
 export const candidateDB = {
   create: (candidate: Candidate) => create<Candidate>(STORES.CANDIDATES, candidate),
-  read: (id: string) => read<Candidate>(STORES.CANDIDATES, id),
-  get: (id: string) => read<Candidate>(STORES.CANDIDATES, id), // Alias for read
+  read: async (id: string) => normalizeCandidate(await read<Candidate>(STORES.CANDIDATES, id)),
+  get: async (id: string) => normalizeCandidate(await read<Candidate>(STORES.CANDIDATES, id)),
   update: (candidate: Candidate) => update<Candidate>(STORES.CANDIDATES, candidate),
   delete: (id: string) => remove(STORES.CANDIDATES, id),
-  list: () => list<Candidate>(STORES.CANDIDATES),
+  list: async () => (await list<Candidate>(STORES.CANDIDATES)).map(c => normalizeCandidate(c)!),
   clear: () => clear(STORES.CANDIDATES),
 };
 

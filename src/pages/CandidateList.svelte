@@ -49,7 +49,17 @@
     questions: ImportQuestionItem[];
   }
 
+  interface OverallStats {
+    totalCandidates: number;
+    totalSessions: number;
+    totalQuestions: number;
+    totalAnswered: number;
+    ratedCount: number;
+    ratingSum: number;
+  }
+
   let candidates: Candidate[] = $state([]);
+  let overallStats = $state<OverallStats | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
 
@@ -92,6 +102,36 @@
       candidates = await candidateDB.list();
       // Sort by creation date, newest first
       candidates.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      // Compute overall stats across all candidates
+      const allSessions = await sessionDB.list();
+      let totalQuestions = 0;
+      let totalAnswered = 0;
+      let ratedCount = 0;
+      let ratingSum = 0;
+
+      await Promise.all(
+        allSessions.map(async (session) => {
+          const questions = await sessionQuestionDB.listBySessionId(session.id);
+          totalQuestions += questions.length;
+          totalAnswered += questions.filter(
+            (q) => (q.answer && q.answer.trim().length > 0) || q.questionRating > 0 || (q.note && q.note.trim().length > 0)
+          ).length;
+          const rated = questions.filter((q) => q.questionRating > 0);
+          ratedCount += rated.length;
+          ratingSum += rated.reduce((sum, q) => sum + q.questionRating, 0);
+        })
+      );
+
+      overallStats = {
+        totalCandidates: candidates.length,
+        totalSessions: allSessions.length,
+        totalQuestions,
+        totalAnswered,
+        ratedCount,
+        ratingSum,
+      };
+
       loading = false;
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to load candidates";
@@ -562,6 +602,16 @@
 
   <header>
     <div></div>
+    {#if overallStats && overallStats.totalSessions > 0}
+      <p class="overall-stats">
+        {overallStats.totalCandidates} candidate{overallStats.totalCandidates !== 1 ? "s" : ""}
+        · {overallStats.totalSessions} session{overallStats.totalSessions !== 1 ? "s" : ""}
+        · {overallStats.totalAnswered}/{overallStats.totalQuestions} answered
+        {#if overallStats.ratedCount > 0}
+          · avg rating {(overallStats.ratingSum / overallStats.ratedCount).toFixed(1)}/10
+        {/if}
+      </p>
+    {/if}
   </header>
 
   {#if loading}
@@ -892,6 +942,25 @@
 
   .candidate-list > header {
     min-height: calc(0.9rem * 1.5);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+  }
+
+  .overall-stats {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-subtle);
+    border-radius: 6px;
+    padding: 0.25rem 0.75rem;
+    margin: 0;
+  }
+
+  :global([data-theme="dark"]) .overall-stats {
+    background: var(--color-bg-dark-2);
+    color: var(--color-text-muted);
   }
 
   .candidate-list > :not(:global(.navigation-tabs)):not(:global(.breadcrumbs)):not(header) {
