@@ -68,18 +68,38 @@
         from the Settings page.
       </p>
       <p class="welcome-note">
-        Want to use Filipa offline?
-        <a href="https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip" target="_blank" rel="noopener noreferrer" class="step-link">Download the latest build</a>
-        — unzip and open <code>dist/index.html</code> directly in your browser, no server needed.
+        Want to use Filipa offline? The easiest way is <strong>File → Save As</strong> (<code>Ctrl+S</code> / <code>Cmd+S</code>)
+        to save this page to your drive and open it anytime without internet.
+        You can also
+        <a href="https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip" target="_blank"
+           rel="noopener noreferrer" class="step-link">download the latest build</a>
+        as a zip.
       </p>
       <div class="welcome-footer">
         <label class="dont-show-label">
           <input type="checkbox" onchange={handleDontShow}/>
           Don't show this again
+          <span class="reopen-hint">
+            (You can show it again from
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="hint-icon">
+              <path
+                d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.92c.04-.34.07-.68.07-1.08s-.03-.74-.07-1.08l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.63c-.04.34-.07.69-.07 1.08s.03.74.07 1.08L2.46 13.07c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.57z"/>
+            </svg>
+            Settings)
+          </span>
         </label>
-        <button class="primary load-example-btn" onclick={handleLoadExample}>
-          Use example data →
-        </button>
+        <div class="welcome-footer-buttons">
+          <a href="#/help" use:link class="help-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="help-btn-icon">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+            </svg>
+            Help & Docs
+          </a>
+          <button class="primary load-example-btn" onclick={handleLoadExample}>
+            Use example data →
+          </button>
+        </div>
       </div>
     </div>
   {/if}
@@ -216,8 +236,64 @@
     cursor: pointer;
   }
 
+  .reopen-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+
+  .hint-icon {
+    width: 0.85rem;
+    height: 0.85rem;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+
+  .welcome-footer-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .help-btn {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    height: 2.25rem;
+    padding: 0 1rem;
+    border-radius: 6px;
+    background: #e0e0e0;
+    color: #444;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .help-btn:hover {
+    background: #d0d0d0;
+    color: #333;
+  }
+
+  .help-btn-icon {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+    flex-shrink: 0;
+    margin-right: 0.35rem;
+  }
+
   .load-example-btn {
     white-space: nowrap;
+    box-sizing: border-box !important;
+    height: 2.25rem !important;
+    padding: 0 1rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1 !important;
   }
 
   .cards-container {
@@ -324,6 +400,16 @@
 
   :global([data-theme="dark"]) .dont-show-label {
     color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .help-btn {
+    background: #3a3a3a;
+    color: #c8c8c8;
+  }
+
+  :global([data-theme="dark"]) .help-btn:hover {
+    background: #4a4a4a;
+    color: #e0e0e0;
   }
 
   :global([data-theme="dark"]) .card {

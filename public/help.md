@@ -4,8 +4,10 @@ Filipa is an interview assessment tool for IT developer candidates. All data is 
 
 ## Want to use Filipa offline?
 
-Download the [latest build](https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip) —
-unzip and open `dist/index.html` directly in your browser, no server needed.
+The easiest way: open the online version in your browser, then use **File → Save As** (or **Ctrl+S** / **Cmd+S**) and save the page as a complete HTML file. You can then open the saved `index.html` from your drive anytime — no internet needed.
+
+Alternatively, download the [latest build](https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip) —
+unzip and open `dist/index.html` directly in your browser.
 
 Or scan the QR code to open the online version:
 
