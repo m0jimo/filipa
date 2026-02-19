@@ -11,7 +11,18 @@ async function init() {
     await loadConfig();
     console.log("Filipa initialized successfully");
   } catch (error) {
-    console.error("Failed to initialize Filipa:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.startsWith("DB_VERSION_CONFLICT")) {
+      console.warn("DB version conflict detected — resetting database and reloading.");
+      try {
+        await resetDatabase();
+        window.location.reload();
+      } catch (resetError) {
+        console.error("Failed to reset database after version conflict:", resetError);
+      }
+    } else {
+      console.error("Failed to initialize Filipa:", error);
+    }
   }
 }
 

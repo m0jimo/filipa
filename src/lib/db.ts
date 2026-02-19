@@ -47,7 +47,12 @@ export async function initDB(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      reject(new Error(`Failed to open database: ${request.error?.message}`));
+      const msg = request.error?.message ?? "";
+      if (msg.includes("less than the existing version") || request.error?.name === "VersionError") {
+        reject(new Error(`DB_VERSION_CONFLICT: ${msg}`));
+      } else {
+        reject(new Error(`Failed to open database: ${msg}`));
+      }
     };
 
     request.onsuccess = () => {

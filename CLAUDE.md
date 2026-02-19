@@ -64,6 +64,34 @@ offline/regulated environments with dual-view interface for interviewer and cand
 - If the task requires complex changes, ask first if I'm sure to do that. e.g.: DB structure change, multiple files
   change
 
+## Database Migration Rules
+
+**User data must never be lost during upgrades.** Every DB schema change requires a migration script.
+
+### Rules for changing `DB_VERSION` in `src/lib/db.ts`
+
+1. **Increment `DB_VERSION`** by exactly 1.
+2. **Add a migration block** inside `onupgradeneeded` guarded by `oldVersion`:
+   ```ts
+   if (oldVersion < NEW_VERSION) {
+     // transform existing data here using the upgrade transaction
+   }
+   ```
+3. **Never use `resetDatabase()` or `deleteDatabase()` as a migration strategy** — this destroys user data.
+4. **New stores/indexes**: always guard with `if (!db.objectStoreNames.contains(...))` so fresh installs and upgrades follow the same path.
+5. **Field renames/type changes**: use a cursor over the affected store and call `cursor.update(record)` within the upgrade transaction.
+6. **Backfilling new fields**: iterate with a cursor and set sensible defaults for existing records.
+7. **Test both paths**: fresh install (oldVersion === 0) and upgrade from each prior version.
+
+### Current migration history
+
+| Version | Change |
+|---------|--------|
+| 1 → 2  | Added `hash` index to `questions` store |
+| 2 → 3  | Renamed `rating` → `difficulty` on all questions |
+| 3 → 4  | *(unknown — document here when identified)* |
+| 4 → 5  | Added `sortOrder` index to `sessions` store; backfilled existing sessions |
+
 ## Deployment Notes
 
 - Deployed to static hosting - GitHub Pages
