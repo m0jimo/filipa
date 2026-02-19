@@ -17,7 +17,7 @@ import type {
 // ============================================================================
 
 const DB_NAME = "FilipaDB";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 // Object store names
 export const STORES = {
@@ -94,6 +94,29 @@ export async function initDB(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains(STORES.CONFIG)) {
         db.createObjectStore(STORES.CONFIG, { keyPath: "id" });
+      }
+
+      // Migration from version 4 to 5: Add sortOrder index to sessions store
+      if (oldVersion < 5 && db.objectStoreNames.contains(STORES.SESSIONS)) {
+        const transaction = (event.target as IDBOpenDBRequest).transaction!;
+        const sessionStore = transaction.objectStore(STORES.SESSIONS);
+        if (!sessionStore.indexNames.contains("sortOrder")) {
+          sessionStore.createIndex("sortOrder", "sortOrder", { unique: false });
+        }
+        // Backfill sortOrder for existing sessions using cursor
+        const cursorRequest = sessionStore.openCursor();
+        let order = 0;
+        cursorRequest.onsuccess = (e) => {
+          const cursor = (e.target as IDBRequest).result;
+          if (cursor) {
+            const session = cursor.value;
+            if (session.sortOrder === undefined) {
+              session.sortOrder = order++;
+              cursor.update(session);
+            }
+            cursor.continue();
+          }
+        };
       }
 
       // Migration from version 1 to 2: Add hash index to questions store
@@ -344,8 +367,10 @@ export const sessionDB = {
   update: (session: Session) => update<Session>(STORES.SESSIONS, session),
   delete: (id: string) => remove(STORES.SESSIONS, id),
   list: () => list<Session>(STORES.SESSIONS),
-  listByCandidateId: (candidateId: string) =>
-    queryByIndex<Session>(STORES.SESSIONS, "candidateId", candidateId),
+  listByCandidateId: async (candidateId: string) => {
+    const sessions = await queryByIndex<Session>(STORES.SESSIONS, "candidateId", candidateId);
+    return sessions.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  },
   clear: () => clear(STORES.SESSIONS),
 };
 

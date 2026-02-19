@@ -366,6 +366,7 @@
       date: new Date(s.date),
       notes: s.notes,
       currentQuestionIndex: s.currentQuestionIndex,
+      sortOrder: s.sortOrder ?? 0,
       createdAt: new Date(s.createdAt),
       updatedAt: new Date(s.updatedAt)
     };

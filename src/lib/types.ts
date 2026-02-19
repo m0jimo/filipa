@@ -54,6 +54,8 @@ export interface Session {
   notes: string;
   /** Index of currently active question during interview (for sync) */
   currentQuestionIndex: number;
+  /** Manual sort order within candidate's session list */
+  sortOrder: number;
   /** Timestamp when session was created */
   createdAt: Date;
   /** Timestamp when session was last updated */

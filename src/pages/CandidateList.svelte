@@ -474,6 +474,7 @@
       interviewers: cleanInterviewers,
       notes: String(data.session.notes || ""),
       currentQuestionIndex: -1,
+      sortOrder: 0,
       createdAt: now,
       updatedAt: now,
     };

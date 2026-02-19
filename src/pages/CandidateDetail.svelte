@@ -111,8 +111,6 @@
       }
 
       sessions = await sessionDB.listByCandidateId(candidateId);
-      // Sort by date, newest first
-      sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       // Load stats for each session
       const summaries: Record<string, SessionSummary> = {};
@@ -225,6 +223,7 @@
           interviewers: interviewersList,
           notes: sessionFormData.notes.trim(),
           currentQuestionIndex: -1,
+          sortOrder: sessions.length,
           createdAt: now,
           updatedAt: now,
         };
@@ -258,6 +257,22 @@
 
   function cancelDeleteSession() {
     deleteConfirmSessionId = null;
+  }
+
+  async function moveSession(index: number, direction: -1 | 1) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= sessions.length) return;
+
+    // Get a plain (non-proxy) snapshot of the sessions array
+    const updated: Session[] = $state.snapshot(sessions);
+    [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+
+    // Reassign sortOrder to match current array positions and persist
+    for (let idx = 0; idx < updated.length; idx++) {
+      updated[idx].sortOrder = idx;
+    }
+    await Promise.all(updated.map((s) => sessionDB.update(s)));
+    sessions = updated;
   }
 
   function closeEditCandidateModal() {
@@ -775,6 +790,7 @@
       interviewers: importData.session.interviewers || [],
       notes: importData.session.notes || "Imported from external session",
       currentQuestionIndex: -1,
+      sortOrder: sessions.length,
       createdAt: now,
       updatedAt: now,
     };
@@ -873,7 +889,7 @@
         </div>
       {:else}
         <div class="session-list">
-          {#each sessions as session (session.id)}
+          {#each sessions as session, i (session.id)}
             <div class="session-card-wrapper">
               <div class="session-card">
                 <div class="session-card-main">
@@ -911,6 +927,22 @@
                 {/if}
               </div>
               <div class="card-actions">
+                <button
+                  onclick={() => moveSession(i, -1)}
+                  class="action-btn move"
+                  title="Move up"
+                  disabled={i === 0}
+                >
+                  ↑
+                </button>
+                <button
+                  onclick={() => moveSession(i, 1)}
+                  class="action-btn move"
+                  title="Move down"
+                  disabled={i === sessions.length - 1}
+                >
+                  ↓
+                </button>
                 <button
                   onclick={(e) => confirmDeleteSession(session.id, e)}
                   class="action-btn delete-narrow"
@@ -1256,6 +1288,25 @@
 
   /* Base action-btn, card-actions, edit, delete styles now in app.css */
 
+  .action-btn.move {
+    flex: 0 0 2rem;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    padding: 0;
+  }
+
+  .action-btn.move:hover:not(:disabled) {
+    background: #e0e0e0;
+    color: var(--color-text);
+    transform: translateY(-1px);
+  }
+
+  .action-btn.move:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
   .action-btn.export {
     flex: 1;
     background: #e8f4f8;
@@ -1405,6 +1456,16 @@
   }
 
   /* Action btn edit/delete dark theme now in app.css */
+
+  :global([data-theme="dark"]) .action-btn.move {
+    background: var(--color-bg-dark-2);
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .action-btn.move:hover:not(:disabled) {
+    background: var(--color-bg-dark-3);
+    color: #fff;
+  }
 
   :global([data-theme="dark"]) .action-btn.export {
     background: #1a3a4a;
