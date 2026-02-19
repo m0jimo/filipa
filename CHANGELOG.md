@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.2] — 2026-02-19
+
+### Fixed
+
+- auto-push tags and create versioned GitHub releases
+- remove File → Save As offline instructions
+
+
 ## [0.3.1] — 2026-02-19
 
 ### Fixed
