@@ -146,7 +146,4 @@ run(`git add package.json CHANGELOG.md`);
 run(`git commit -m "chore: release v${newVersion}"`);
 run(`git tag v${newVersion}`);
 console.log(`Committed and tagged as v${newVersion}.`);
-
-run(`git push`);
-run(`git push --tags`);
-console.log(`Pushed commit and tag — GitHub Actions will create the release.`);
+console.log(`\nNext step: push the commit and tag v${newVersion} to trigger the GitHub Actions release.`);
