@@ -68,12 +68,10 @@
         from the Settings page.
       </p>
       <p class="welcome-note">
-        Want to use Filipa offline? The easiest way is <strong>File → Save As</strong> (<code>Ctrl+S</code> / <code>Cmd+S</code>)
-        to save this page to your drive and open it anytime without internet.
-        You can also
+        Want to use Filipa offline?
         <a href="https://github.com/m0jimo/filipa/releases/download/latest/filipa.zip" target="_blank"
-           rel="noopener noreferrer" class="step-link">download the latest build</a>
-        as a zip.
+           rel="noopener noreferrer" class="step-link">Download the latest build</a>
+        as a zip and open it directly from your drive without internet.
       </p>
       <div class="welcome-footer">
         <label class="dont-show-label">
