@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] — 2026-04-10
+
+### Added
+
+- add full candidate export/import as JSON v2.0.0
+- add Clear Session button to reset all session interactions
+- move question tags into header meta row
+- replace Expected Answer details + Record button with tab bar
+- merge candidate and session notes into single Notes modal
+- introduce CompactDialog for small/medium modals
+- make notes textareas grow to fill modal vertical space
+
+### Fixed
+
+- show full first element in question text, hide See more when no extra content
+- expand dialogs to 90vw/90vh, fix button alignment, prevent accidental close on dirty state
+
+
 ## [0.3.6] — 2026-02-19
 
 ### Chore
