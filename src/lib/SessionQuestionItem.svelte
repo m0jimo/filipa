@@ -48,13 +48,41 @@
   let isQuestionExpanded = $state(false);
   let questionTextRef: HTMLDivElement | null = $state(null);
   let isQuestionTruncated = $state(false);
+  let collapsedHeight = $state("4em");
   let questionItemRef: HTMLDivElement | null = $state(null);
   let activeTab: "expected" | "record" = $state("record");
 
+  const measureCollapsedHeight = () => {
+    if (!questionTextRef) return;
+    const markdownEl = questionTextRef.querySelector(".markdown-preview");
+    if (!markdownEl) return;
+
+    // Temporarily remove max-height so we can measure true content height
+    questionTextRef.style.maxHeight = "none";
+
+    const children = Array.from(markdownEl.children) as HTMLElement[];
+    const firstChild = children[0] ?? null;
+    const firstChildHeight = firstChild ? firstChild.offsetHeight : 0;
+    const fullScrollHeight = (markdownEl as HTMLElement).scrollHeight;
+    const hasMoreChildren = children.length > 1;
+
+    questionTextRef.style.maxHeight = "";
+
+    if (firstChildHeight > 0) collapsedHeight = `${firstChildHeight + 8}px`;
+    const firstChildMargin = firstChild
+      ? parseFloat(getComputedStyle(firstChild).marginBottom) + parseFloat(getComputedStyle(firstChild).marginTop)
+      : 0;
+    isQuestionTruncated = hasMoreChildren || fullScrollHeight > firstChildHeight + firstChildMargin + 2;
+  };
+
   $effect(() => {
     if (questionTextRef) {
-      // Check if content is truncated
-      isQuestionTruncated = questionTextRef.scrollHeight > 150;
+      requestAnimationFrame(() => {
+        if (!questionTextRef) return;
+        const imgs = questionTextRef.querySelectorAll("img");
+        imgs.forEach((img) => img.addEventListener("load", measureCollapsedHeight, { once: true }));
+        measureCollapsedHeight();
+      });
     }
   });
 
@@ -165,7 +193,12 @@
   </div>
 
   <div class="question-content">
-    <div class="question-text" class:expanded={isQuestionExpanded} bind:this={questionTextRef}>
+    <div
+      class="question-text"
+      class:expanded={isQuestionExpanded}
+      style:--collapsed-height={collapsedHeight}
+      bind:this={questionTextRef}
+    >
       <MarkdownPreview md={question.questionObj.question} />
     </div>
 
@@ -449,7 +482,7 @@
 
   .question-text {
     margin-bottom: 0.5rem;
-    max-height: 150px;
+    max-height: var(--collapsed-height, 4em);
     overflow: hidden;
     position: relative;
     transition: max-height 0.3s ease;
@@ -465,7 +498,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 40px;
+    height: 20px;
     background: linear-gradient(to bottom, transparent, var(--color-bg));
     pointer-events: none;
     transition: opacity 0.3s ease;
