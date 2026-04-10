@@ -12,6 +12,7 @@
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
+  import CompactDialog from "../lib/CompactDialog.svelte";
 
   let questionSets: QuestionSet[] = $state([]);
   let setsLoading = $state(true);
@@ -786,11 +787,10 @@
 </div>
 
 <!-- Create/Edit Set Modal -->
-<SessionModal
+<CompactDialog
   show={showSetModal}
   onClose={closeSetModal}
   title={editingSet ? "Edit Question Set" : "New Question Set"}
-  size="medium"
 >
   <form onsubmit={handleSetSubmit} autocomplete="off" data-form-type="other">
     <div class="form-group">
@@ -826,14 +826,13 @@
       </button>
     </div>
   </form>
-</SessionModal>
+</CompactDialog>
 
 <!-- Delete Set Confirmation Modal -->
-<SessionModal
+<CompactDialog
   show={!!deleteSetConfirmId}
   onClose={() => (deleteSetConfirmId = null)}
   title="Delete Question Set?"
-  size="small"
 >
   <p class="confirm-text">
     Are you sure you want to delete this question set? The questions themselves will not be deleted.
@@ -848,14 +847,13 @@
       class="danger">Delete</button
     >
   </div>
-</SessionModal>
+</CompactDialog>
 
 <!-- Export Format Modal -->
-<SessionModal
+<CompactDialog
   show={showExportModal}
   onClose={closeExportModal}
   title="Export Question Sets"
-  size="medium"
 >
   <p class="export-description">
     Choose the export format for the selected {selectedCount} set{selectedCount !== 1 ? "s" : ""} with
@@ -893,14 +891,13 @@
       {isExporting ? "Exporting..." : "Export"}
     </button>
   </div>
-</SessionModal>
+</CompactDialog>
 
 <!-- Import Modal -->
-<SessionModal
+<CompactDialog
   show={showImportModal}
   onClose={closeImportModal}
   title="Import Question Sets"
-  size="large"
 >
   <input
     bind:this={importFileInput}
@@ -1064,7 +1061,7 @@
       </div>
     </div>
   {/if}
-</SessionModal>
+</CompactDialog>
 
 <style>
   .question-sets > header,

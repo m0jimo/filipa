@@ -7,6 +7,7 @@
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
+  import CompactDialog from "../lib/CompactDialog.svelte";
   import MarkdownEditor from "../components/MarkdownEditor.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import { userSettings, type QuestionViewMode, type EditorViewMode } from "../lib/userSettings";
@@ -1258,7 +1259,7 @@
 </SessionModal>
 
 <!-- Delete Confirmation Modal -->
-<SessionModal show={!!deleteConfirmId} onClose={cancelDelete} title="Delete Question?" size="small">
+<CompactDialog show={!!deleteConfirmId} onClose={cancelDelete} title="Delete Question?">
   <p class="confirm-text">
     Are you sure you want to delete this question? This action cannot be undone.
   </p>
@@ -1270,14 +1271,13 @@
       class="danger">Delete</button
     >
   </div>
-</SessionModal>
+</CompactDialog>
 
 <!-- Bulk Delete Confirmation Modal -->
-<SessionModal
+<CompactDialog
   show={showBulkDeleteConfirm}
   onClose={cancelBulkDelete}
   title="Delete Selected Questions?"
-  size="small"
 >
   <p class="confirm-text">
     Are you sure you want to delete <strong>{selectedQuestionIds.size}</strong> selected question{selectedQuestionIds.size !==
@@ -1293,14 +1293,13 @@
       {isDeletingBulk ? "Deleting..." : "Delete"}
     </button>
   </div>
-</SessionModal>
+</CompactDialog>
 
 <!-- Import Modal -->
-<SessionModal
+<CompactDialog
   show={showImportModal}
   onClose={closeImportModal}
   title="Import Questions"
-  size="large"
 >
   {#if !importPreview && !importResults}
     <div class="import-instructions">
@@ -1526,14 +1525,13 @@ Type: text</code
       </div>
     </div>
   {/if}
-</SessionModal>
+</CompactDialog>
 
 <!-- Export Modal -->
-<SessionModal
+<CompactDialog
   show={showExportModal}
   onClose={closeExportModal}
   title="Export Questions"
-  size="medium"
 >
   <p class="export-description">
     Choose the export format for the selected {selectedQuestionIds.size} question{selectedQuestionIds.size !==
@@ -1573,7 +1571,7 @@ Type: text</code
       {isExporting ? "Exporting..." : "Export"}
     </button>
   </div>
-</SessionModal>
+</CompactDialog>
 
 <style>
 

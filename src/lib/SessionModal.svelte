@@ -188,6 +188,13 @@
     box-sizing: border-box;
   }
 
+  .modal-content :global(form) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
   /* Pin modal-actions to the bottom of the scrollable content area */
   .modal :global(.modal-actions) {
     position: sticky;
