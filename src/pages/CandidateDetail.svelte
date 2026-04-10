@@ -22,6 +22,7 @@
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
+  import CompactDialog from "../lib/CompactDialog.svelte";
 
   let { params = { candidateId: "" } }: { params: { candidateId: string } } = $props();
 
@@ -1028,14 +1029,13 @@
       <small>Separate multiple names with commas (e.g., John Doe, Jane Smith)</small>
     </div>
 
-    <div class="form-group">
+    <div class="form-group form-group-grow">
       <label for="interviewSessionNotes">Session Notes</label>
       <textarea
         id="interviewSessionNotes"
         name="interview-session-notes"
         bind:value={sessionFormData.notes}
         placeholder="Add any notes about this session"
-        rows="4"
         autocomplete="off"
         data-lpignore="true"
         data-form-type="other"
@@ -1076,14 +1076,13 @@
       />
     </div>
 
-    <div class="form-group">
+    <div class="form-group form-group-grow">
       <label for="candidateNotes">Notes</label>
       <textarea
         id="candidateNotes"
         name="candidate-notes"
         bind:value={candidateFormData.notes}
         placeholder="Add any notes about the candidate"
-        rows="4"
         autocomplete="off"
         data-lpignore="true"
         data-form-type="other"
@@ -1164,11 +1163,10 @@
 </SessionModal>
 
 <!-- Import Session Modal -->
-<SessionModal
+<CompactDialog
   show={showImportModal}
   onClose={closeImportModal}
   title="Import Session"
-  size="medium"
 >
   <p class="modal-description">
     Import a session from a colleague. You can import both JSON and Markdown (.md) formats. The
@@ -1226,7 +1224,7 @@
       {isImporting ? "Importing..." : "Import"}
     </button>
   </div>
-</SessionModal>
+</CompactDialog>
 
 <style>
 

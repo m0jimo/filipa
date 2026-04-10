@@ -9,6 +9,7 @@
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
+  import CompactDialog from "../lib/CompactDialog.svelte";
 
   interface ImportQuestionItem {
     question: {
@@ -743,7 +744,7 @@
   show={showModal}
   onClose={closeModal}
   title={editingCandidate ? "Edit Candidate" : "New Candidate"}
-  size="medium"
+  size="large"
 >
   <form onsubmit={handleSubmit} autocomplete="off" data-form-type="other">
     <div class="form-group">
@@ -761,14 +762,13 @@
       />
     </div>
 
-    <div class="form-group">
+    <div class="form-group form-group-grow">
       <label for="newCandidateNotes">Notes</label>
       <textarea
         id="newCandidateNotes"
         name="new-candidate-notes"
         bind:value={formData.notes}
         placeholder="Add any notes about the candidate"
-        rows="4"
         autocomplete="off"
         data-lpignore="true"
         data-form-type="other"
@@ -787,11 +787,10 @@
 </SessionModal>
 
 <!-- Delete Confirmation Modal -->
-<SessionModal
+<CompactDialog
   show={!!deleteConfirmId}
   onClose={cancelDelete}
   title="Delete Candidate?"
-  size="small"
 >
   <p class="confirm-text">
     Are you sure you want to delete this candidate? This action cannot be undone.
@@ -802,7 +801,7 @@
       >Delete</button
     >
   </div>
-</SessionModal>
+</CompactDialog>
 
 <!-- Conflict Resolution Modal -->
 <SessionModal

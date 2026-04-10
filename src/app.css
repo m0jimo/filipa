@@ -379,6 +379,20 @@ button:disabled {
   resize: vertical;
 }
 
+.form-group-grow {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.form-group-grow textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+}
+
 .form-group small {
   display: block;
   margin-top: 0.25rem;

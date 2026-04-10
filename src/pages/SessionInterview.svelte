@@ -730,20 +730,28 @@
 
 <!-- Session Notes Modal -->
 <SessionModal show={showNotesModal} title="Session Notes" onClose={closeNotesModal} size="large">
-  <div class="form-group">
-    <textarea
-      bind:value={sessionNotes}
-      placeholder="Add notes about this interview session..."
-      rows="12"
-    ></textarea>
-  </div>
-  <div class="modal-actions">
-    <button type="button" onclick={closeNotesModal} class="secondary">Cancel</button>
-    <button type="button" onclick={saveSessionNotes} class="primary">Save Notes</button>
+  <div class="notes-modal-body">
+    <div class="form-group form-group-grow">
+      <textarea
+        bind:value={sessionNotes}
+        placeholder="Add notes about this interview session..."
+      ></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" onclick={closeNotesModal} class="secondary">Cancel</button>
+      <button type="button" onclick={saveSessionNotes} class="primary">Save Notes</button>
+    </div>
   </div>
 </SessionModal>
 
 <style>
+
+  .notes-modal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
 
   h1 {
     display: flex;
