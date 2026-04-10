@@ -50,6 +50,36 @@
     questions: ImportQuestionItem[];
   }
 
+  interface CandidateExportSessionEntry {
+    session: {
+      id: string;
+      candidateId: string;
+      name: string;
+      date: string;
+      interviewers: string[];
+      notes: string;
+      currentQuestionIndex: number;
+      sortOrder: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+    questions: ImportQuestionItem[];
+  }
+
+  interface CandidateImportData {
+    version: "2.0.0";
+    exportedAt: string;
+    type: "candidate";
+    candidate: {
+      id: string;
+      displayName: string;
+      notes?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    };
+    sessions: CandidateExportSessionEntry[];
+  }
+
   interface CandidateStats {
     sessions: number;
     total: number;
@@ -85,6 +115,13 @@
   // Import state
   let fileInput: HTMLInputElement;
   let importing = $state(false);
+
+  // Candidate export/import state
+  let exportingCandidateId: string | null = $state(null);
+  let isExportingCandidate = $state(false);
+  let showCandidateMergeModal = $state(false);
+  let pendingCandidateImport: CandidateImportData | null = $state(null);
+  let candidateMergeChoice: "merge" | "new" = $state("merge");
 
   // Conflict resolution state
   let showConflictModal = $state(false);
@@ -276,6 +313,26 @@
       let importData: ImportData;
 
       if (file.name.endsWith(".json")) {
+        const rawJson = JSON.parse(fileContent) as Record<string, unknown>;
+        if (rawJson["version"] === "2.0.0" && rawJson["type"] === "candidate") {
+          const data = parseCandidateJsonImport(rawJson);
+          pendingCandidateImport = data;
+          const allCandidates = await candidateDB.list();
+          const nameMatch = allCandidates.find((c) => c.displayName === data.candidate.displayName);
+          if (nameMatch) {
+            candidateMergeChoice = "merge";
+            showCandidateMergeModal = true;
+            importing = false;
+          } else {
+            await importCandidateData(data, "new");
+            fileInput.value = "";
+            await loadCandidates();
+            alert(`Imported: ${data.candidate.displayName}, ${data.sessions.length} session(s)`);
+            pendingCandidateImport = null;
+            importing = false;
+          }
+          return;
+        }
         importData = parseJsonWithConfig(fileContent);
       } else if (file.name.endsWith(".md")) {
         // Use unified markdown format
@@ -367,6 +424,264 @@
       fileInput.value = "";
     }
   }
+
+  const toISOSafe = (value: unknown): string => {
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === "string") return value;
+    return new Date().toISOString();
+  };
+
+  const generateCandidateJsonExport = (
+    candidate: Candidate,
+    sessionsWithQuestions: Array<{ session: Session; questions: SessionQuestion[] }>
+  ): string => {
+    const data = {
+      version: "2.0.0",
+      exportedAt: new Date().toISOString(),
+      type: "candidate",
+      candidate: {
+        id: candidate.id,
+        displayName: candidate.displayName,
+        notes: candidate.notes,
+        createdAt: toISOSafe(candidate.createdAt),
+        updatedAt: toISOSafe(candidate.updatedAt),
+      },
+      sessions: sessionsWithQuestions.map(({ session, questions }) => ({
+        session: {
+          id: session.id,
+          candidateId: session.candidateId,
+          name: session.name,
+          date: toISOSafe(session.date),
+          interviewers: session.interviewers,
+          notes: session.notes,
+          currentQuestionIndex: session.currentQuestionIndex,
+          sortOrder: session.sortOrder,
+          createdAt: toISOSafe(session.createdAt),
+          updatedAt: toISOSafe(session.updatedAt),
+        },
+        questions: questions.map((sq) => ({
+          id: sq.id,
+          sessionId: sq.sessionId,
+          order: sq.order,
+          note: sq.note,
+          questionRating: sq.questionRating,
+          answer: sq.answer,
+          isPresented: sq.isPresented,
+          question: {
+            id: sq.questionObj.id,
+            question: sq.questionObj.question,
+            expectedAnswer: sq.questionObj.expectedAnswer,
+            tags: sq.questionObj.tags,
+            questionType: sq.questionObj.questionType,
+            difficulty: sq.questionObj.difficulty,
+            hash: sq.questionObj.hash,
+            createdAt: toISOSafe(sq.questionObj.createdAt),
+          },
+          createdAt: toISOSafe(sq.createdAt),
+          updatedAt: toISOSafe(sq.updatedAt),
+        })),
+      })),
+    };
+    return JSON.stringify(data, null, 2);
+  };
+
+  const handleExportCandidate = async (candidateId: string, event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    exportingCandidateId = candidateId;
+    isExportingCandidate = true;
+    try {
+      const candidate = await candidateDB.get(candidateId);
+      if (!candidate) throw new Error("Candidate not found");
+      const sessions = await sessionDB.listByCandidateId(candidateId);
+      const sessionsWithQuestions = await Promise.all(
+        sessions.map(async (session) => {
+          const questions = await sessionQuestionDB.listBySessionId(session.id);
+          questions.sort((a, b) => a.order - b.order);
+          return { session, questions };
+        })
+      );
+      const content = generateCandidateJsonExport(candidate, sessionsWithQuestions);
+      const date = new Date().toISOString().slice(0, 10);
+      const safeName = candidate.displayName.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+      const filename = `candidate-${safeName}-${date}.json`;
+      const blob = new Blob([content], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to export candidate: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      exportingCandidateId = null;
+      isExportingCandidate = false;
+    }
+  };
+
+  const parseCandidateJsonImport = (rawJson: Record<string, unknown>): CandidateImportData => {
+    const now = new Date().toISOString();
+    const rawCandidate = (rawJson["candidate"] as Record<string, unknown>) ?? {};
+    const rawSessions = Array.isArray(rawJson["sessions"]) ? rawJson["sessions"] : [];
+
+    return {
+      version: "2.0.0",
+      exportedAt: typeof rawJson["exportedAt"] === "string" ? rawJson["exportedAt"] : now,
+      type: "candidate",
+      candidate: {
+        id: typeof rawCandidate["id"] === "string" ? rawCandidate["id"] : generateId(),
+        displayName: typeof rawCandidate["displayName"] === "string" && rawCandidate["displayName"]
+          ? rawCandidate["displayName"]
+          : "Imported Candidate",
+        notes: typeof rawCandidate["notes"] === "string" ? rawCandidate["notes"] : "",
+        createdAt: typeof rawCandidate["createdAt"] === "string" ? rawCandidate["createdAt"] : now,
+        updatedAt: typeof rawCandidate["updatedAt"] === "string" ? rawCandidate["updatedAt"] : now,
+      },
+      sessions: rawSessions.map((entry: unknown) => {
+        const e = (entry as Record<string, unknown>) ?? {};
+        const rawSession = (e["session"] as Record<string, unknown>) ?? {};
+        const rawQuestions = Array.isArray(e["questions"]) ? e["questions"] : [];
+        return {
+          session: {
+            id: typeof rawSession["id"] === "string" ? rawSession["id"] : generateId(),
+            candidateId: typeof rawSession["candidateId"] === "string" ? rawSession["candidateId"] : "",
+            name: typeof rawSession["name"] === "string" ? rawSession["name"] : "Imported Session",
+            date: typeof rawSession["date"] === "string" ? rawSession["date"] : now,
+            interviewers: Array.isArray(rawSession["interviewers"])
+              ? rawSession["interviewers"].map((i: unknown) => String(i))
+              : [],
+            notes: typeof rawSession["notes"] === "string" ? rawSession["notes"] : "",
+            currentQuestionIndex: typeof rawSession["currentQuestionIndex"] === "number"
+              ? rawSession["currentQuestionIndex"]
+              : -1,
+            sortOrder: typeof rawSession["sortOrder"] === "number" ? rawSession["sortOrder"] : 0,
+            createdAt: typeof rawSession["createdAt"] === "string" ? rawSession["createdAt"] : now,
+            updatedAt: typeof rawSession["updatedAt"] === "string" ? rawSession["updatedAt"] : now,
+          },
+          questions: rawQuestions.map((q: unknown) => {
+            const qe = (q as Record<string, unknown>) ?? {};
+            const rawQ = (qe["question"] as Record<string, unknown>) ?? {};
+            return {
+              id: typeof qe["id"] === "string" ? qe["id"] : generateId(),
+              sessionId: typeof qe["sessionId"] === "string" ? qe["sessionId"] : "",
+              order: typeof qe["order"] === "number" ? qe["order"] : 0,
+              note: typeof qe["note"] === "string" ? qe["note"] : "",
+              questionRating: typeof qe["questionRating"] === "number" ? qe["questionRating"] : 0,
+              answer: typeof qe["answer"] === "string" ? qe["answer"] : "",
+              isPresented: typeof qe["isPresented"] === "boolean" ? qe["isPresented"] : false,
+              createdAt: typeof qe["createdAt"] === "string" ? qe["createdAt"] : now,
+              updatedAt: typeof qe["updatedAt"] === "string" ? qe["updatedAt"] : now,
+              question: {
+                id: typeof rawQ["id"] === "string" ? rawQ["id"] : generateId(),
+                question: typeof rawQ["question"] === "string" ? rawQ["question"] : "",
+                expectedAnswer: typeof rawQ["expectedAnswer"] === "string" ? rawQ["expectedAnswer"] : "",
+                tags: Array.isArray(rawQ["tags"]) ? rawQ["tags"].map((t: unknown) => String(t)) : [],
+                questionType: typeof rawQ["questionType"] === "string" ? rawQ["questionType"] : "text",
+                difficulty: Array.isArray(rawQ["difficulty"])
+                  ? rawQ["difficulty"].map((d: unknown) => Number(d))
+                  : [],
+                hash: typeof rawQ["hash"] === "string" ? rawQ["hash"] : "",
+                createdAt: typeof rawQ["createdAt"] === "string" ? rawQ["createdAt"] : now,
+              },
+            } as ImportQuestionItem;
+          }),
+        };
+      }),
+    };
+  };
+
+  const importCandidateData = async (
+    data: CandidateImportData,
+    mode: "merge" | "new"
+  ) => {
+    const now = new Date();
+    let targetCandidate: Candidate;
+
+    if (mode === "merge") {
+      const allCandidates = await candidateDB.list();
+      const existing = allCandidates.find((c) => c.displayName === data.candidate.displayName);
+      if (!existing) throw new Error("Candidate not found for merge");
+      targetCandidate = existing;
+    } else {
+      const allCandidates = await candidateDB.list();
+      const nameTaken = allCandidates.some((c) => c.displayName === data.candidate.displayName);
+      const displayName = nameTaken
+        ? `${data.candidate.displayName} (Imported)`
+        : data.candidate.displayName;
+      targetCandidate = {
+        id: generateId(),
+        displayName,
+        notes: data.candidate.notes ?? "",
+        createdAt: now,
+        updatedAt: now,
+      };
+      await candidateDB.create(targetCandidate);
+    }
+
+    for (const entry of data.sessions) {
+      const newSession: Session = {
+        id: generateId(),
+        candidateId: targetCandidate.id,
+        name: entry.session.name + " (imported)",
+        date: new Date(entry.session.date),
+        interviewers: entry.session.interviewers.map((s) => String(s)),
+        notes: entry.session.notes,
+        currentQuestionIndex: entry.session.currentQuestionIndex,
+        sortOrder: entry.session.sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await sessionDB.create(newSession);
+
+      for (let i = 0; i < entry.questions.length; i++) {
+        const qData = entry.questions[i];
+        const question = createCleanQuestion(qData.question, generateId(), now);
+        const sessionQuestion: SessionQuestion = {
+          id: generateId(),
+          sessionId: newSession.id,
+          order: qData.order ?? i,
+          note: qData.note || "",
+          questionRating: qData.questionRating ?? 0,
+          answer: qData.answer || "",
+          isPresented: qData.isPresented ?? false,
+          questionObj: question,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await sessionQuestionDB.create(sessionQuestion);
+      }
+    }
+  };
+
+  const cancelCandidateMergeModal = () => {
+    showCandidateMergeModal = false;
+    pendingCandidateImport = null;
+    candidateMergeChoice = "merge";
+    importing = false;
+    if (fileInput) fileInput.value = "";
+  };
+
+  const handleCandidateMergeResolution = async () => {
+    if (!pendingCandidateImport) return;
+    const data = structuredClone($state.snapshot(pendingCandidateImport));
+    showCandidateMergeModal = false;
+    importing = true;
+    try {
+      await importCandidateData(data, candidateMergeChoice);
+      if (fileInput) fileInput.value = "";
+      await loadCandidates();
+      alert(`Imported: ${data.candidate.displayName}, ${data.sessions.length} session(s)`);
+    } catch (err) {
+      alert("Failed to import: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      pendingCandidateImport = null;
+      candidateMergeChoice = "merge";
+      importing = false;
+    }
+  };
 
   function createCleanQuestion(
     questionData: ImportQuestionItem["question"],
@@ -719,6 +1034,14 @@
               >
                 Edit
               </button>
+              <button
+                onclick={(e) => handleExportCandidate(candidate.id, e)}
+                class="action-btn export-candidate"
+                title="Export candidate with all sessions as JSON"
+                disabled={isExportingCandidate && exportingCandidateId === candidate.id}
+              >
+                {isExportingCandidate && exportingCandidateId === candidate.id ? "..." : "Export"}
+              </button>
               <a href="/candidate/{candidate.id}" use:link class="action-btn select-interview">
                 Show Interviews →
               </a>
@@ -986,6 +1309,38 @@
   {/if}
 </SessionModal>
 
+<!-- Candidate Merge Modal -->
+<CompactDialog show={showCandidateMergeModal} onClose={cancelCandidateMergeModal} title="Candidate Already Exists">
+  {#if pendingCandidateImport}
+    <p class="conflict-detail">
+      A candidate named <strong>{pendingCandidateImport.candidate.displayName}</strong> already exists.
+    </p>
+    <p style="font-size:0.85rem; color: var(--color-text-secondary); margin-bottom:0.5rem">
+      {pendingCandidateImport.sessions.length} session(s) will be imported.
+    </p>
+    <div class="radio-group">
+      <label class="radio-option">
+        <input type="radio" name="candidateMerge" value="merge" bind:group={candidateMergeChoice} />
+        <div class="radio-content">
+          <strong>Merge into existing candidate</strong>
+          <span>Sessions are added to the existing candidate</span>
+        </div>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="candidateMerge" value="new" bind:group={candidateMergeChoice} />
+        <div class="radio-content">
+          <strong>Import as new candidate</strong>
+          <span>Creates "{pendingCandidateImport.candidate.displayName} (Imported)"</span>
+        </div>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" onclick={cancelCandidateMergeModal} class="secondary">Cancel</button>
+      <button type="button" onclick={handleCandidateMergeResolution} class="primary">Import</button>
+    </div>
+  {/if}
+</CompactDialog>
+
 <style>
   .candidate-list {
   }
@@ -1115,6 +1470,32 @@
   }
 
   /* Base action-btn, card-actions, edit, delete styles now in app.css */
+
+  .action-btn.export-candidate {
+    flex: 1;
+    background: #e8f4f8;
+    color: #0277bd;
+    font-weight: 500;
+  }
+
+  .action-btn.export-candidate:hover:not(:disabled) {
+    background: #b3e5fc;
+    transform: translateY(-1px);
+  }
+
+  .action-btn.export-candidate:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  :global([data-theme="dark"]) .action-btn.export-candidate {
+    background: #1a3a4a;
+    color: #81d4fa;
+  }
+
+  :global([data-theme="dark"]) .action-btn.export-candidate:hover:not(:disabled) {
+    background: #2a4a5a;
+  }
 
   .action-btn.select-interview {
     flex: 2;
