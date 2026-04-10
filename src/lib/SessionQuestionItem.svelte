@@ -144,6 +144,11 @@
           Difficulty: {question.questionObj.difficulty.join(", ")}
         </span>
       {/if}
+      {#if question.questionObj.tags.length > 0}
+        {#each question.questionObj.tags as tag (tag)}
+          <span class="tag">{tag}</span>
+        {/each}
+      {/if}
       {#if question.answer.trim().length > 0}
         <span class="status-badge answered">✓ Answered</span>
       {/if}
@@ -206,14 +211,6 @@
       <button type="button" class="expand-btn" onclick={toggleQuestionExpanded}>
         {isQuestionExpanded ? "▲ Show less" : "▼ See more"}
       </button>
-    {/if}
-
-    {#if question.questionObj.tags.length > 0}
-      <div class="tags">
-        {#each question.questionObj.tags as tag (tag)}
-          <span class="tag">{tag}</span>
-        {/each}
-      </div>
     {/if}
   </div>
 
