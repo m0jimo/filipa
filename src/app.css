@@ -734,6 +734,12 @@ button:disabled {
   color: var(--color-text-secondary) !important;
 }
 
+[data-theme="light"] .view-btn.active,
+:root:not([data-theme="dark"]) .view-btn.active {
+  background: var(--color-primary) !important;
+  color: white !important;
+}
+
 [data-theme="light"] .card,
 [data-theme="light"] .candidate-card,
 [data-theme="light"] .session-card,

@@ -16,10 +16,21 @@
   } = $props();
 
   let modalRef: HTMLDivElement | null = $state(null);
+  let isDirty = $state(false);
 
-  // Close on Escape key
+  // Reset dirty state whenever modal opens/closes
+  $effect(() => {
+    if (show) {
+      isDirty = false;
+    }
+  });
+
+  // Track any input/change inside the modal content
+  const markDirty = () => { isDirty = true; };
+
+  // Close on Escape key — blocked when dirty
   function handleKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape" && show) {
+    if (event.key === "Escape" && show && !isDirty) {
       onClose();
     }
   }
@@ -58,20 +69,13 @@
     }
   });
 
-  // Handle overlay click
+  // Handle overlay click — blocked when dirty
   function handleOverlayClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
+    if (event.target === event.currentTarget && !isDirty) {
       onClose();
     }
   }
 
-  // Handle overlay keyboard events (Enter or Space on overlay)
-  function handleOverlayKeydown(event: KeyboardEvent) {
-    if ((event.key === "Enter" || event.key === " ") && event.target === event.currentTarget) {
-      event.preventDefault();
-      onClose();
-    }
-  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -79,11 +83,9 @@
 {#if show}
   <div
     class="modal-overlay"
-    role="button"
-    tabindex="0"
-    aria-label="Close modal"
+    class:is-dirty={isDirty}
+    role="presentation"
     onclick={handleOverlayClick}
-    onkeydown={handleOverlayKeydown}
   >
     <div
       bind:this={modalRef}
@@ -104,7 +106,7 @@
         </div>
       {/if}
 
-      <div class="modal-content">
+      <div class="modal-content" oninput={markDirty} onchange={markDirty}>
         {@render children?.()}
       </div>
     </div>
@@ -126,12 +128,15 @@
     cursor: pointer;
   }
 
+  .modal-overlay.is-dirty {
+    cursor: default;
+  }
+
   .modal {
     background: white;
     border-radius: 8px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 90vh;
+    width: 90vw;
+    height: 90vh;
     cursor: default;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     display: flex;
@@ -140,14 +145,18 @@
 
   .modal.small {
     max-width: 400px;
+    height: auto;
+    max-height: 90vh;
   }
 
   .modal.medium {
-    max-width: 500px;
+    max-width: 600px;
+    height: auto;
+    max-height: 90vh;
   }
 
   .modal.large {
-    max-width: 900px;
+    max-width: 1200px;
   }
 
   .modal-header {
@@ -170,6 +179,8 @@
     padding: 0 2rem 2rem 2rem;
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .modal-content :global(textarea) {
@@ -177,14 +188,14 @@
     box-sizing: border-box;
   }
 
-  /* Pull modal-actions out of the scrollable padding so background covers full width */
+  /* Pin modal-actions to the bottom of the scrollable content area */
   .modal :global(.modal-actions) {
     position: sticky;
-    bottom: -2rem;
+    bottom: 0;
     background: white;
     padding: 1.5rem 2rem 2rem 2rem;
     border-top: 1px solid #eee;
-    margin-top: 1.5rem;
+    margin-top: auto;
     margin-left: -2rem;
     margin-right: -2rem;
     flex-shrink: 0;

@@ -981,7 +981,7 @@
   show={showSessionModal}
   onClose={closeSessionModal}
   title={editingSession ? "Edit Session" : "New Session"}
-  size="medium"
+  size="large"
 >
   <form onsubmit={handleSessionSubmit} autocomplete="off" data-form-type="other">
     <div class="form-group">
@@ -1058,7 +1058,7 @@
   show={showEditCandidateModal}
   onClose={closeEditCandidateModal}
   title="Edit Candidate"
-  size="medium"
+  size="large"
 >
   <form onsubmit={handleCandidateSubmit} autocomplete="off" data-form-type="other">
     <div class="form-group">

@@ -729,7 +729,7 @@
 />
 
 <!-- Session Notes Modal -->
-<SessionModal show={showNotesModal} title="Session Notes" onClose={closeNotesModal}>
+<SessionModal show={showNotesModal} title="Session Notes" onClose={closeNotesModal} size="large">
   <div class="form-group">
     <textarea
       bind:value={sessionNotes}
