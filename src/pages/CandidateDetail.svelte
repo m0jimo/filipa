@@ -76,6 +76,9 @@
   // Delete confirmation
   let deleteConfirmSessionId: string | null = $state(null);
 
+  // Reset session confirmation
+  let resetConfirmSessionId: string | null = $state(null);
+
   // Edit candidate modal
   let showEditCandidateModal = $state(false);
   let candidateFormData = $state({ displayName: "", notes: "" });
@@ -258,6 +261,69 @@
 
   function cancelDeleteSession() {
     deleteConfirmSessionId = null;
+  }
+
+  function confirmResetSession(sessionId: string, event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    resetConfirmSessionId = sessionId;
+  }
+
+  async function handleResetSession(sessionId: string) {
+    try {
+      const questions = await sessionQuestionDB.listBySessionId(sessionId);
+      await Promise.all(
+        questions.map((q) => {
+          const clean: SessionQuestion = {
+            id: q.id,
+            sessionId: q.sessionId,
+            questionObj: {
+              id: q.questionObj.id,
+              hash: q.questionObj.hash ?? "",
+              tags: [...q.questionObj.tags],
+              questionType: q.questionObj.questionType,
+              question: q.questionObj.question,
+              expectedAnswer: q.questionObj.expectedAnswer,
+              difficulty: q.questionObj.difficulty ? [...q.questionObj.difficulty] : [],
+              createdAt: new Date(q.questionObj.createdAt),
+              updatedAt: new Date(q.questionObj.updatedAt),
+            },
+            order: q.order,
+            note: "",
+            questionRating: 0,
+            answer: "",
+            isPresented: false,
+            createdAt: new Date(q.createdAt),
+            updatedAt: new Date(),
+          };
+          return sessionQuestionDB.update(clean);
+        })
+      );
+      const session = sessions.find((s) => s.id === sessionId);
+      if (session) {
+        const cleanSession: Session = {
+          id: session.id,
+          candidateId: session.candidateId,
+          interviewers: [...session.interviewers],
+          name: session.name,
+          date: new Date(session.date),
+          notes: "",
+          currentQuestionIndex: 0,
+          sortOrder: session.sortOrder ?? 0,
+          createdAt: new Date(session.createdAt),
+          updatedAt: new Date(),
+        };
+        await sessionDB.update(cleanSession);
+      }
+      await loadData();
+      resetConfirmSessionId = null;
+    } catch (err) {
+      alert("Failed to reset session: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  }
+
+  function cancelResetSession() {
+    resetConfirmSessionId = null;
   }
 
   async function moveSession(index: number, direction: -1 | 1) {
@@ -959,6 +1025,14 @@
                   Edit
                 </button>
                 <button
+                  onclick={(e) => confirmResetSession(session.id, e)}
+                  class="action-btn reset"
+                  title="Clear all interactions in this session"
+                  disabled={!sessionSummaries[session.id] || (sessionSummaries[session.id].answered === 0 && !sessions.find((s) => s.id === session.id)?.notes)}
+                >
+                  Clear
+                </button>
+                <button
                   onclick={(e) => openExportModal(session.id, e)}
                   class="action-btn export"
                   title="Export session"
@@ -1118,6 +1192,29 @@
       class="danger"
     >
       Delete
+    </button>
+  </div>
+</SessionModal>
+
+<!-- Reset Session Confirmation Modal -->
+<SessionModal
+  show={!!resetConfirmSessionId}
+  onClose={cancelResetSession}
+  title="Clear Session?"
+  size="small"
+>
+  <p class="confirm-text">
+    This will clear all answers, ratings, notes, and presentation state for every question in this
+    session. The session itself and its questions will remain. This action cannot be undone.
+  </p>
+  <div class="modal-actions">
+    <button type="button" onclick={cancelResetSession} class="secondary">Cancel</button>
+    <button
+      type="button"
+      onclick={() => resetConfirmSessionId && handleResetSession(resetConfirmSessionId)}
+      class="danger"
+    >
+      Clear Session
     </button>
   </div>
 </SessionModal>
@@ -1305,6 +1402,23 @@
     cursor: default;
   }
 
+  .action-btn.reset {
+    flex: 1;
+    background: #fff3e0;
+    color: #e65100;
+    font-weight: 500;
+  }
+
+  .action-btn.reset:hover:not(:disabled) {
+    background: #ffe0b2;
+    transform: translateY(-1px);
+  }
+
+  .action-btn.reset:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
   .action-btn.export {
     flex: 1;
     background: #e8f4f8;
@@ -1463,6 +1577,15 @@
   :global([data-theme="dark"]) .action-btn.move:hover:not(:disabled) {
     background: var(--color-bg-dark-3);
     color: #fff;
+  }
+
+  :global([data-theme="dark"]) .action-btn.reset {
+    background: #3a1a00;
+    color: #ffb74d;
+  }
+
+  :global([data-theme="dark"]) .action-btn.reset:hover:not(:disabled) {
+    background: #4a2a00;
   }
 
   :global([data-theme="dark"]) .action-btn.export {
