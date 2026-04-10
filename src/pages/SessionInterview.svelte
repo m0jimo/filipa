@@ -439,9 +439,10 @@
   let expandedQuestionId: string | null = $state(null);
   let saveTimeout: number | null = null;
 
-  // Session notes modal
+  // Notes modal (combined session + candidate)
   let showNotesModal = $state(false);
   let sessionNotes = $state("");
+  let candidateNotes = $state("");
 
   function toggleRecordingForm(questionId: string) {
     expandedQuestionId = expandedQuestionId === questionId ? null : questionId;
@@ -501,30 +502,38 @@
   }
 
   function openNotesModal() {
-    if (session) {
-      sessionNotes = session.notes;
-      showNotesModal = true;
-    }
+    if (session) sessionNotes = session.notes;
+    if (candidate) candidateNotes = candidate.notes;
+    showNotesModal = true;
   }
 
   function closeNotesModal() {
     showNotesModal = false;
   }
 
-  async function saveSessionNotes() {
-    if (!session) return;
-
+  async function saveNotes() {
     try {
-      session.notes = sessionNotes;
-      session.updatedAt = new Date();
-      const cleanSess = cleanSession(session);
-      await sessionDB.update(cleanSess);
-      session = session; // Trigger reactivity
+      if (session) {
+        session.notes = sessionNotes;
+        session.updatedAt = new Date();
+        await sessionDB.update(cleanSession(session));
+        session = session;
+      }
+      if (candidate) {
+        candidate.notes = candidateNotes;
+        candidate.updatedAt = new Date();
+        await candidateDB.update({
+          id: candidate.id,
+          displayName: candidate.displayName,
+          notes: candidate.notes,
+          createdAt: new Date(candidate.createdAt),
+          updatedAt: new Date(candidate.updatedAt)
+        });
+        candidate = candidate;
+      }
       closeNotesModal();
     } catch (err) {
-      alert(
-        "Failed to save session notes: " + (err instanceof Error ? err.message : "Unknown error")
-      );
+      alert("Failed to save notes: " + (err instanceof Error ? err.message : "Unknown error"));
     }
   }
 
@@ -603,7 +612,7 @@
                                                                                    style="width:1.2em;height:1.2em;vertical-align:middle;margin-right:0.4em;"/>
               Welcome Page
             </button>
-            <button type="button" onclick={openNotesModal} class="secondary">📝 Session Notes</button>
+            <button type="button" onclick={openNotesModal} class="secondary">📝 Notes</button>
             <button type="button" onclick={openQuestionSetBrowser} class="primary">+ Add Question Set</button>
             <button type="button" onclick={openQuestionBrowser} class="primary">+ Add Questions</button>
             <div class="window-status-container">
@@ -728,18 +737,20 @@
   onClose={closeQuestionBrowser}
 />
 
-<!-- Session Notes Modal -->
-<SessionModal show={showNotesModal} title="Session Notes" onClose={closeNotesModal} size="large">
+<!-- Notes Modal -->
+<SessionModal show={showNotesModal} title="Notes" onClose={closeNotesModal} size="large">
   <div class="notes-modal-body">
     <div class="form-group form-group-grow">
-      <textarea
-        bind:value={sessionNotes}
-        placeholder="Add notes about this interview session..."
-      ></textarea>
+      <label>Session Notes</label>
+      <textarea bind:value={sessionNotes} placeholder="Add notes about this interview session..."></textarea>
+    </div>
+    <div class="form-group form-group-grow">
+      <label>Candidate Notes</label>
+      <textarea bind:value={candidateNotes} placeholder="Add notes about this candidate..."></textarea>
     </div>
     <div class="modal-actions">
       <button type="button" onclick={closeNotesModal} class="secondary">Cancel</button>
-      <button type="button" onclick={saveSessionNotes} class="primary">Save Notes</button>
+      <button type="button" onclick={saveNotes} class="primary">Save Notes</button>
     </div>
   </div>
 </SessionModal>
