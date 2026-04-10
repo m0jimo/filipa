@@ -49,6 +49,7 @@
   let questionTextRef: HTMLDivElement | null = $state(null);
   let isQuestionTruncated = $state(false);
   let questionItemRef: HTMLDivElement | null = $state(null);
+  let activeTab: "expected" | "record" = $state("record");
 
   $effect(() => {
     if (questionTextRef) {
@@ -79,6 +80,17 @@
 
   function toggleQuestionExpanded() {
     isQuestionExpanded = !isQuestionExpanded;
+  }
+
+  function handleTabClick(tab: "expected" | "record") {
+    if (isExpanded && activeTab === tab) {
+      onToggleRecording(question.id);
+    } else {
+      activeTab = tab;
+      if (!isExpanded) {
+        onToggleRecording(question.id);
+      }
+    }
   }
 </script>
 
@@ -170,76 +182,87 @@
         {/each}
       </div>
     {/if}
+  </div>
 
+  <div class="question-tabs">
     {#if question.questionObj.expectedAnswer}
-      <details class="expected-answer">
-        <summary>Expected Answer</summary>
-        <div class="expected-answer-content">
-          <MarkdownPreview md={question.questionObj.expectedAnswer} />
-        </div>
-      </details>
+      <button
+        type="button"
+        class="tab-btn"
+        class:active={isExpanded && activeTab === "expected"}
+        onclick={() => handleTabClick("expected")}
+      >
+        💡 Expected Answer
+      </button>
+    {/if}
+    <button
+      type="button"
+      class="tab-btn record"
+      class:active={isExpanded && activeTab === "record"}
+      class:has-recording={hasRecording}
+      onclick={() => handleTabClick("record")}
+    >
+      {hasRecording ? "✓ Record Answer" : "⏺ Record Answer"}
+    </button>
+    {#if isExpanded}
+      <button
+        type="button"
+        class="tab-close"
+        onclick={() => onToggleRecording(question.id)}
+        title="Collapse"
+      >✕</button>
     {/if}
   </div>
 
-  <div class="question-actions">
-    <button
-      type="button"
-      onclick={() => onToggleRecording(question.id)}
-      class="action-btn record"
-      class:expanded={isExpanded}
-      class:has-recording={hasRecording}
-    >
-      {#if hasRecording}
-        {isExpanded ? "✓ ▼ Hide Answer" : "✓ ▶ Record Answer"}
-      {:else}
-        {isExpanded ? "▼ Hide Answer" : "▶ Record Answer"}
-      {/if}
-    </button>
-  </div>
-
   {#if isExpanded}
-    <div class="recording-form">
-      <div class="form-group">
-        <label for="answer-{question.id}">Candidate's Answer</label>
-        <textarea
-          id="answer-{question.id}"
-          bind:value={question.answer}
-          oninput={() => onSaveAnswer(question)}
-          placeholder="Record what the candidate said..."
-          rows="4"
-        ></textarea>
-      </div>
+    <div class="tab-panel">
+      {#if activeTab === "expected"}
+        <div class="expected-answer-content">
+          <MarkdownPreview md={question.questionObj.expectedAnswer ?? ""} />
+        </div>
+      {:else}
+        <div class="form-group">
+          <label for="answer-{question.id}">Candidate's Answer</label>
+          <textarea
+            id="answer-{question.id}"
+            bind:value={question.answer}
+            oninput={() => onSaveAnswer(question)}
+            placeholder="Record what the candidate said..."
+            rows="4"
+          ></textarea>
+        </div>
 
-      <div class="form-group">
-        <RatingSlider
-          bind:value={question.questionRating}
-          onchange={() => onSaveAnswer(question)}
-          label="Rating (0-10)"
-        />
-      </div>
+        <div class="form-group">
+          <RatingSlider
+            bind:value={question.questionRating}
+            onchange={() => onSaveAnswer(question)}
+            label="Rating (0-10)"
+          />
+        </div>
 
-      <div class="form-group">
-        <label for="notes-{question.id}">Interviewer Notes</label>
-        <textarea
-          id="notes-{question.id}"
-          bind:value={question.note}
-          oninput={() => onSaveAnswer(question)}
-          placeholder="Add your notes, observations, or follow-up items..."
-          rows="3"
-        ></textarea>
-      </div>
+        <div class="form-group">
+          <label for="notes-{question.id}">Interviewer Notes</label>
+          <textarea
+            id="notes-{question.id}"
+            bind:value={question.note}
+            oninput={() => onSaveAnswer(question)}
+            placeholder="Add your notes, observations, or follow-up items..."
+            rows="3"
+          ></textarea>
+        </div>
 
-      <div class="save-indicator">
-        <small>✓ Auto-saved</small>
-        <button
-          type="button"
-          onclick={() => onResetRecord(question)}
-          class="reset-answer-btn"
-          title="Reset recorded answer, rating, and notes"
-        >
-          ✕ Reset Answer
-        </button>
-      </div>
+        <div class="save-indicator">
+          <small>✓ Auto-saved</small>
+          <button
+            type="button"
+            onclick={() => onResetRecord(question)}
+            class="reset-answer-btn"
+            title="Reset recorded answer, rating, and notes"
+          >
+            ✕ Reset Answer
+          </button>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
@@ -511,31 +534,87 @@
     font-size: 0.75rem;
   }
 
-  .expected-answer {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 3px solid #e0e0e0;
-  }
-
-  .expected-answer summary {
-    cursor: pointer;
-    color: var(--color-primary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: 0.5rem;
+  .question-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    padding: 0.375rem;
     background: var(--color-bg-subtle);
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
   }
 
-  .expected-answer summary:hover {
-    text-decoration: underline;
+  .tab-btn {
+    padding: 0.45rem 1rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: white;
+    border-color: var(--color-border);
+    color: var(--color-primary);
+  }
+
+  .tab-btn.active {
+    background: white;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 102, 204, 0.15);
+  }
+
+  .tab-btn.has-recording {
+    color: #2e7d32;
+  }
+
+  .tab-btn.has-recording:hover {
+    color: #2e7d32;
+    border-color: #a5d6a7;
+  }
+
+  .tab-btn.has-recording.active {
+    border-color: #4caf50;
+    color: #2e7d32;
+    box-shadow: 0 1px 3px rgba(76, 175, 80, 0.15);
+  }
+
+  .tab-close {
+    margin-left: auto;
+    padding: 0.25rem 0.5rem;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+
+  .tab-close:hover {
+    background: white;
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .tab-panel {
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 0 0 6px 6px;
+    border: 1px solid var(--color-border);
+    border-top: none;
   }
 
   .expected-answer-content {
-    margin-top: 0.5rem;
-    padding: 0.75rem;
-    background: #f9f9f9;
-    border-radius: 4px;
+    padding: 0.25rem 0;
   }
 
   .expected-answer-content :global(.markdown-preview) {
@@ -549,96 +628,6 @@
     font-size: 1rem;
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
-  }
-
-  .question-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .action-btn {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-
-  .action-btn.present {
-    background: var(--color-primary);
-    color: white;
-  }
-
-  .action-btn.present:hover:not(:disabled) {
-    background: var(--color-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2);
-  }
-
-  .action-btn.present.answered {
-    background: var(--color-bg-subtle);
-    color: var(--color-text);
-  }
-
-  .action-btn.present.answered:hover {
-    background: #e0e0e0;
-  }
-
-  .action-btn.present.showing {
-    background: #757575;
-    color: white;
-    cursor: default;
-  }
-
-  .action-btn.present.showing:hover {
-    background: #757575;
-    transform: none;
-    box-shadow: none;
-  }
-
-  .action-btn.present:disabled {
-    background: #9e9e9e;
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .action-btn.record {
-    background: var(--color-bg-subtle);
-    color: var(--color-text);
-  }
-
-  .action-btn.record:hover {
-    background: #e0e0e0;
-  }
-
-  .action-btn.record.expanded {
-    background: #e0e0e0;
-  }
-
-  .action-btn.record.has-recording {
-    background: #e8f5e9;
-    color: #2e7d32;
-    font-weight: 600;
-  }
-
-  .action-btn.record.has-recording:hover {
-    background: #c8e6c9;
-  }
-
-  .action-btn.record.has-recording.expanded {
-    background: #c8e6c9;
-  }
-
-  .recording-form {
-    padding: 1rem;
-    background: #f9f9f9;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
   }
 
   .form-group {
@@ -762,16 +751,56 @@
     color: var(--color-text-muted);
   }
 
-  :global([data-theme="dark"]) .expected-answer {
-    border-top-color: var(--color-border-dark);
+  :global([data-theme="dark"]) .question-tabs {
+    background: #2a2a2a;
+    border-color: var(--color-border-dark);
   }
 
-  :global([data-theme="dark"]) .expected-answer summary {
+  :global([data-theme="dark"]) .tab-btn {
+    color: #cccccc;
+  }
+
+  :global([data-theme="dark"]) .tab-btn:hover {
     background: #3a3a3a;
+    border-color: var(--color-border-dark);
+    color: var(--color-primary-dark);
   }
 
-  :global([data-theme="dark"]) .expected-answer-content {
+  :global([data-theme="dark"]) .tab-btn.active {
+    background: #3a3a3a;
+    border-color: var(--color-primary-dark);
+    color: var(--color-primary-dark);
+    box-shadow: 0 1px 3px rgba(77, 163, 255, 0.2);
+  }
+
+  :global([data-theme="dark"]) .tab-btn.has-recording {
+    color: #a5d6a7;
+  }
+
+  :global([data-theme="dark"]) .tab-btn.has-recording:hover {
+    color: #a5d6a7;
+    border-color: #388e3c;
+  }
+
+  :global([data-theme="dark"]) .tab-btn.has-recording.active {
+    border-color: #66bb6a;
+    color: #a5d6a7;
+    box-shadow: 0 1px 3px rgba(102, 187, 106, 0.2);
+  }
+
+  :global([data-theme="dark"]) .tab-close {
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .tab-close:hover {
+    background: #3a3a3a;
+    border-color: var(--color-border-dark);
+    color: #ffffff;
+  }
+
+  :global([data-theme="dark"]) .tab-panel {
     background: var(--color-bg-dark);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .expected-answer-content :global(.markdown-preview) {
@@ -792,24 +821,6 @@
 
   :global([data-theme="dark"]) .icon-btn:hover:not(:disabled) {
     background: #4a4a4a;
-  }
-
-  :global([data-theme="dark"]) .action-btn.present.answered {
-    background: #3a3a3a;
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .action-btn.present.answered:hover {
-    background: #4a4a4a;
-  }
-
-  :global([data-theme="dark"]) .action-btn.present.showing {
-    background: #616161;
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .action-btn.present.showing:hover {
-    background: #616161;
   }
 
   :global([data-theme="dark"]) .action-btn-header.present.answered {
@@ -833,38 +844,6 @@
   :global([data-theme="dark"]) .action-btn-header.present:disabled {
     background: #616161;
     opacity: 0.5;
-  }
-
-  :global([data-theme="dark"]) .action-btn.record {
-    background: #3a3a3a;
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .action-btn.record:hover {
-    background: #4a4a4a;
-  }
-
-  :global([data-theme="dark"]) .action-btn.record.expanded {
-    background: #4a4a4a;
-  }
-
-  :global([data-theme="dark"]) .action-btn.record.has-recording {
-    background: #1b5e20;
-    color: #a5d6a7;
-    font-weight: 600;
-  }
-
-  :global([data-theme="dark"]) .action-btn.record.has-recording:hover {
-    background: #2e7d32;
-  }
-
-  :global([data-theme="dark"]) .action-btn.record.has-recording.expanded {
-    background: #2e7d32;
-  }
-
-  :global([data-theme="dark"]) .recording-form {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .form-group label {
