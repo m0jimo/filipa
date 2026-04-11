@@ -106,7 +106,7 @@
         }}
         type="button"
       >
-        {selectedTypes.length === 0 ? "All Types" : `${selectedTypes.length} selected`}
+        {selectedTypes.length === 0 ? "All Types" : selectedTypes.join(", ")}
         <span class="qfp-dropdown-arrow">▼</span>
       </button>
       {#if showTypeDropdown}

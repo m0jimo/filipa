@@ -23,6 +23,7 @@
   let searchQuery = $state("");
   let selectedTypes = $state<string[]>([]);
   let selectedTags = $state<string[]>([]);
+  let selectedDifficulties = $state<number[]>([]);
   let viewMode = $state<"cards" | "table">("cards");
   let tableSelected = $state(new SvelteSet<string>());
 
@@ -57,6 +58,10 @@
 
     if (selectedTags.length > 0) {
       result = result.filter((q) => q.tags.some((tag) => selectedTags.includes(tag)));
+    }
+
+    if (selectedDifficulties.length > 0) {
+      result = result.filter((q) => q.difficulty?.some((d) => selectedDifficulties.includes(d)));
     }
 
     return result;
@@ -107,13 +112,13 @@
     bind:searchQuery
     bind:selectedTypes
     bind:selectedTags
+    bind:selectedDifficulties
     bind:viewMode
-    selectedDifficulties={[]}
     allTags={allTagsComputed().allTags}
     tagCounts={allTagsComputed().tagCounts}
     totalCount={questions.length}
     filteredCount={filteredQuestions().length}
-    showDifficultyFilter={false}
+    showDifficultyFilter={true}
     showViewToggle={true}
   />
 
