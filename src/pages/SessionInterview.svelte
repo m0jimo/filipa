@@ -668,20 +668,30 @@
     }
   }
 
+  let skippedQuestionIds = $state(new Set<string>());
+
+  const toggleSkip = (questionId: string) => {
+    const next = new Set(skippedQuestionIds);
+    if (next.has(questionId)) {
+      next.delete(questionId);
+    } else {
+      next.add(questionId);
+    }
+    skippedQuestionIds = next;
+  };
+
   function goToPreviousQuestion() {
-    if (!session || session.currentQuestionIndex === undefined || session.currentQuestionIndex <= 0)
-      return;
-    setActiveQuestion(session.currentQuestionIndex - 1, true);
+    if (!session || session.currentQuestionIndex === undefined) return;
+    let idx = session.currentQuestionIndex - 1;
+    while (idx >= 0 && skippedQuestionIds.has(questions[idx].id)) idx--;
+    if (idx >= 0) setActiveQuestion(idx, true);
   }
 
   function goToNextQuestion() {
-    if (
-      !session ||
-      session.currentQuestionIndex === undefined ||
-      session.currentQuestionIndex >= questions.length - 1
-    )
-      return;
-    setActiveQuestion(session.currentQuestionIndex + 1, true);
+    if (!session || session.currentQuestionIndex === undefined) return;
+    let idx = session.currentQuestionIndex + 1;
+    while (idx < questions.length && skippedQuestionIds.has(questions[idx].id)) idx++;
+    if (idx < questions.length) setActiveQuestion(idx, true);
   }
 
   function openNotesModal() {
@@ -817,7 +827,7 @@
                 onclick={goToPreviousQuestion}
                 class="nav-btn secondary"
                 disabled={session?.currentQuestionIndex === undefined ||
-                  session.currentQuestionIndex <= 0}
+                  questions.slice(0, session.currentQuestionIndex).every((q) => skippedQuestionIds.has(q.id))}
                 title="Previous question"
               >
                 ◀ Previous
@@ -827,7 +837,7 @@
                 onclick={goToNextQuestion}
                 class="nav-btn secondary"
                 disabled={session?.currentQuestionIndex === undefined ||
-                  session.currentQuestionIndex >= questions.length - 1}
+                  questions.slice(session.currentQuestionIndex + 1).every((q) => skippedQuestionIds.has(q.id))}
                 title="Next question"
               >
                 Next ▶
@@ -869,6 +879,8 @@
                 onSaveToCatalog={saveToCatalog}
                 onEditQuestion={openEditQuestionModal}
                 isOutOfSync={outOfSyncIds.has(question.questionObj.id)}
+                isSkipped={skippedQuestionIds.has(question.id)}
+                onToggleSkip={toggleSkip}
               />
             {/each}
           </div>

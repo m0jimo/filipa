@@ -22,6 +22,8 @@
     onSaveToCatalog,
     onEditQuestion,
     isOutOfSync = false,
+    isSkipped = false,
+    onToggleSkip,
   }: {
     question: SessionQuestion;
     index: number;
@@ -40,6 +42,8 @@
     onSaveToCatalog?: (question: SessionQuestion) => void;
     onEditQuestion: (question: SessionQuestion) => void;
     isOutOfSync?: boolean;
+    isSkipped?: boolean;
+    onToggleSkip?: (questionId: string) => void;
   } = $props();
 
   const isActive = $derived(candidateWindowOpen && index === session.currentQuestionIndex);
@@ -135,6 +139,7 @@
   class:presented={question.isPresented}
   class:answered={question.answer.trim().length > 0}
   class:rated={question.questionRating > 0}
+  class:skipped={isSkipped}
 >
   <div class="question-header">
     <div class="question-meta">
@@ -181,6 +186,17 @@
       >
         Edit
       </button>
+      {#if onToggleSkip}
+        <button
+          type="button"
+          onclick={() => onToggleSkip!(question.id)}
+          class="action-btn-header skip-toggle"
+          class:skipped={isSkipped}
+          title={isSkipped ? "Include in Prev/Next navigation" : "Exclude from Prev/Next navigation"}
+        >
+          ⊘
+        </button>
+      {/if}
       <button
         type="button"
         onclick={() => onSetActive(index)}
@@ -345,6 +361,15 @@
     border-left: 4px solid #4caf50;
   }
 
+  .question-item.skipped {
+    opacity: 0.45;
+    background-color: var(--color-bg-subtle, #f5f5f5);
+  }
+
+  .question-item.skipped:hover {
+    opacity: 0.65;
+  }
+
   .question-header {
     display: flex;
     justify-content: space-between;
@@ -452,6 +477,27 @@
   .action-btn-header.edit-question:hover {
     background: var(--color-bg-subtle);
     border-color: var(--color-text-secondary);
+  }
+
+  .action-btn-header.skip-toggle {
+    background: white;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .action-btn-header.skip-toggle:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-text-secondary);
+  }
+
+  .action-btn-header.skip-toggle.skipped {
+    color: var(--color-warning, #e07b00);
+    border-color: var(--color-warning, #e07b00);
+    background: #fff8f0;
+  }
+
+  .action-btn-header.skip-toggle.skipped:hover {
+    background: #fff0e0;
   }
 
   .action-btn-header.present {
@@ -919,6 +965,31 @@
   :global([data-theme="dark"]) .action-btn-header.edit-question:hover {
     background: #3a3a3a;
     border-color: #aaaaaa;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.skip-toggle {
+    background: #2a2a2a;
+    color: #aaaaaa;
+    border-color: #555;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.skip-toggle:hover {
+    background: #3a3a3a;
+    border-color: #aaaaaa;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.skip-toggle.skipped {
+    color: #ffb74d;
+    border-color: #ffb74d;
+    background: #2a2010;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.skip-toggle.skipped:hover {
+    background: #3a2a10;
+  }
+
+  :global([data-theme="dark"]) .question-item.skipped {
+    background-color: #1e1e1e;
   }
 
   :global([data-theme="dark"]) .action-btn-header.present.answered {
