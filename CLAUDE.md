@@ -78,19 +78,35 @@ offline/regulated environments with dual-view interface for interviewer and cand
    }
    ```
 3. **Never use `resetDatabase()` or `deleteDatabase()` as a migration strategy** — this destroys user data.
-4. **New stores/indexes**: always guard with `if (!db.objectStoreNames.contains(...))` so fresh installs and upgrades follow the same path.
-5. **Field renames/type changes**: use a cursor over the affected store and call `cursor.update(record)` within the upgrade transaction.
+4. **New stores/indexes**: always guard with `if (!db.objectStoreNames.contains(...))` so fresh installs and upgrades
+   follow the same path.
+5. **Field renames/type changes**: use a cursor over the affected store and call `cursor.update(record)` within the
+   upgrade transaction.
 6. **Backfilling new fields**: iterate with a cursor and set sensible defaults for existing records.
 7. **Test both paths**: fresh install (oldVersion === 0) and upgrade from each prior version.
 
 ### Current migration history
 
-| Version | Change |
-|---------|--------|
-| 1 → 2  | Added `hash` index to `questions` store |
-| 2 → 3  | Renamed `rating` → `difficulty` on all questions |
-| 3 → 4  | *(unknown — document here when identified)* |
-| 4 → 5  | Added `sortOrder` index to `sessions` store; backfilled existing sessions |
+| Version | Change                                                                    |
+|---------|---------------------------------------------------------------------------|
+| 1 → 2   | Added `hash` index to `questions` store                                   |
+| 2 → 3   | Renamed `rating` → `difficulty` on all questions                          |
+| 3 → 4   | *(unknown — document here when identified)*                               |
+| 4 → 5   | Added `sortOrder` index to `sessions` store; backfilled existing sessions |
+
+## IndexedDB and Svelte 5 Reactive Proxies
+
+**Never write Svelte reactive state objects directly to IndexedDB.** Svelte 5 wraps `$state` values in reactive proxies.
+IndexedDB's structured clone algorithm cannot serialize these proxies and throws:
+`Failed to execute 'put' on 'IDBObjectStore': [object Array] could not be cloned.`
+
+This affects array fields (`tags`, `difficulty`, `interviewers`) and `Date` fields inside nested objects.
+
+**Rule:** Always pass data through a `clean*` helper before any `create`/`update` DB call. Use explicit field-by-field
+construction with `[...array]` spreads and `new Date(...)` copies — never spread a reactive object directly into a DB
+call.
+
+Existing helpers: `cleanSessionQuestion()`, `cleanSession()`, `cleanQuestionObj()` in `SessionInterview.svelte`.
 
 ## Deployment Notes
 
