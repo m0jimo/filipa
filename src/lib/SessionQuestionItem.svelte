@@ -19,6 +19,7 @@
     onToggleRecording,
     onSaveAnswer,
     onResetRecord,
+    onSaveToCatalog,
   }: {
     question: SessionQuestion;
     index: number;
@@ -34,6 +35,7 @@
     onToggleRecording: (questionId: string) => void;
     onSaveAnswer: (question: SessionQuestion) => void;
     onResetRecord: (question: SessionQuestion) => void;
+    onSaveToCatalog?: (question: SessionQuestion) => void;
   } = $props();
 
   const isActive = $derived(index === session.currentQuestionIndex);
@@ -157,6 +159,16 @@
       {/if}
     </div>
     <div class="header-right-actions">
+      {#if onSaveToCatalog}
+        <button
+          type="button"
+          onclick={() => onSaveToCatalog!(question)}
+          class="action-btn-header save-catalog"
+          title="Save to Question Catalog"
+        >
+          + Catalog
+        </button>
+      {/if}
       <button
         type="button"
         onclick={() => onSetActive(index)}
@@ -406,6 +418,17 @@
     font-weight: 600;
     transition: all 0.2s;
     white-space: nowrap;
+  }
+
+  .action-btn-header.save-catalog {
+    background: white;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .action-btn-header.save-catalog:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-text-secondary);
   }
 
   .action-btn-header.present {
@@ -851,6 +874,17 @@
 
   :global([data-theme="dark"]) .icon-btn:hover:not(:disabled) {
     background: #4a4a4a;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.save-catalog {
+    background: #2a2a2a;
+    color: #aaaaaa;
+    border-color: #555;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.save-catalog:hover {
+    background: #3a3a3a;
+    border-color: #aaaaaa;
   }
 
   :global([data-theme="dark"]) .action-btn-header.present.answered {

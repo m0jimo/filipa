@@ -131,6 +131,8 @@ export interface SessionQuestion {
   answer: string;
   /** Whether this question has been presented to candidate */
   isPresented: boolean;
+  /** Whether this question was created ad-hoc during the session (not from the catalog) */
+  isAdHoc?: boolean;
   /** Timestamp when question was added to session */
   createdAt: Date;
   /** Timestamp when question was last updated */

@@ -1,8 +1,10 @@
 <script lang="ts">
   import {onDestroy, onMount} from "svelte";
   import candidateWindowSvg from "../assets/filipa-candidate-window.svg";
-  import {candidateDB, generateId, questionDB, questionSetDB, sessionDB, sessionQuestionDB} from "../lib/db";
+  import {candidateDB, generateId, generateQuestionHash, questionDB, questionSetDB, sessionDB, sessionQuestionDB} from "../lib/db";
   import type {Candidate, FilipaUpdateMessage, Question, QuestionSet, Session, SessionQuestion} from "../lib/types";
+  import {QuestionType} from "../lib/types";
+  import MarkdownEditor from "../components/MarkdownEditor.svelte";
   import SessionQuestionItem from "../lib/SessionQuestionItem.svelte";
   import QuestionBrowserModal from "../lib/QuestionBrowserModal.svelte";
   import Navigation from "../lib/Navigation.svelte";
@@ -25,6 +27,11 @@
   let showQuestionSetBrowser = $state(false);
   let availableQuestionSets: QuestionSet[] = $state([]);
   let questionSetBrowserLoading = $state(false);
+
+  // Ad-hoc question creation
+  let showNewQuestionModal = $state(false);
+  let newQuestionFormData = $state({ question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" });
+  let savingNewQuestion = $state(false);
 
   onMount(async () => {
     await loadSession();
@@ -217,7 +224,7 @@
     }
   }
 
-  async function addQuestionToSession(question: Question) {
+  async function addQuestionToSession(question: Question, isAdHoc = false) {
     if (!session) return;
 
     try {
@@ -244,6 +251,7 @@
         questionRating: 0,
         answer: "",
         isPresented: false,
+        isAdHoc: isAdHoc || undefined,
         createdAt: now,
         updatedAt: now
       };
@@ -252,6 +260,53 @@
       await loadSession();
     } catch (err) {
       alert("Failed to add question: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  }
+
+  function openNewQuestionModal() {
+    newQuestionFormData = { question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" };
+    showNewQuestionModal = true;
+  }
+
+  function closeNewQuestionModal() {
+    showNewQuestionModal = false;
+  }
+
+  async function handleNewQuestionSubmit(event: Event) {
+    event.preventDefault();
+    if (!newQuestionFormData.question.trim()) { alert("Please enter a question"); return; }
+    savingNewQuestion = true;
+    try {
+      const tagsList = newQuestionFormData.tags.split(",").map((t) => t.trim()).filter((t) => t.length > 0);
+      const difficultyList = newQuestionFormData.difficulty.split(",").map((r) => parseInt(r.trim())).filter((r) => !isNaN(r) && r >= 1 && r <= 10);
+      const now = new Date();
+      const newQuestion: Question = {
+        id: generateId(),
+        question: newQuestionFormData.question.trim(),
+        expectedAnswer: newQuestionFormData.expectedAnswer.trim(),
+        tags: tagsList,
+        questionType: newQuestionFormData.questionType,
+        difficulty: difficultyList,
+        hash: generateQuestionHash(newQuestionFormData.question.trim(), tagsList, newQuestionFormData.questionType),
+        createdAt: now,
+        updatedAt: now,
+      };
+      await addQuestionToSession(newQuestion, true);
+      closeNewQuestionModal();
+    } finally {
+      savingNewQuestion = false;
+    }
+  }
+
+  async function saveToCatalog(sq: SessionQuestion) {
+    if (!confirm("Add this question to the Question Catalog?")) return;
+    try {
+      await questionDB.create(sq.questionObj);
+      const updated: SessionQuestion = { ...sq, isAdHoc: false, updatedAt: new Date() };
+      await sessionQuestionDB.update(cleanSessionQuestion(updated));
+      await loadSession();
+    } catch (err) {
+      alert("Failed to save to catalog: " + (err instanceof Error ? err.message : "Unknown error"));
     }
   }
 
@@ -332,12 +387,12 @@
 
   // Helper function to create a clean copy of SessionQuestion for IndexDB
   function cleanSessionQuestion(sq: SessionQuestion): SessionQuestion {
-    return {
+    const cleaned: SessionQuestion = {
       id: sq.id,
       sessionId: sq.sessionId,
       questionObj: {
         id: sq.questionObj.id,
-        hash: "",
+        hash: sq.questionObj.hash ?? "",
         tags: [...sq.questionObj.tags],
         questionType: sq.questionObj.questionType,
         question: sq.questionObj.question,
@@ -354,6 +409,8 @@
       createdAt: new Date(sq.createdAt),
       updatedAt: new Date(sq.updatedAt)
     };
+    if (sq.isAdHoc) cleaned.isAdHoc = true;
+    return cleaned;
   }
 
   // Helper function to create a clean copy of Session for IndexDB
@@ -615,6 +672,7 @@
             <button type="button" onclick={openNotesModal} class="secondary">📝 Notes</button>
             <button type="button" onclick={openQuestionSetBrowser} class="primary">+ Add Question Set</button>
             <button type="button" onclick={openQuestionBrowser} class="primary">+ Add Questions</button>
+            <button type="button" onclick={openNewQuestionModal} class="primary">+ New Question</button>
             <div class="window-status-container">
               {#if candidateWindowOpen}
                 <span class="window-status open">● Candidate Window</span>
@@ -686,6 +744,7 @@
                 onToggleRecording={toggleRecordingForm}
                 onSaveAnswer={saveAnswerData}
                 onResetRecord={resetRecord}
+                onSaveToCatalog={question.isAdHoc ? saveToCatalog : undefined}
               />
             {/each}
           </div>
@@ -736,6 +795,88 @@
   onAdd={addQuestionToSession}
   onClose={closeQuestionBrowser}
 />
+
+<!-- New Ad-Hoc Question Modal -->
+<SessionModal show={showNewQuestionModal} title="New Question" size="large" onClose={closeNewQuestionModal}>
+  <form onsubmit={handleNewQuestionSubmit} autocomplete="off" data-form-type="other">
+    <div class="form-group">
+      <MarkdownEditor
+        bind:value={newQuestionFormData.question}
+        id="newQuestionText"
+        name="new-question-text-content"
+        label="Question"
+        required={true}
+        placeholder="Enter the question text"
+        rows={3}
+      />
+    </div>
+
+    <div class="form-group">
+      <MarkdownEditor
+        bind:value={newQuestionFormData.expectedAnswer}
+        id="newExpectedAnswer"
+        name="new-question-expected-answer"
+        label="Expected Answer"
+        placeholder="Enter the expected answer (visible only to interviewer)"
+        rows={5}
+        helpText="This will be visible only to the interviewer during the interview"
+      />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="newQuestionType">Question Type <span class="required">*</span></label>
+        <select
+          id="newQuestionType"
+          name="new-question-type"
+          bind:value={newQuestionFormData.questionType}
+          required
+          autocomplete="off"
+          data-lpignore="true"
+          data-form-type="other"
+        >
+          <option value={QuestionType.Text}>Text</option>
+          <option value={QuestionType.Rating}>Rating</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="newQuestionTags">Tags</label>
+        <input
+          id="newQuestionTags"
+          name="new-question-tags"
+          type="text"
+          bind:value={newQuestionFormData.tags}
+          placeholder="javascript, react, frontend"
+          autocomplete="off"
+          data-lpignore="true"
+          data-form-type="other"
+        />
+        <small>Separate tags with commas</small>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="newQuestionDifficulty">Difficulty</label>
+      <input
+        id="newQuestionDifficulty"
+        name="new-question-difficulty-levels"
+        type="text"
+        bind:value={newQuestionFormData.difficulty}
+        placeholder="1,2,3,4,5,6,7,8,9,10"
+        autocomplete="off"
+        data-lpignore="true"
+        data-form-type="other"
+      />
+      <small>Comma-separated numbers (1-10) indicating which difficulty levels this question applies to</small>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" onclick={closeNewQuestionModal} class="secondary" disabled={savingNewQuestion}>Cancel</button>
+      <button type="submit" class="primary" disabled={savingNewQuestion}>{savingNewQuestion ? "Adding..." : "Add to Session"}</button>
+    </div>
+  </form>
+</SessionModal>
 
 <!-- Notes Modal -->
 <SessionModal show={showNotesModal} title="Notes" onClose={closeNotesModal} size="large">
@@ -1120,5 +1261,16 @@
 
   :global([data-theme="dark"]) .question-set-count {
     color: #6b7280;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .required {
+    color: #d32f2f;
+    margin-left: 0.25rem;
   }
 </style>
