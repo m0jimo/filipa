@@ -20,6 +20,8 @@
     onSaveAnswer,
     onResetRecord,
     onSaveToCatalog,
+    onEditQuestion,
+    isOutOfSync = false,
   }: {
     question: SessionQuestion;
     index: number;
@@ -36,6 +38,8 @@
     onSaveAnswer: (question: SessionQuestion) => void;
     onResetRecord: (question: SessionQuestion) => void;
     onSaveToCatalog?: (question: SessionQuestion) => void;
+    onEditQuestion: (question: SessionQuestion) => void;
+    isOutOfSync?: boolean;
   } = $props();
 
   const isActive = $derived(index === session.currentQuestionIndex);
@@ -159,16 +163,24 @@
       {/if}
     </div>
     <div class="header-right-actions">
-      {#if onSaveToCatalog}
+      {#if onSaveToCatalog && (question.isAdHoc || isOutOfSync)}
         <button
           type="button"
           onclick={() => onSaveToCatalog!(question)}
           class="action-btn-header save-catalog"
-          title="Save to Question Catalog"
+          title={question.isAdHoc ? "Save to Question Catalog" : "Update in Question Catalog"}
         >
-          + Catalog
+          {question.isAdHoc ? "+ Catalog" : "↑ Catalog"}
         </button>
       {/if}
+      <button
+        type="button"
+        onclick={() => onEditQuestion(question)}
+        class="action-btn-header edit-question"
+        title="Edit question"
+      >
+        Edit
+      </button>
       <button
         type="button"
         onclick={() => onSetActive(index)}
@@ -427,6 +439,17 @@
   }
 
   .action-btn-header.save-catalog:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-text-secondary);
+  }
+
+  .action-btn-header.edit-question {
+    background: white;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .action-btn-header.edit-question:hover {
     background: var(--color-bg-subtle);
     border-color: var(--color-text-secondary);
   }
@@ -883,6 +906,17 @@
   }
 
   :global([data-theme="dark"]) .action-btn-header.save-catalog:hover {
+    background: #3a3a3a;
+    border-color: #aaaaaa;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.edit-question {
+    background: #2a2a2a;
+    color: #aaaaaa;
+    border-color: #555;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.edit-question:hover {
     background: #3a3a3a;
     border-color: #aaaaaa;
   }

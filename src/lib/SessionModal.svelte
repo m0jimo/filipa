@@ -176,7 +176,7 @@
 
   .modal-content {
     overflow-y: auto;
-    padding: 0 2rem 2rem 2rem;
+    padding: 0 2rem;
     flex: 1;
     min-height: 0;
     display: flex;

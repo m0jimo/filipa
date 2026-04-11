@@ -19,12 +19,10 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  // Question catalog for adding
-  let showQuestionBrowser = $state(false);
+  // Combined add-questions modal
+  let showAddQuestionsModal = $state(false);
+  let addQuestionsTab = $state<"catalog" | "sets">("catalog");
   let catalogQuestions: Question[] = $state([]);
-
-  // Question set browser
-  let showQuestionSetBrowser = $state(false);
   let availableQuestionSets: QuestionSet[] = $state([]);
   let questionSetBrowserLoading = $state(false);
 
@@ -33,8 +31,34 @@
   let newQuestionFormData = $state({ question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" });
   let savingNewQuestion = $state(false);
 
+  // Edit question
+  let showEditQuestionModal = $state(false);
+  let editingSessionQuestion: SessionQuestion | null = $state(null);
+  let editQuestionFormData = $state({ question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" });
+  let savingEditQuestion = $state(false);
+
+  // Catalog sync tracking: map of catalog question id → content fingerprint
+  let catalogFingerprints = $state<Map<string, string>>(new Map());
+
+  const questionFingerprint = (q: { question: string; expectedAnswer: string; tags: string[]; questionType: string; difficulty: number[] }) =>
+    `${q.question}|${q.expectedAnswer}|${[...q.tags].sort().join(",")}|${q.questionType}|${[...q.difficulty].sort((a, b) => a - b).join(",")}`;
+
+  const outOfSyncIds = $derived(
+    new Set(
+      questions
+        .filter((sq) => !sq.isAdHoc && catalogFingerprints.has(sq.questionObj.id) && catalogFingerprints.get(sq.questionObj.id) !== questionFingerprint(sq.questionObj))
+        .map((sq) => sq.questionObj.id)
+    )
+  );
+
+  async function loadCatalogFingerprints() {
+    const all = await questionDB.list();
+    catalogFingerprints = new Map(all.map((q) => [q.id, questionFingerprint(q)]));
+  }
+
   onMount(async () => {
     await loadSession();
+    await loadCatalogFingerprints();
     // Initialize BroadcastChannel for session updates
     if (session) {
       sessionChannel = new BroadcastChannel(`filipa-session-${session.id}`);
@@ -102,6 +126,29 @@
     catalogQuestions = await questionDB.list();
   }
 
+  async function loadQuestionSets() {
+    try {
+      questionSetBrowserLoading = true;
+      const all = await questionSetDB.list();
+      all.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      availableQuestionSets = all;
+    } catch (err) {
+      alert("Failed to load question sets: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      questionSetBrowserLoading = false;
+    }
+  }
+
+  async function openAddQuestionsModal(tab: "catalog" | "sets" = "catalog") {
+    addQuestionsTab = tab;
+    showAddQuestionsModal = true;
+    await Promise.all([loadQuestionCatalog(), loadQuestionSets()]);
+  }
+
+  function closeAddQuestionsModal() {
+    showAddQuestionsModal = false;
+  }
+
   async function openCandidateView() {
     if (session) {
       const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
@@ -134,35 +181,6 @@
     }
   }
 
-  async function openQuestionBrowser() {
-    await loadQuestionCatalog();
-    showQuestionBrowser = true;
-  }
-
-  function closeQuestionBrowser() {
-    showQuestionBrowser = false;
-  }
-
-  async function openQuestionSetBrowser() {
-    try {
-      questionSetBrowserLoading = true;
-      showQuestionSetBrowser = true;
-      const all = await questionSetDB.list();
-      all.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-      availableQuestionSets = all;
-    } catch (err) {
-      alert(
-        "Failed to load question sets: " + (err instanceof Error ? err.message : "Unknown error")
-      );
-      showQuestionSetBrowser = false;
-    } finally {
-      questionSetBrowserLoading = false;
-    }
-  }
-
-  function closeQuestionSetBrowser() {
-    showQuestionSetBrowser = false;
-  }
 
   async function addQuestionSetToSession(questionSet: QuestionSet) {
     if (!session) return;
@@ -216,7 +234,7 @@
       }
 
       await loadSession();
-      closeQuestionSetBrowser();
+      closeAddQuestionsModal();
     } catch (err) {
       alert(
         "Failed to add question set: " + (err instanceof Error ? err.message : "Unknown error")
@@ -299,14 +317,74 @@
   }
 
   async function saveToCatalog(sq: SessionQuestion) {
-    if (!confirm("Add this question to the Question Catalog?")) return;
+    if (sq.isAdHoc) {
+      if (!confirm("Add this question to the Question Catalog?")) return;
+      try {
+        await questionDB.create(cleanQuestionObj(sq.questionObj));
+        const updated: SessionQuestion = { ...sq, isAdHoc: false, updatedAt: new Date() };
+        await sessionQuestionDB.update(cleanSessionQuestion(updated));
+        await Promise.all([loadSession(), loadCatalogFingerprints()]);
+      } catch (err) {
+        alert("Failed to save to catalog: " + (err instanceof Error ? err.message : "Unknown error"));
+      }
+    } else {
+      if (!confirm("Update this question in the Question Catalog with the current version?")) return;
+      try {
+        const existing = await questionDB.read(sq.questionObj.id);
+        if (existing) {
+          await questionDB.update(cleanQuestionObj(sq.questionObj, { updatedAt: new Date() }));
+        } else {
+          await questionDB.create(cleanQuestionObj(sq.questionObj));
+        }
+        await loadCatalogFingerprints();
+      } catch (err) {
+        alert("Failed to update catalog: " + (err instanceof Error ? err.message : "Unknown error"));
+      }
+    }
+  }
+
+  function openEditQuestionModal(sq: SessionQuestion) {
+    editingSessionQuestion = sq;
+    editQuestionFormData = {
+      question: sq.questionObj.question,
+      expectedAnswer: sq.questionObj.expectedAnswer,
+      tags: sq.questionObj.tags.join(", "),
+      questionType: sq.questionObj.questionType,
+      difficulty: sq.questionObj.difficulty ? sq.questionObj.difficulty.join(",") : "",
+    };
+    showEditQuestionModal = true;
+  }
+
+  function closeEditQuestionModal() {
+    showEditQuestionModal = false;
+    editingSessionQuestion = null;
+  }
+
+  async function handleEditQuestionSubmit(event: Event) {
+    event.preventDefault();
+    if (!editingSessionQuestion) return;
+    if (!editQuestionFormData.question.trim()) { alert("Please enter a question"); return; }
+    savingEditQuestion = true;
     try {
-      await questionDB.create(sq.questionObj);
-      const updated: SessionQuestion = { ...sq, isAdHoc: false, updatedAt: new Date() };
-      await sessionQuestionDB.update(cleanSessionQuestion(updated));
+      const tagsList = editQuestionFormData.tags.split(",").map((t) => t.trim()).filter((t) => t.length > 0);
+      const difficultyList = editQuestionFormData.difficulty.split(",").map((r) => parseInt(r.trim())).filter((r) => !isNaN(r) && r >= 1 && r <= 10);
+      const updatedQuestion: Question = cleanQuestionObj(editingSessionQuestion.questionObj, {
+        question: editQuestionFormData.question.trim(),
+        expectedAnswer: editQuestionFormData.expectedAnswer.trim(),
+        tags: tagsList,
+        questionType: editQuestionFormData.questionType,
+        difficulty: difficultyList,
+        hash: generateQuestionHash(editQuestionFormData.question.trim(), tagsList, editQuestionFormData.questionType),
+        updatedAt: new Date(),
+      });
+      const updatedSQ: SessionQuestion = { ...editingSessionQuestion, questionObj: updatedQuestion, updatedAt: new Date() };
+      await sessionQuestionDB.update(cleanSessionQuestion(updatedSQ));
+
       await loadSession();
-    } catch (err) {
-      alert("Failed to save to catalog: " + (err instanceof Error ? err.message : "Unknown error"));
+      await loadCatalogFingerprints();
+      closeEditQuestionModal();
+    } finally {
+      savingEditQuestion = false;
     }
   }
 
@@ -383,6 +461,22 @@
         "Failed to reorder questions: " + (err instanceof Error ? err.message : "Unknown error")
       );
     }
+  }
+
+  // Helper function to create a plain Question object safe for IndexedDB
+  function cleanQuestionObj(q: Question, overrides: Partial<Question> = {}): Question {
+    return {
+      id: q.id,
+      hash: q.hash ?? "",
+      tags: [...q.tags],
+      questionType: q.questionType,
+      question: q.question,
+      expectedAnswer: q.expectedAnswer,
+      difficulty: q.difficulty ? [...q.difficulty] : [],
+      createdAt: new Date(q.createdAt),
+      updatedAt: new Date(q.updatedAt),
+      ...overrides,
+    };
   }
 
   // Helper function to create a clean copy of SessionQuestion for IndexDB
@@ -670,8 +764,7 @@
               Welcome Page
             </button>
             <button type="button" onclick={openNotesModal} class="secondary">📝 Notes</button>
-            <button type="button" onclick={openQuestionSetBrowser} class="primary">+ Add Question Set</button>
-            <button type="button" onclick={openQuestionBrowser} class="primary">+ Add Questions</button>
+            <button type="button" onclick={() => openAddQuestionsModal()} class="primary">+ Add Questions …</button>
             <button type="button" onclick={openNewQuestionModal} class="primary">+ New Question</button>
             <div class="window-status-container">
               {#if candidateWindowOpen}
@@ -721,10 +814,7 @@
           <div class="empty-state">
             <h3>No questions yet</h3>
             <p>Add questions from the catalog to start preparing the interview.</p>
-            <button type="button" onclick={openQuestionBrowser} class="primary"
-            >+ Add Questions
-            </button
-            >
+            <button type="button" onclick={() => openAddQuestionsModal()} class="primary">+ Add Questions …</button>
           </div>
         {:else}
           <div class="questions-list">
@@ -744,7 +834,9 @@
                 onToggleRecording={toggleRecordingForm}
                 onSaveAnswer={saveAnswerData}
                 onResetRecord={resetRecord}
-                onSaveToCatalog={question.isAdHoc ? saveToCatalog : undefined}
+                onSaveToCatalog={saveToCatalog}
+                onEditQuestion={openEditQuestionModal}
+                isOutOfSync={outOfSyncIds.has(question.questionObj.id)}
               />
             {/each}
           </div>
@@ -754,47 +846,62 @@
   {/if}
 </div>
 
-<!-- Question Set Browser Modal -->
-<SessionModal show={showQuestionSetBrowser} title="Add Question Set" size="large" onClose={closeQuestionSetBrowser}>
-  {#if questionSetBrowserLoading}
-    <p class="loading-text">Loading question sets...</p>
-  {:else if availableQuestionSets.length === 0}
-    <p class="empty-state">
-      No question sets found. Create question sets in the Question Sets section.
-    </p>
+<!-- Add Questions Modal (tabbed) -->
+<SessionModal show={showAddQuestionsModal} title="Add Questions" size="large" onClose={closeAddQuestionsModal}>
+  <div class="tab-bar">
+    <button
+      type="button"
+      class="tab-btn"
+      class:active={addQuestionsTab === "catalog"}
+      onclick={() => (addQuestionsTab = "catalog")}
+    >From Catalog</button>
+    <button
+      type="button"
+      class="tab-btn"
+      class:active={addQuestionsTab === "sets"}
+      onclick={() => (addQuestionsTab = "sets")}
+    >From Question Set</button>
+  </div>
+
+  {#if addQuestionsTab === "catalog"}
+    <QuestionBrowserModal
+      questions={catalogQuestions}
+      existingQuestionIds={questions.map((sq) => sq.questionObj.id)}
+      onAdd={addQuestionToSession}
+      onClose={closeAddQuestionsModal}
+    />
   {:else}
-    <p class="helper-text">
-      Select a question set to add its questions to the session. Duplicates will be skipped.
-    </p>
-    <div class="question-set-list">
-      {#each availableQuestionSets as qs (qs.id)}
-        <div class="question-set-item">
-          <div class="question-set-info">
-            <strong class="question-set-name">{qs.name}</strong>
-            {#if qs.notes}
-              <span class="question-set-notes">{qs.notes}</span>
-            {/if}
-            <span class="question-set-count"
-            >{qs.questionIds.length} question{qs.questionIds.length !== 1 ? "s" : ""}</span
-            >
+    {#if questionSetBrowserLoading}
+      <p class="loading-text">Loading question sets...</p>
+    {:else if availableQuestionSets.length === 0}
+      <p class="empty-state">
+        No question sets found. Create question sets in the Question Sets section.
+      </p>
+    {:else}
+      <p class="helper-text">
+        Select a question set to add its questions to the session. Duplicates will be skipped.
+      </p>
+      <div class="question-set-list">
+        {#each availableQuestionSets as qs (qs.id)}
+          <div class="question-set-item">
+            <div class="question-set-info">
+              <strong class="question-set-name">{qs.name}</strong>
+              {#if qs.notes}
+                <span class="question-set-notes">{qs.notes}</span>
+              {/if}
+              <span class="question-set-count"
+              >{qs.questionIds.length} question{qs.questionIds.length !== 1 ? "s" : ""}</span
+              >
+            </div>
+            <button type="button" class="primary" onclick={() => addQuestionSetToSession(qs)}>
+              + Add to Session
+            </button>
           </div>
-          <button type="button" class="primary" onclick={() => addQuestionSetToSession(qs)}>
-            + Add to Session
-          </button>
-        </div>
-      {/each}
-    </div>
+        {/each}
+      </div>
+    {/if}
   {/if}
 </SessionModal>
-
-<!-- Question Browser Modal -->
-<QuestionBrowserModal
-  show={showQuestionBrowser}
-  questions={catalogQuestions}
-  existingQuestionIds={questions.map((sq) => sq.questionObj.id)}
-  onAdd={addQuestionToSession}
-  onClose={closeQuestionBrowser}
-/>
 
 <!-- New Ad-Hoc Question Modal -->
 <SessionModal show={showNewQuestionModal} title="New Question" size="large" onClose={closeNewQuestionModal}>
@@ -874,6 +981,88 @@
     <div class="modal-actions">
       <button type="button" onclick={closeNewQuestionModal} class="secondary" disabled={savingNewQuestion}>Cancel</button>
       <button type="submit" class="primary" disabled={savingNewQuestion}>{savingNewQuestion ? "Adding..." : "Add to Session"}</button>
+    </div>
+  </form>
+</SessionModal>
+
+<!-- Edit Question Modal -->
+<SessionModal show={showEditQuestionModal} title="Edit Question" size="large" onClose={closeEditQuestionModal}>
+  <form onsubmit={handleEditQuestionSubmit} autocomplete="off" data-form-type="other">
+    <div class="form-group">
+      <MarkdownEditor
+        bind:value={editQuestionFormData.question}
+        id="editQuestionText"
+        name="edit-question-text-content"
+        label="Question"
+        required={true}
+        placeholder="Enter the question text"
+        rows={3}
+      />
+    </div>
+
+    <div class="form-group">
+      <MarkdownEditor
+        bind:value={editQuestionFormData.expectedAnswer}
+        id="editExpectedAnswer"
+        name="edit-question-expected-answer"
+        label="Expected Answer"
+        placeholder="Enter the expected answer (visible only to interviewer)"
+        rows={5}
+        helpText="This will be visible only to the interviewer during the interview"
+      />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="editQuestionType">Question Type <span class="required">*</span></label>
+        <select
+          id="editQuestionType"
+          name="edit-question-type"
+          bind:value={editQuestionFormData.questionType}
+          required
+          autocomplete="off"
+          data-lpignore="true"
+          data-form-type="other"
+        >
+          <option value={QuestionType.Text}>Text</option>
+          <option value={QuestionType.Rating}>Rating</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="editQuestionTags">Tags</label>
+        <input
+          id="editQuestionTags"
+          name="edit-question-tags"
+          type="text"
+          bind:value={editQuestionFormData.tags}
+          placeholder="javascript, react, frontend"
+          autocomplete="off"
+          data-lpignore="true"
+          data-form-type="other"
+        />
+        <small>Separate tags with commas</small>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="editQuestionDifficulty">Difficulty</label>
+      <input
+        id="editQuestionDifficulty"
+        name="edit-question-difficulty-levels"
+        type="text"
+        bind:value={editQuestionFormData.difficulty}
+        placeholder="1,2,3,4,5,6,7,8,9,10"
+        autocomplete="off"
+        data-lpignore="true"
+        data-form-type="other"
+      />
+      <small>Comma-separated numbers (1-10) indicating which difficulty levels this question applies to</small>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" onclick={closeEditQuestionModal} class="secondary" disabled={savingEditQuestion}>Cancel</button>
+      <button type="submit" class="primary" disabled={savingEditQuestion}>{savingEditQuestion ? "Saving..." : "Save Changes"}</button>
     </div>
   </form>
 </SessionModal>
@@ -1272,5 +1461,47 @@
   .required {
     color: #d32f2f;
     margin-left: 0.25rem;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--color-border);
+    margin-bottom: 1.25rem;
+  }
+
+  .tab-btn {
+    padding: 0.6rem 1.25rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab-btn:hover {
+    color: var(--color-primary);
+  }
+
+  .tab-btn.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+  }
+
+  :global([data-theme="dark"]) .tab-btn {
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .tab-btn:hover,
+  :global([data-theme="dark"]) .tab-btn.active {
+    color: var(--color-primary-dark);
+  }
+
+  :global([data-theme="dark"]) .tab-btn.active {
+    border-bottom-color: var(--color-primary-dark);
   }
 </style>

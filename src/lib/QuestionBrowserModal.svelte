@@ -1,19 +1,16 @@
 <script lang="ts">
   import type { Question } from "./types";
   import { QuestionType } from "./types";
-  import SessionModal from "./SessionModal.svelte";
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   let {
-    show = false,
     questions,
     existingQuestionIds = [],
     onAdd,
     onClose,
   }: {
-    show: boolean;
     questions: Question[];
     existingQuestionIds?: string[];
     onAdd: (question: Question) => void;
@@ -26,12 +23,6 @@
   let selectedDifficulties = $state<number[]>([]);
   let viewMode = $state<"cards" | "table">("cards");
   let tableSelected = $state(new SvelteSet<string>());
-
-  $effect(() => {
-    if (show) {
-      tableSelected = new SvelteSet();
-    }
-  });
 
   const allTagsComputed = $derived(() => {
     const counts: Record<string, number> = {};
@@ -107,8 +98,7 @@
   };
 </script>
 
-<SessionModal {show} title="Add Questions from Catalog" size="large" onClose={onClose}>
-  <QuestionFilterPanel
+<QuestionFilterPanel
     bind:searchQuery
     bind:selectedTypes
     bind:selectedTags
@@ -256,7 +246,6 @@
       </div>
     {/if}
   {/if}
-</SessionModal>
 
 <style>
   /* Card grid */
