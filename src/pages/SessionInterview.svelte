@@ -2,6 +2,7 @@
   import {onDestroy, onMount} from "svelte";
   import candidateWindowSvg from "../assets/filipa-candidate-window.svg";
   import {candidateDB, generateId, generateQuestionHash, questionDB, questionSetDB, sessionDB, sessionQuestionDB} from "../lib/db";
+  import {getSharedCandidateWindow, setSharedCandidateWindow} from "../lib/candidateWindowStore";
   import type {Candidate, FilipaUpdateMessage, Question, QuestionSet, Session, SessionQuestion} from "../lib/types";
   import {QuestionType} from "../lib/types";
   import MarkdownEditor from "../components/MarkdownEditor.svelte";
@@ -57,6 +58,15 @@
   }
 
   onMount(async () => {
+    // Restore shared candidate window reference if still open from a previous session.
+    // Do NOT set candidateWindowOpen=true here — it will be set when the candidate view
+    // sends "candidate-window-opened" for this specific session.
+    const shared = getSharedCandidateWindow();
+    if (shared && !shared.closed) {
+      candidateWindow = shared;
+      startWindowCheck();
+    }
+
     await loadSession();
     await loadCatalogFingerprints();
     // Initialize BroadcastChannel for session updates
@@ -149,29 +159,49 @@
     showAddQuestionsModal = false;
   }
 
-  async function openCandidateView() {
-    if (session) {
-      const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
-
-      // Open the window synchronously before any await, so Safari on iPad
-      // treats it as a direct user-gesture response and doesn't block it.
-      if (!candidateWindow || candidateWindow.closed) {
-        candidateWindow = window.open(url, "candidate_view_" + session.id, "width=1280,height=1024");
-        // Fallback: if popup was blocked (e.g. iPad Safari blocks sized popups),
-        // retry as a plain new tab — must still be before any await.
-        if (!candidateWindow) {
-          candidateWindow = window.open(url, "_blank");
-        }
+  // Ensures the candidate window exists and is navigated to the current session URL.
+  // Returns true if the window was already showing this session, false if it was navigated.
+  function ensureCandidateWindow(): boolean {
+    if (!session) return false;
+    const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
+    const shared = getSharedCandidateWindow();
+    if (shared && !shared.closed) {
+      let currentHash = "";
+      try { currentHash = shared.location.hash; } catch { /* cross-origin guard */ }
+      if (currentHash === `#/candidate-view/${session.id}`) {
+        candidateWindow = shared;
+        return true;
       }
+      // Showing a different session — navigate it
+      shared.location.href = url;
+      candidateWindow = shared;
+      return false;
+    }
+    // No window open — open a new one with a fixed name
+    // Must be synchronous (before any await) so browsers treat it as a user gesture
+    candidateWindow = window.open(url, "filipa_candidate_view", "width=1280,height=1024");
+    if (!candidateWindow) {
+      // Fallback: plain new tab if popup was blocked (e.g. iPad Safari)
+      candidateWindow = window.open(url, "_blank");
+    }
+    setSharedCandidateWindow(candidateWindow);
+    return false;
+  }
 
-      // Reset active question so candidate sees the welcome page
-      session.currentQuestionIndex = -1;
-      session.updatedAt = new Date();
-      const cleanSess = cleanSession(session);
-      await sessionDB.update(cleanSess);
-      session = session;
+  async function openCandidateView() {
+    if (!session) return;
 
-      // Broadcast reset to any already-open candidate window
+    // Save DB update first so the candidate view reads the correct state on mount
+    session.currentQuestionIndex = -1;
+    session.updatedAt = new Date();
+    const cleanSess = cleanSession(session);
+    await sessionDB.update(cleanSess);
+    session = session;
+
+    const alreadyOnThisSession = ensureCandidateWindow();
+
+    if (alreadyOnThisSession) {
+      // Window is already on this session — send messages to trigger a refresh
       if (sessionChannel) {
         sessionChannel.postMessage({type: "filipa-question-update", sessionId: session.id});
       }
@@ -179,6 +209,8 @@
         candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
       }
     }
+    // If not already on this session, the window is navigating to the new URL.
+    // The candidate view will read the correct currentQuestionIndex from DB on mount.
   }
 
 
@@ -533,11 +565,7 @@
     if (!session) return;
 
     try {
-      // Check if candidate window is open, if not open it
-      if (!candidateWindow || candidateWindow.closed) {
-        openCandidateView();
-      }
-
+      // Save DB state first so the candidate view reads the correct question on mount
       session.currentQuestionIndex = index;
       session.updatedAt = new Date();
       const cleanSess = cleanSession(session);
@@ -561,19 +589,23 @@
         scrollToQuestionId = null;
       }
 
-      // Broadcast to BroadcastChannel (all tabs/windows)
-      if (sessionChannel) {
-        const message: FilipaUpdateMessage = {
-          type: "filipa-question-update",
-          sessionId: session.id,
-          timestamp: Date.now()
-        };
-        sessionChannel.postMessage(message);
-      }
+      // Ensure the candidate window exists and is on this session.
+      // If it was navigated to a new URL it will read the correct index from DB on mount.
+      const alreadyOnThisSession = ensureCandidateWindow();
 
-      // Notify candidate window instantly via postMessage
-      if (candidateWindow && !candidateWindow.closed) {
-        candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
+      if (alreadyOnThisSession) {
+        // Window is already showing this session — send messages to trigger a refresh
+        if (sessionChannel) {
+          const message: FilipaUpdateMessage = {
+            type: "filipa-question-update",
+            sessionId: session.id,
+            timestamp: Date.now()
+          };
+          sessionChannel.postMessage(message);
+        }
+        if (candidateWindow && !candidateWindow.closed) {
+          candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
+        }
       }
 
       // Don't reload - just trigger reactivity by reassigning

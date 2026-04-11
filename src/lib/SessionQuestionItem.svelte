@@ -42,7 +42,7 @@
     isOutOfSync?: boolean;
   } = $props();
 
-  const isActive = $derived(index === session.currentQuestionIndex);
+  const isActive = $derived(candidateWindowOpen && index === session.currentQuestionIndex);
   const isExpanded = $derived(expandedQuestionId === question.id);
   const isAnswered = $derived(question.answer.trim().length > 0);
   const hasRecording = $derived(

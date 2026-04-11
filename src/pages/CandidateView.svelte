@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import { fly, fade } from "svelte/transition";
   import { sessionDB, sessionQuestionDB } from "../lib/db";
   import type { Session, SessionQuestion } from "../lib/types";
@@ -15,8 +15,11 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
+  // Captured per-session so async callbacks always reference the session they were created for
+  let activeSessionId = "";
+
   async function refreshFromDB() {
-    const sessionId = params.sessionId;
+    const sessionId = activeSessionId;
     const updatedSession = await sessionDB.read(sessionId);
     const updatedQuestions = await sessionQuestionDB.listBySessionId(sessionId);
     updatedQuestions.sort((a, b) => a.order - b.order);
@@ -42,72 +45,83 @@
     }
   }
 
-  let sessionChannel: BroadcastChannel | null = null;
-  let messageHandler: ((event: MessageEvent) => void) | null = null;
-
-  onMount(async () => {
-    // Initialize candidate-specific theme
+  onMount(() => {
     candidateThemeStore.initialize();
-    try {
-      const sessionId = params.sessionId;
-      session = await sessionDB.read(sessionId);
-
-      if (!session) {
-        error = "Session not found";
-        loading = false;
-        return;
-      }
-
-      questions = await sessionQuestionDB.listBySessionId(sessionId);
-      questions.sort((a, b) => a.order - b.order);
-
-      // Show active question immediately if one is already presented
-      currentQuestion =
-        session.currentQuestionIndex >= 0 && session.currentQuestionIndex < questions.length
-          ? questions[session.currentQuestionIndex]
-          : null;
-
-      loading = false;
-
-      // Set up BroadcastChannel for session-specific updates
-      sessionChannel = new BroadcastChannel(`filipa-session-${sessionId}`);
-      sessionChannel.onmessage = (event) => {
-        if (event.data?.type === "filipa-question-update" && event.data?.sessionId === sessionId) {
-          refreshFromDB();
-        }
-      };
-
-      // Notify interviewer that candidate window is open
-      sessionChannel.postMessage({
-        type: "candidate-window-opened",
-        sessionId: sessionId,
-      });
-
-      // Listen for postMessage from interviewer window (complementary mechanism)
-      messageHandler = (event: MessageEvent) => {
-        if (event.data?.type === "filipa-question-update" && event.data?.sessionId === sessionId) {
-          refreshFromDB();
-        }
-      };
-      window.addEventListener("message", messageHandler);
-    } catch (err) {
-      error = err instanceof Error ? err.message : "Failed to load session";
-      loading = false;
-    }
   });
 
-  onDestroy(() => {
-    if (messageHandler) {
-      window.removeEventListener("message", messageHandler);
-    }
-    if (sessionChannel) {
-      // Notify interviewer that candidate window is closing
-      sessionChannel.postMessage({
-        type: "candidate-window-closing",
-        sessionId: params.sessionId,
-      });
-      sessionChannel.close();
-    }
+  // Re-runs whenever params.sessionId changes (svelte-spa-router reuses the component)
+  $effect(() => {
+    const sessionId = params.sessionId;
+    activeSessionId = sessionId;
+
+    let channel: BroadcastChannel | null = null;
+    let handler: ((event: MessageEvent) => void) | null = null;
+
+    loading = true;
+    error = null;
+    session = null;
+    questions = [];
+    currentQuestion = null;
+
+    (async () => {
+      try {
+        const loadedSession = await sessionDB.read(sessionId);
+
+        // Bail out if the session changed again before this async resolved
+        if (activeSessionId !== sessionId) return;
+
+        if (!loadedSession) {
+          error = "Session not found";
+          loading = false;
+          return;
+        }
+
+        const loadedQuestions = await sessionQuestionDB.listBySessionId(sessionId);
+        if (activeSessionId !== sessionId) return;
+
+        loadedQuestions.sort((a, b) => a.order - b.order);
+        session = loadedSession;
+        questions = loadedQuestions;
+        currentQuestion =
+          loadedSession.currentQuestionIndex >= 0 &&
+          loadedSession.currentQuestionIndex < loadedQuestions.length
+            ? loadedQuestions[loadedSession.currentQuestionIndex]
+            : null;
+        loading = false;
+
+        // Set up BroadcastChannel for this session
+        channel = new BroadcastChannel(`filipa-session-${sessionId}`);
+        channel.onmessage = (event) => {
+          if (event.data?.type === "filipa-question-update" && event.data?.sessionId === sessionId) {
+            refreshFromDB();
+          }
+        };
+
+        // Notify interviewer that candidate window is now showing this session
+        channel.postMessage({ type: "candidate-window-opened", sessionId });
+
+        // postMessage fallback from interviewer window
+        handler = (event: MessageEvent) => {
+          if (event.data?.type === "filipa-question-update" && event.data?.sessionId === sessionId) {
+            refreshFromDB();
+          }
+        };
+        window.addEventListener("message", handler);
+      } catch (err) {
+        if (activeSessionId !== sessionId) return;
+        error = err instanceof Error ? err.message : "Failed to load session";
+        loading = false;
+      }
+    })();
+
+    // Cleanup runs before the next effect (session change) or on component destroy
+    return () => {
+      if (handler) window.removeEventListener("message", handler);
+      if (channel) {
+        channel.postMessage({ type: "candidate-window-closing", sessionId });
+        channel.close();
+      }
+    };
   });
 
   function increaseFontSize() {
@@ -136,9 +150,6 @@
     <header>
       <div class="session-info">
         <h1>Filipa <span class="window-label">— Candidate Window</span></h1>
-        <p class="meta">
-          {session.name} • {new Date(session.date).toLocaleDateString()}
-        </p>
       </div>
       <div class="controls">
         <div class="font-controls">
@@ -187,9 +198,6 @@
       </div>
     </main>
 
-    <footer>
-      <p class="session-id">Session ID: {session.id.substring(0, 8)}</p>
-    </footer>
   {/if}
 </div>
 
@@ -199,7 +207,6 @@
     display: flex;
     flex-direction: column;
     background: #ffffff;
-    padding-bottom: 60px; /* Space for fixed footer */
   }
 
   header {
@@ -221,12 +228,6 @@
     font-size: 1rem;
     font-weight: 400;
     color: var(--color-text-secondary);
-  }
-
-  .meta {
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
   }
 
   .controls {
@@ -404,34 +405,6 @@
     display: inline-block;
   }
 
-  footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 1rem 2rem;
-    background: var(--color-bg-subtle);
-    border-top: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 100;
-  }
-
-  footer p {
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-  }
-
-  .session-id {
-    font-family: monospace;
-  }
-
-  .progress {
-    font-weight: bold;
-  }
-
   :global([data-theme="dark"]) .candidate-view {
     background: var(--color-bg-dark);
   }
@@ -446,10 +419,6 @@
   }
 
   :global([data-theme="dark"]) .window-label {
-    color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .meta {
     color: var(--color-text-muted);
   }
 
@@ -495,12 +464,5 @@
     color: var(--color-text-secondary) !important;
   }
 
-  :global([data-theme="dark"]) footer {
-    background: var(--color-bg-dark-2);
-    border-top-color: var(--color-border-dark);
-  }
 
-  :global([data-theme="dark"]) footer p {
-    color: var(--color-text-muted);
-  }
 </style>
