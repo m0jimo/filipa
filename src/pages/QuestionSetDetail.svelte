@@ -10,6 +10,7 @@
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import AddQuestionsModal from "../lib/AddQuestionsModal.svelte";
   import { userSettings, type QuestionViewMode } from "../lib/userSettings";
+  import ReorderableTable from "../components/ReorderableTable.svelte";
 
   let { params }: { params: { setId: string } } = $props();
 
@@ -309,8 +310,13 @@
         {/each}
       </div>
     {:else}
-      <table class="questions-table">
-        <thead>
+      <ReorderableTable
+        items={questions}
+        onMoveUp={moveUp}
+        onMoveDown={moveDown}
+        tableClass="questions-set-table"
+      >
+        {#snippet headerRow()}
           <tr>
             <th class="col-order">#</th>
             <th class="col-type">Type</th>
@@ -319,52 +325,32 @@
             <th class="col-reorder">Order</th>
             <th class="col-actions"></th>
           </tr>
-        </thead>
-        <tbody>
-          {#each questions as question, index (question.id)}
-            <tr>
-              <td class="col-order">{index + 1}</td>
-              <td class="col-type">
-                <span
-                  class="question-type"
-                  class:rating={question.questionType === QuestionType.Rating}
-                >
-                  {question.questionType}
-                </span>
-              </td>
-              <td class="col-difficulty">
-                {#if question.difficulty && question.difficulty.length > 0}
-                  {question.difficulty.join(", ")}
-                {:else}
-                  <span class="no-value">—</span>
-                {/if}
-              </td>
-              <td class="col-question">{truncateWords(question.question, 50)}</td>
-              <td class="col-reorder">
-                <button
-                  class="icon-btn"
-                  onclick={() => moveUp(index)}
-                  disabled={index === 0}
-                  title="Move up">▲</button
-                >
-                <button
-                  class="icon-btn"
-                  onclick={() => moveDown(index)}
-                  disabled={index === questions.length - 1}
-                  title="Move down">▼</button
-                >
-              </td>
-              <td class="col-actions">
-                <button
-                  onclick={() => (removeConfirmId = question.id)}
-                  class="icon-btn"
-                  title="Remove from set">🗑️</button
-                >
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+        {/snippet}
+
+        {#snippet bodyRow(question, index)}
+          <td class="col-order">{index + 1}</td>
+          <td class="col-type">
+            <span
+              class="question-type"
+              class:rating={question.questionType === QuestionType.Rating}
+            >{question.questionType}</span>
+          </td>
+          <td class="col-difficulty">
+            {#if question.difficulty && question.difficulty.length > 0}
+              {question.difficulty.join(", ")}
+            {:else}
+              <span class="no-value">—</span>
+            {/if}
+          </td>
+          <td class="col-question">{truncateWords(question.question, 50)}</td>
+          <td class="col-actions">
+            <button
+              onclick={(e) => { e.stopPropagation(); removeConfirmId = question.id; }}
+              class="icon-btn"
+              title="Remove from set">🗑️</button>
+          </td>
+        {/snippet}
+      </ReorderableTable>
     {/if}
   {/if}
 </div>
@@ -697,11 +683,11 @@
   }
 
   /* Table styles */
-  .questions-table {
+  :global(.questions-set-table) {
     table-layout: fixed;
   }
 
-  .questions-table thead th {
+  :global(.questions-set-table thead th) {
     white-space: nowrap;
   }
 
@@ -725,12 +711,6 @@
     color: var(--color-text);
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .col-reorder {
-    width: 56px;
-    text-align: center;
     white-space: nowrap;
   }
 

@@ -38,6 +38,33 @@
   let editQuestionFormData = $state({ question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" });
   let savingEditQuestion = $state(false);
 
+  // Question list keyboard reorder selection
+  let selectedQuestionIndex = $state<number | null>(null);
+  let questionsListEl: HTMLDivElement | null = $state(null);
+
+  const handleQuestionsKeydown = async (e: KeyboardEvent) => {
+    if (selectedQuestionIndex === null) return;
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (selectedQuestionIndex > 0) {
+        const next = selectedQuestionIndex - 1;
+        await moveQuestionUp(selectedQuestionIndex);
+        selectedQuestionIndex = next;
+        questionsListEl?.focus();
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (selectedQuestionIndex < questions.length - 1) {
+        const next = selectedQuestionIndex + 1;
+        await moveQuestionDown(selectedQuestionIndex);
+        selectedQuestionIndex = next;
+        questionsListEl?.focus();
+      }
+    } else if (e.key === "Escape") {
+      selectedQuestionIndex = null;
+    }
+  };
+
   // Catalog sync tracking: map of catalog question id → content fingerprint
   let catalogFingerprints = $state<Map<string, string>>(new Map());
 
@@ -488,6 +515,7 @@
       }
 
       await loadSession();
+      if (selectedQuestionIndex !== null) questionsListEl?.focus();
     } catch (err) {
       alert(
         "Failed to reorder questions: " + (err instanceof Error ? err.message : "Unknown error")
@@ -859,7 +887,14 @@
             <button type="button" onclick={() => openAddQuestionsModal()} class="primary">+ Add Questions …</button>
           </div>
         {:else}
-          <div class="questions-list">
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions -->
+          <div
+            class="questions-list"
+            tabindex="0"
+            bind:this={questionsListEl}
+            onkeydown={handleQuestionsKeydown}
+            onblur={() => (selectedQuestionIndex = null)}
+          >
             {#each questions as question, index (question.id)}
               <SessionQuestionItem
                 {question}
@@ -881,6 +916,8 @@
                 isOutOfSync={outOfSyncIds.has(question.questionObj.id)}
                 isSkipped={skippedQuestionIds.has(question.id)}
                 onToggleSkip={toggleSkip}
+                isSelected={selectedQuestionIndex === index}
+                onSelect={() => (selectedQuestionIndex = index)}
               />
             {/each}
           </div>

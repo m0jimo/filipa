@@ -24,6 +24,8 @@
     isOutOfSync = false,
     isSkipped = false,
     onToggleSkip,
+    isSelected = false,
+    onSelect,
   }: {
     question: SessionQuestion;
     index: number;
@@ -44,6 +46,8 @@
     isOutOfSync?: boolean;
     isSkipped?: boolean;
     onToggleSkip?: (questionId: string) => void;
+    isSelected?: boolean;
+    onSelect?: () => void;
   } = $props();
 
   const isActive = $derived(candidateWindowOpen && index === session.currentQuestionIndex);
@@ -132,6 +136,7 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={questionItemRef}
   class="question-item"
@@ -140,6 +145,8 @@
   class:answered={question.answer.trim().length > 0}
   class:rated={question.questionRating > 0}
   class:skipped={isSkipped}
+  class:selected={isSelected}
+  onclick={onSelect}
 >
   <div class="question-header">
     <div class="question-meta">
@@ -349,6 +356,11 @@
 
   .question-item:last-child {
     margin-bottom: 0;
+  }
+
+  .question-item.selected {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
   }
 
   .question-item.active {
