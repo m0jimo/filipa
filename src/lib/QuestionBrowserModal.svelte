@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Question } from "./types";
   import { QuestionType } from "./types";
-  import { SvelteSet } from "svelte/reactivity";
   import SessionModal from "./SessionModal.svelte";
+  import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
 
   let {
     show = false,
@@ -21,13 +21,11 @@
   let searchQuery = $state("");
   let selectedTypes = $state<string[]>([]);
   let selectedTags = $state<string[]>([]);
-  let showTypeDropdown = $state(false);
-  let showTagDropdown = $state(false);
 
-  const allTags = $derived(() => {
-    const tagSet = new SvelteSet<string>();
-    questions.forEach((q) => q.tags.forEach((tag) => tagSet.add(tag)));
-    return Array.from(tagSet).sort();
+  const allTagsComputed = $derived(() => {
+    const counts: Record<string, number> = {};
+    questions.forEach((q) => q.tags.forEach((tag) => { counts[tag] = (counts[tag] ?? 0) + 1; }));
+    return { allTags: Object.keys(counts).sort(), tagCounts: counts };
   });
 
   const filteredQuestions = $derived(() => {
@@ -53,129 +51,21 @@
 
     return result;
   });
-
-  function toggleType(type: string) {
-    if (selectedTypes.includes(type)) {
-      selectedTypes = selectedTypes.filter((t) => t !== type);
-    } else {
-      selectedTypes = [...selectedTypes, type];
-    }
-  }
-
-  function toggleTag(tag: string) {
-    if (selectedTags.includes(tag)) {
-      selectedTags = selectedTags.filter((t) => t !== tag);
-    } else {
-      selectedTags = [...selectedTags, tag];
-    }
-  }
-
-  function clearFilters() {
-    searchQuery = "";
-    selectedTypes = [];
-    selectedTags = [];
-  }
-
-  function handleWindowClick(event: MouseEvent) {
-    if (!(event.target as HTMLElement).closest(".multiselect-container")) {
-      showTypeDropdown = false;
-      showTagDropdown = false;
-    }
-  }
 </script>
 
-<svelte:window onclick={handleWindowClick} />
-
 <SessionModal {show} title="Add Questions from Catalog" size="large" onClose={onClose}>
-  <div class="filters">
-    <div class="filter-group">
-      <input
-        id="searchQuestionsBrowser"
-        name="input-search-questions-browser"
-        type="text"
-        bind:value={searchQuery}
-        placeholder="Search questions..."
-        class="search-input"
-        autocomplete="off"
-        data-lpignore="true"
-        data-form-type="other"
-      />
-    </div>
-
-    <div class="filter-group multiselect-wrapper">
-      <label>Type:</label>
-      <div class="multiselect-container">
-        <button
-          class="multiselect-trigger"
-          onclick={() => (showTypeDropdown = !showTypeDropdown)}
-          type="button"
-        >
-          {selectedTypes.length === 0 ? "All Types" : `${selectedTypes.length} selected`}
-          <span class="dropdown-arrow">&#9660;</span>
-        </button>
-        {#if showTypeDropdown}
-          <div class="multiselect-dropdown">
-            <label class="multiselect-option">
-              <input
-                type="checkbox"
-                checked={selectedTypes.includes(QuestionType.Text)}
-                onchange={() => toggleType(QuestionType.Text)}
-              />
-              <span>Text</span>
-            </label>
-            <label class="multiselect-option">
-              <input
-                type="checkbox"
-                checked={selectedTypes.includes(QuestionType.Rating)}
-                onchange={() => toggleType(QuestionType.Rating)}
-              />
-              <span>Rating</span>
-            </label>
-          </div>
-        {/if}
-      </div>
-    </div>
-
-    <div class="filter-group multiselect-wrapper">
-      <label>Tag:</label>
-      <div class="multiselect-container">
-        <button
-          class="multiselect-trigger"
-          onclick={() => (showTagDropdown = !showTagDropdown)}
-          type="button"
-        >
-          {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} selected`}
-          <span class="dropdown-arrow">&#9660;</span>
-        </button>
-        {#if showTagDropdown}
-          <div class="multiselect-dropdown">
-            {#if allTags().length === 0}
-              <div class="multiselect-empty">No tags available</div>
-            {:else}
-              {#each allTags() as tag (tag)}
-                <label class="multiselect-option">
-                  <input
-                    type="checkbox"
-                    checked={selectedTags.includes(tag)}
-                    onchange={() => toggleTag(tag)}
-                  />
-                  <span>{tag}</span>
-                </label>
-              {/each}
-            {/if}
-          </div>
-        {/if}
-      </div>
-    </div>
-
-    {#if searchQuery || selectedTypes.length > 0 || selectedTags.length > 0}
-      <button type="button" onclick={clearFilters} class="clear-filters">Clear Filters</button>
-    {/if}
-
-    <div class="results-count">
-      {filteredQuestions().length} of {questions.length} questions
-    </div>
-  </div>
+  <QuestionFilterPanel
+    bind:searchQuery
+    bind:selectedTypes
+    bind:selectedTags
+    selectedDifficulties={[]}
+    allTags={allTagsComputed().allTags}
+    tagCounts={allTagsComputed().tagCounts}
+    totalCount={questions.length}
+    filteredCount={filteredQuestions().length}
+    showDifficultyFilter={false}
+    showViewToggle={false}
+  />
 
   <div class="questions-grid">
     {#each filteredQuestions() as question (question.id)}
@@ -233,140 +123,6 @@
 </SessionModal>
 
 <style>
-  .filters {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: var(--color-bg-subtle);
-    border-radius: 8px;
-    flex-wrap: wrap;
-  }
-
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .filter-group label {
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-  }
-
-  .search-input {
-    flex: 1;
-    min-width: 200px;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-
-  .search-input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
-
-  .multiselect-wrapper {
-    position: relative;
-  }
-
-  .multiselect-container {
-    position: relative;
-  }
-
-  .multiselect-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    background: white;
-    cursor: pointer;
-    min-width: 150px;
-    text-align: left;
-  }
-
-  .multiselect-trigger:hover {
-    border-color: var(--color-primary);
-  }
-
-  .dropdown-arrow {
-    font-size: 0.7rem;
-    color: var(--color-text-secondary);
-  }
-
-  .multiselect-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    max-height: 250px;
-    overflow-y: auto;
-  }
-
-  .multiselect-option {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.15s;
-  }
-
-  .multiselect-option:hover {
-    background: var(--color-bg-subtle);
-  }
-
-  .multiselect-option input[type="checkbox"] {
-    cursor: pointer;
-    margin: 0;
-  }
-
-  .multiselect-option span {
-    flex: 1;
-    font-size: 0.9rem;
-  }
-
-  .multiselect-empty {
-    padding: 1rem;
-    text-align: center;
-    color: #999;
-    font-size: 0.9rem;
-  }
-
-  .clear-filters {
-    padding: 0.5rem 1rem;
-    background: white;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .clear-filters:hover {
-    background: var(--color-bg-subtle);
-  }
-
-  .results-count {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-left: auto;
-  }
-
   .questions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -506,65 +262,6 @@
     text-align: center;
     padding: 3rem;
     color: var(--color-text-secondary);
-  }
-
-  :global([data-theme="dark"]) .filters {
-    background: var(--color-bg-dark-2);
-  }
-
-  :global([data-theme="dark"]) .filter-group label {
-    color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .search-input {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .multiselect-trigger {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .multiselect-trigger:hover {
-    border-color: var(--color-primary);
-  }
-
-  :global([data-theme="dark"]) .dropdown-arrow {
-    color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .multiselect-dropdown {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
-  }
-
-  :global([data-theme="dark"]) .multiselect-option:hover {
-    background: var(--color-bg-dark-2);
-  }
-
-  :global([data-theme="dark"]) .multiselect-option span {
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .multiselect-empty {
-    color: var(--color-text-secondary);
-  }
-
-  :global([data-theme="dark"]) .clear-filters {
-    background: #3a3a3a;
-    border-color: #555;
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .clear-filters:hover {
-    background: #4a4a4a;
-  }
-
-  :global([data-theme="dark"]) .results-count {
-    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .question-card {

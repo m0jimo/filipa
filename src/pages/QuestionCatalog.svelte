@@ -10,6 +10,7 @@
   import CompactDialog from "../lib/CompactDialog.svelte";
   import MarkdownEditor from "../components/MarkdownEditor.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
+  import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
   import { userSettings, type QuestionViewMode, type EditorViewMode } from "../lib/userSettings";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -25,10 +26,6 @@
   let selectedDifficulties = $state<number[]>([]);
   let allTags: string[] = $state([]);
   let tagCounts: Record<string, number> = $state({});
-  let showTypeDropdown = $state(false);
-  let showDifficultyDropdown = $state(false);
-  let tagSearch = $state("");
-  let showAllTags = $state(false);
   let viewMode = $state<QuestionViewMode>("cards");
 
   type SortColumn = "type" | "difficulty" | "createdAt";
@@ -120,12 +117,10 @@
     selectedDifficulties = saved.questionFilters.selectedDifficulties;
     viewMode = saved.questionViewMode;
     loadQuestions();
+  });
 
-    // Add click outside listener
-    document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
+  $effect(() => {
+    userSettings.setQuestionViewMode(viewMode);
   });
 
   async function loadQuestions() {
@@ -196,6 +191,7 @@
       userSettings.setQuestionFilters({ selectedTypes, selectedTags, selectedDifficulties });
     }
   });
+
 
   function openCreateModal() {
     editingQuestion = null;
@@ -346,45 +342,6 @@
     const words = text.trim().split(/\s+/);
     return words.length <= max ? text : words.slice(0, max).join(" ") + "…";
   };
-
-  function clearFilters() {
-    searchQuery = "";
-    selectedTypes = [];
-    selectedTags = [];
-    selectedDifficulties = [];
-  }
-
-  function toggleType(type: string) {
-    if (selectedTypes.includes(type)) {
-      selectedTypes = selectedTypes.filter((t) => t !== type);
-    } else {
-      selectedTypes = [...selectedTypes, type];
-    }
-  }
-
-  function toggleTag(tag: string) {
-    if (selectedTags.includes(tag)) {
-      selectedTags = selectedTags.filter((t) => t !== tag);
-    } else {
-      selectedTags = [...selectedTags, tag];
-    }
-  }
-
-  function toggleDifficulty(level: number) {
-    if (selectedDifficulties.includes(level)) {
-      selectedDifficulties = selectedDifficulties.filter((d) => d !== level);
-    } else {
-      selectedDifficulties = [...selectedDifficulties, level];
-    }
-  }
-
-  function handleClickOutside(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (!target.closest(".multiselect-container")) {
-      showTypeDropdown = false;
-      showDifficultyDropdown = false;
-    }
-  }
 
   function openImportModal() {
     importResults = null;
@@ -838,173 +795,33 @@
     <p class="error">Error: {error}</p>
   {:else}
     <!-- Filters -->
-    <div class="filters">
-      <div class="filter-group">
+    <QuestionFilterPanel
+      bind:searchQuery
+      bind:selectedTypes
+      bind:selectedTags
+      bind:selectedDifficulties
+      bind:viewMode
+      {allTags}
+      {tagCounts}
+      totalCount={questions.length}
+      filteredCount={filteredQuestions.length}
+      showDifficultyFilter={true}
+      showViewToggle={true}
+    />
+
+    {#if filteredQuestions.length > 0}
+      <label class="select-all-checkbox">
         <input
-          id="searchQuestions"
-          name="input-search-questions"
-          type="text"
-          bind:value={searchQuery}
-          placeholder="Search questions..."
-          class="search-input"
-          autocomplete="off"
-          data-lpignore="true"
-          data-form-type="other"
+          type="checkbox"
+          checked={filteredQuestions.length > 0 &&
+            filteredQuestions.every((q) => selectedQuestionIds.has(q.id))}
+          indeterminate={filteredQuestions.some((q) => selectedQuestionIds.has(q.id)) &&
+            !filteredQuestions.every((q) => selectedQuestionIds.has(q.id))}
+          onchange={toggleSelectAllForExport}
         />
-      </div>
-
-      <div class="filter-group multiselect-wrapper">
-        <label>Type:</label>
-        <div class="multiselect-container">
-          <button
-            class="multiselect-trigger"
-            onclick={() => (showTypeDropdown = !showTypeDropdown)}
-            type="button"
-          >
-            {selectedTypes.length === 0 ? "All Types" : `${selectedTypes.length} selected`}
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          {#if showTypeDropdown}
-            <div class="multiselect-dropdown">
-              <label class="multiselect-option">
-                <input
-                  type="checkbox"
-                  checked={selectedTypes.includes(QuestionType.Text)}
-                  onchange={() => toggleType(QuestionType.Text)}
-                />
-                <span>Text</span>
-              </label>
-              <label class="multiselect-option">
-                <input
-                  type="checkbox"
-                  checked={selectedTypes.includes(QuestionType.Rating)}
-                  onchange={() => toggleType(QuestionType.Rating)}
-                />
-                <span>Rating</span>
-              </label>
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <div class="filter-group multiselect-wrapper">
-        <label>Difficulty:</label>
-        <div class="multiselect-container">
-          <button
-            class="multiselect-trigger"
-            onclick={() => (showDifficultyDropdown = !showDifficultyDropdown)}
-            type="button"
-          >
-            {selectedDifficulties.length === 0
-              ? "All Levels"
-              : [...selectedDifficulties].sort((a, b) => a - b).join(", ")}
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          {#if showDifficultyDropdown}
-            <div class="multiselect-dropdown difficulty-dropdown">
-              {#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as level (level)}
-                <label class="multiselect-option">
-                  <input
-                    type="checkbox"
-                    checked={selectedDifficulties.includes(level)}
-                    onchange={() => toggleDifficulty(level)}
-                  />
-                  <span>{level}</span>
-                </label>
-              {/each}
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <div class="filter-group tag-filter-group">
-        {#if allTags.length === 0}
-          <span class="tag-filter-empty">No tags available</span>
-        {:else}
-          {@const top10 = [...allTags]
-            .sort((a, b) => (tagCounts[b] ?? 0) - (tagCounts[a] ?? 0))
-            .slice(0, 10)
-            .sort()}
-          {@const filtered = (showAllTags || tagSearch ? allTags : top10).filter((t) =>
-            t.toLowerCase().includes(tagSearch.toLowerCase())
-          )}
-          <div class="tag-filter-panel">
-            <div class="tag-filter-controls">
-              <input
-                type="text"
-                class="tag-search-input"
-                placeholder="Filter tags..."
-                bind:value={tagSearch}
-                autocomplete="off"
-                data-lpignore="true"
-                data-form-type="other"
-              />
-              <button
-                type="button"
-                class="tag-toggle-btn"
-                onclick={() => (showAllTags = !showAllTags)}
-                >{showAllTags ? "Show less" : `Show all ${allTags.length}`}</button
-              >
-            </div>
-            <div class="tag-chips">
-              {#each filtered as tag (tag)}
-                <button
-                  type="button"
-                  class="tag-chip"
-                  class:selected={selectedTags.includes(tag)}
-                  onclick={() => toggleTag(tag)}>{tag}</button
-                >
-              {/each}
-            </div>
-          </div>
-        {/if}
-      </div>
-
-      {#if searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedDifficulties.length > 0}
-        <button onclick={clearFilters} class="clear-filters">Clear Filters</button>
-      {/if}
-
-      <div class="results-count">
-        {filteredQuestions.length} of {questions.length} questions
-      </div>
-
-      <div class="view-toggle">
-        <button
-          type="button"
-          class="view-btn"
-          class:active={viewMode === "cards"}
-          onclick={() => {
-            viewMode = "cards";
-            userSettings.setQuestionViewMode("cards");
-          }}
-          title="Card view">⊞</button
-        >
-        <button
-          type="button"
-          class="view-btn"
-          class:active={viewMode === "table"}
-          onclick={() => {
-            viewMode = "table";
-            userSettings.setQuestionViewMode("table");
-          }}
-          title="Table view">☰</button
-        >
-      </div>
-
-      {#if filteredQuestions.length > 0}
-        <label class="select-all-checkbox">
-          <input
-            type="checkbox"
-            checked={filteredQuestions.length > 0 &&
-              filteredQuestions.every((q) => selectedQuestionIds.has(q.id))}
-            indeterminate={filteredQuestions.some((q) => selectedQuestionIds.has(q.id)) &&
-              !filteredQuestions.every((q) => selectedQuestionIds.has(q.id))}
-            onchange={toggleSelectAllForExport}
-          />
-          Select All
-        </label>
-      {/if}
-    </div>
+        Select All
+      </label>
+    {/if}
 
     {#if questions.length === 0}
       <div class="empty-state">
@@ -1016,7 +833,9 @@
       <div class="empty-state">
         <h2>No questions found</h2>
         <p>Try adjusting your filters.</p>
-        <button onclick={clearFilters} class="secondary">Clear Filters</button>
+        <button
+          onclick={() => { searchQuery = ""; selectedTypes = []; selectedTags = []; selectedDifficulties = []; }}
+          class="secondary">Clear Filters</button>
       </div>
     {:else if viewMode === "cards"}
       <div class="questions-grid">
@@ -1601,248 +1420,6 @@ Type: text</code
   .question-catalog > header,
   .question-catalog > :not(:global(.navigation-tabs)):not(:global(.breadcrumbs)):not(header) {
     padding: 1rem;
-  }
-
-  .filters {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: var(--color-bg-subtle);
-    border-radius: 8px;
-    flex-wrap: wrap;
-  }
-
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .filter-group label {
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    white-space: nowrap;
-  }
-
-  .tag-filter-group {
-    align-items: flex-start;
-    flex: 1 1 100%;
-  }
-
-  .tag-filter-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-  }
-
-  .tag-filter-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .tag-search-input {
-    padding: 0.4rem 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 0.85rem;
-    width: 180px;
-  }
-
-  .tag-search-input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
-
-  .tag-toggle-btn {
-    padding: 0.4rem 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    background: white;
-    cursor: pointer;
-    color: #555;
-    white-space: nowrap;
-  }
-
-  .tag-toggle-btn:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  .tag-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .tag-chip {
-    padding: 0.25rem 0.65rem;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    background: white;
-    cursor: pointer;
-    transition:
-      background 0.15s,
-      border-color 0.15s,
-      color 0.15s;
-    color: #444;
-  }
-
-  .tag-chip:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  .tag-chip.selected {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-  }
-
-  .tag-filter-empty {
-    font-size: 0.9rem;
-    color: #999;
-  }
-
-  .search-input {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 1rem;
-    min-width: 250px;
-  }
-
-  .search-input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
-
-  select {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    background: white;
-    cursor: pointer;
-  }
-
-  select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
-
-  .multiselect-wrapper {
-    position: relative;
-  }
-
-  .multiselect-container {
-    position: relative;
-  }
-
-  .multiselect-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    background: white;
-    cursor: pointer;
-    min-width: 150px;
-    text-align: left;
-  }
-
-  .multiselect-trigger:hover {
-    border-color: var(--color-primary);
-  }
-
-  .dropdown-arrow {
-    font-size: 0.7rem;
-    color: var(--color-text-secondary);
-  }
-
-  .multiselect-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    max-height: 250px;
-    overflow-y: auto;
-  }
-
-  .multiselect-option {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.15s;
-  }
-
-  .multiselect-option:hover {
-    background: var(--color-bg-subtle);
-  }
-
-  .multiselect-option input[type="checkbox"] {
-    cursor: pointer;
-    margin: 0;
-  }
-
-  .multiselect-option span {
-    flex: 1;
-    font-size: 0.9rem;
-  }
-
-  .difficulty-dropdown {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    min-width: 200px;
-  }
-
-  .difficulty-dropdown .multiselect-option {
-    justify-content: center;
-    padding: 0.5rem 0.25rem;
-  }
-
-  .multiselect-empty {
-    padding: 1rem;
-    text-align: center;
-    color: #999;
-    font-size: 0.9rem;
-  }
-
-  .clear-filters {
-    padding: 0.5rem 1rem;
-    background: white;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .clear-filters:hover {
-    background: var(--color-bg-subtle);
-  }
-
-  .results-count {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    align-self: center;
   }
 
   .select-all-checkbox {
@@ -2466,94 +2043,6 @@ Type: text</code
       padding: 1.5rem;
     }
 
-    .filters {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .filter-group {
-      width: 100%;
-    }
-
-    .search-input {
-      min-width: 100%;
-    }
-  }
-
-  :global([data-theme="dark"]) .filters {
-    background: var(--color-bg-dark-2);
-  }
-
-  :global([data-theme="dark"]) .filter-group label {
-    color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .search-input {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) select {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .tag-search-input {
-    background: var(--color-bg-dark);
-    border-color: var(--color-border-dark);
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .tag-search-input:focus {
-    border-color: var(--color-primary);
-  }
-
-  :global([data-theme="dark"]) .tag-toggle-btn {
-    background: var(--color-bg-dark-2);
-    border-color: #555;
-    color: #ccc;
-  }
-
-  :global([data-theme="dark"]) .tag-toggle-btn:hover {
-    border-color: var(--color-primary);
-    color: #66aaff;
-  }
-
-  :global([data-theme="dark"]) .tag-chip {
-    background: var(--color-bg-dark-2);
-    border-color: #555;
-    color: #ccc;
-  }
-
-  :global([data-theme="dark"]) .tag-chip:hover {
-    border-color: var(--color-primary);
-    color: #66aaff;
-  }
-
-  :global([data-theme="dark"]) .tag-chip.selected {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-  }
-
-  :global([data-theme="dark"]) .tag-filter-empty {
-    color: var(--color-text-secondary);
-  }
-
-  :global([data-theme="dark"]) .clear-filters {
-    background: #3a3a3a;
-    border-color: #555;
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .clear-filters:hover {
-    background: #4a4a4a;
-  }
-
-  :global([data-theme="dark"]) .results-count {
-    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .col-sortable:hover {
