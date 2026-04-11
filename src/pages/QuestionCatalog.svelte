@@ -9,8 +9,8 @@
   import SessionModal from "../lib/SessionModal.svelte";
   import CompactDialog from "../lib/CompactDialog.svelte";
   import MarkdownEditor from "../components/MarkdownEditor.svelte";
-  import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
+  import QuestionListView from "../components/QuestionListView.svelte";
   import { userSettings, type QuestionViewMode, type EditorViewMode } from "../lib/userSettings";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -837,145 +837,22 @@
           onclick={() => { searchQuery = ""; selectedTypes = []; selectedTags = []; selectedDifficulties = []; }}
           class="secondary">Clear Filters</button>
       </div>
-    {:else if viewMode === "cards"}
-      <div class="questions-grid">
-        {#each filteredQuestions as question (question.id)}
-          <div class="question-card" class:selected={selectedQuestionIds.has(question.id)}>
-            <div class="question-header">
-              <span
-                class="question-type"
-                class:rating={question.questionType === QuestionType.Rating}
-              >
-                {question.questionType}
-              </span>
-              {#if question.tags.length > 0}
-                <div class="tags">
-                  {#each question.tags as tag (tag)}
-                    <span class="tag">{tag}</span>
-                  {/each}
-                </div>
-              {/if}
-              <input
-                type="checkbox"
-                class="question-select"
-                checked={selectedQuestionIds.has(question.id)}
-                onchange={() => toggleQuestionForExport(question.id)}
-                title="Select for export"
-              />
-            </div>
-
-            <div class="question-content">
-              <div class="question-text">
-                <MarkdownPreview md={question.question} />
-              </div>
-              {#if question.expectedAnswer}
-                <details class="expected-answer">
-                  <summary>Expected Answer</summary>
-                  <div class="expected-answer-content">
-                    <MarkdownPreview md={question.expectedAnswer} />
-                  </div>
-                </details>
-              {/if}
-            </div>
-
-            {#if question.difficulty && question.difficulty.length > 0}
-              <div class="rating-info">
-                <small>Difficulty: {question.difficulty.join(", ")}</small>
-              </div>
-            {/if}
-
-            <div class="question-meta">
-              <small title="Updated: {new Date(question.updatedAt).toLocaleString()}">
-                Created: {new Date(question.createdAt).toLocaleDateString()}
-              </small>
-            </div>
-
-            <div class="card-actions">
-              <button
-                onclick={(e) => confirmDelete(question.id, e)}
-                class="action-btn delete-narrow"
-                title="Delete question"
-              >
-                🗑️
-              </button>
-              <button
-                onclick={(e) => openEditModal(question, e)}
-                class="action-btn edit"
-                title="Edit question"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-        {/each}
-      </div>
     {:else}
-      <table class="questions-table">
-        <thead>
-          <tr>
-            <th class="col-check"></th>
-            <th class="col-type col-sortable" onclick={() => toggleSort("type")}>
-              Type {#if sortCol === "type"}<span class="sort-arrow"
-                  >{sortDir === "asc" ? "▲" : "▼"}</span
-                >{:else}<span class="sort-arrow inactive">⇅</span>{/if}
-            </th>
-            <th class="col-difficulty col-sortable" onclick={() => toggleSort("difficulty")}>
-              Difficulty {#if sortCol === "difficulty"}<span class="sort-arrow"
-                  >{sortDir === "asc" ? "▲" : "▼"}</span
-                >{:else}<span class="sort-arrow inactive">⇅</span>{/if}
-            </th>
-            <th class="col-question">Question</th>
-            <th class="col-created col-sortable" onclick={() => toggleSort("createdAt")}>
-              Created {#if sortCol === "createdAt"}<span class="sort-arrow"
-                  >{sortDir === "asc" ? "▲" : "▼"}</span
-                >{:else}<span class="sort-arrow inactive">⇅</span>{/if}
-            </th>
-            <th class="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each tableSorted as question (question.id)}
-            <tr class:selected={selectedQuestionIds.has(question.id)}>
-              <td class="col-check">
-                <input
-                  type="checkbox"
-                  checked={selectedQuestionIds.has(question.id)}
-                  onchange={() => toggleQuestionForExport(question.id)}
-                  title="Select for export"
-                />
-              </td>
-              <td class="col-type">
-                <span
-                  class="question-type"
-                  class:rating={question.questionType === QuestionType.Rating}
-                >
-                  {question.questionType}
-                </span>
-              </td>
-              <td class="col-difficulty">
-                {#if question.difficulty && question.difficulty.length > 0}
-                  {question.difficulty.join(", ")}
-                {:else}
-                  <span class="no-value">—</span>
-                {/if}
-              </td>
-              <td class="col-question">{truncateWords(question.question, 50)}</td>
-              <td class="col-created">
-                <span title="Updated: {new Date(question.updatedAt).toLocaleString()}">
-                  {new Date(question.createdAt).toLocaleDateString()}
-                </span>
-              </td>
-              <td class="col-actions">
-                <button
-                  onclick={(e) => openEditModal(question, e)}
-                  class="icon-btn edit-icon"
-                  title="Edit question">✎ Edit</button
-                >
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <QuestionListView
+        questions={tableSorted}
+        {viewMode}
+        selectedSet={selectedQuestionIds}
+        onToggleSelect={toggleQuestionForExport}
+        {sortCol}
+        {sortDir}
+        onToggleSort={toggleSort}
+        onEdit={openEditModal}
+        onDelete={confirmDelete}
+        showSorting={true}
+        showActions={true}
+        showCreatedDate={true}
+        showExpectedAnswer={true}
+      />
     {/if}
   {/if}
 </div>
@@ -1490,248 +1367,6 @@ Type: text</code
     background: #388e3c !important;
   }
 
-  .questions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .questions-table thead th {
-    color: #555;
-    white-space: nowrap;
-  }
-
-  .col-sortable {
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .col-sortable:hover {
-    color: var(--color-primary);
-  }
-
-  .sort-arrow {
-    font-size: 0.7rem;
-    margin-left: 0.25rem;
-  }
-
-  .sort-arrow.inactive {
-    opacity: 0.35;
-  }
-
-  .col-check {
-    width: 32px;
-    text-align: center;
-  }
-
-  .col-type {
-    width: 80px;
-  }
-
-  .col-difficulty {
-    width: 90px;
-    text-align: center;
-  }
-
-  .col-question {
-    color: var(--color-text);
-    max-width: 400px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .col-actions {
-    width: 72px;
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .no-value {
-    color: #bbb;
-  }
-
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.25rem;
-    font-size: 0.95rem;
-    border-radius: 3px;
-    line-height: 1;
-    opacity: 0.6;
-    transition:
-      opacity 0.15s,
-      background 0.15s;
-  }
-
-  .icon-btn:hover {
-    opacity: 1;
-    background: #f0f0f0;
-  }
-
-  .icon-btn.delete-icon:hover {
-    background: #fdecea;
-  }
-
-  /* Base question-card styles now in app.css - keeping component-specific transitions */
-  .question-card {
-    transition: all 0.2s;
-    height: 280px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .question-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
-  }
-
-  .question-card.selected {
-    border-color: #4caf50;
-    background: #f1f8f4;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
-  }
-
-  .question-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    gap: 1rem;
-  }
-
-  .question-type {
-    padding: 0.25rem 0.75rem;
-    background: #e3f2fd;
-    color: #1976d2;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .question-type.rating {
-    background: #fff3e0;
-    color: #f57c00;
-  }
-
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
-
-  .tag {
-    padding: 0.25rem 0.5rem;
-    background: var(--color-bg-subtle);
-    color: var(--color-text-secondary);
-    border-radius: 3px;
-    font-size: 0.75rem;
-  }
-
-  .question-content {
-    margin-bottom: 1rem;
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .question-text {
-    font-size: 0.95rem;
-    max-height: 100px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .question-text::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(to bottom, transparent, white);
-    pointer-events: none;
-  }
-
-  .question-card.selected .question-text::after {
-    background: linear-gradient(to bottom, transparent, #f1f8f4);
-  }
-
-  .question-text :global(.markdown-preview) {
-    font-size: 0.95rem;
-  }
-
-  .question-text :global(.markdown-preview h1),
-  .question-text :global(.markdown-preview h2),
-  .question-text :global(.markdown-preview h3) {
-    font-size: 1rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .expected-answer {
-    margin-top: 0.75rem;
-  }
-
-  .expected-answer summary {
-    cursor: pointer;
-    color: var(--color-primary);
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-
-  .expected-answer summary:hover {
-    text-decoration: underline;
-  }
-
-  .expected-answer-content {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: #f9f9f9;
-    border-radius: 4px;
-    font-size: 0.9rem;
-  }
-
-  .expected-answer-content :global(.markdown-preview) {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-  }
-
-  .expected-answer-content :global(.markdown-preview h1),
-  .expected-answer-content :global(.markdown-preview h2),
-  .expected-answer-content :global(.markdown-preview h3) {
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .rating-info {
-    margin-bottom: 1rem;
-    color: var(--color-text-secondary);
-  }
-
-  .question-meta {
-    margin-bottom: 0.5rem;
-    color: #999;
-    font-size: 0.75rem;
-  }
-
-  .col-created {
-    white-space: nowrap;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-  }
-
-  /* Base action-btn, edit, delete styles now in app.css */
-  .card-actions {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
-  }
-
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2045,53 +1680,8 @@ Type: text</code
 
   }
 
-  :global([data-theme="dark"]) .col-sortable:hover {
-    color: #66aaff;
-  }
-
-  :global([data-theme="dark"]) .col-question {
-    color: #ddd;
-  }
-
-  :global([data-theme="dark"]) .icon-btn:hover {
-    background: var(--color-bg-dark-2);
-  }
-
-  :global([data-theme="dark"]) .icon-btn.delete-icon:hover {
-    background: #3a1a1a;
-  }
-
-  /* Question-card dark theme styles now in app.css */
-
-  :global([data-theme="dark"]) .question-content h3 {
-    color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .question-text::after {
-    background: linear-gradient(to bottom, transparent, #1a1a1a);
-  }
-
-  :global([data-theme="dark"]) .question-card.selected .question-text::after {
-    background: linear-gradient(to bottom, transparent, #2d3d2f);
-  }
-
-  :global([data-theme="dark"]) .expected-answer-content {
-    background: var(--color-bg-dark-2);
-  }
-
-  :global([data-theme="dark"]) .expected-answer-content :global(.markdown-preview) {
-    color: var(--color-text-muted);
-  }
-
-  /* Action btn dark theme now in app.css */
-
   :global([data-theme="dark"]) .select-all-checkbox {
     color: #ffffff;
-  }
-
-  :global([data-theme="dark"]) .question-card.selected {
-    background: #2d3d2f;
-    border-color: #4caf50;
   }
 
   :global([data-theme="dark"]) .export-description {

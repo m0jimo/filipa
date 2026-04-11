@@ -3,6 +3,8 @@
   import { QuestionType } from "./types";
   import SessionModal from "./SessionModal.svelte";
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
+  import MarkdownPreview from "../components/MarkdownPreview.svelte";
+  import { SvelteSet } from "svelte/reactivity";
 
   let {
     show = false,
@@ -21,6 +23,14 @@
   let searchQuery = $state("");
   let selectedTypes = $state<string[]>([]);
   let selectedTags = $state<string[]>([]);
+  let viewMode = $state<"cards" | "table">("cards");
+  let tableSelected = $state(new SvelteSet<string>());
+
+  $effect(() => {
+    if (show) {
+      tableSelected = new SvelteSet();
+    }
+  });
 
   const allTagsComputed = $derived(() => {
     const counts: Record<string, number> = {};
@@ -51,6 +61,45 @@
 
     return result;
   });
+
+  const eligibleInView = $derived(
+    filteredQuestions().filter((q) => !existingQuestionIds.includes(q.id))
+  );
+
+  const allEligibleSelected = $derived(
+    eligibleInView.length > 0 && eligibleInView.every((q) => tableSelected.has(q.id))
+  );
+
+  const toggleTableRow = (id: string) => {
+    const next = new SvelteSet(tableSelected);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    tableSelected = next;
+  };
+
+  const toggleSelectAll = () => {
+    const next = new SvelteSet(tableSelected);
+    if (allEligibleSelected) {
+      eligibleInView.forEach((q) => next.delete(q.id));
+    } else {
+      eligibleInView.forEach((q) => next.add(q.id));
+    }
+    tableSelected = next;
+  };
+
+  const addSelected = () => {
+    const toAdd = questions.filter((q) => tableSelected.has(q.id));
+    toAdd.forEach((q) => onAdd(q));
+    tableSelected = new SvelteSet();
+  };
+
+  const truncateWords = (text: string, max: number): string => {
+    const words = text.trim().split(/\s+/);
+    return words.length <= max ? text : words.slice(0, max).join(" ") + "…";
+  };
 </script>
 
 <SessionModal {show} title="Add Questions from Catalog" size="large" onClose={onClose}>
@@ -58,71 +107,154 @@
     bind:searchQuery
     bind:selectedTypes
     bind:selectedTags
+    bind:viewMode
     selectedDifficulties={[]}
     allTags={allTagsComputed().allTags}
     tagCounts={allTagsComputed().tagCounts}
     totalCount={questions.length}
     filteredCount={filteredQuestions().length}
     showDifficultyFilter={false}
-    showViewToggle={false}
+    showViewToggle={true}
   />
 
-  <div class="questions-grid">
-    {#each filteredQuestions() as question (question.id)}
-      <div class="question-card">
-        <div class="question-header">
-          <span
-            class="question-type"
-            class:rating={question.questionType === QuestionType.Rating}
-          >
-            {question.questionType}
-          </span>
-          {#if question.tags.length > 0}
-            <div class="tags">
-              {#each question.tags as tag (tag)}
-                <span class="tag">{tag}</span>
-              {/each}
+  {#if filteredQuestions().length === 0}
+    <div class="empty-state">
+      <p>No questions found. Try adjusting your filters.</p>
+    </div>
+  {:else if viewMode === "cards"}
+    <div class="questions-grid">
+      {#each filteredQuestions() as question (question.id)}
+        {@const alreadyIn = existingQuestionIds.includes(question.id)}
+        <div class="question-card" class:already-in-session={alreadyIn}>
+          <div class="question-header">
+            <span
+              class="question-type"
+              class:rating={question.questionType === QuestionType.Rating}
+            >
+              {question.questionType}
+            </span>
+            {#if question.tags.length > 0}
+              <div class="tags">
+                {#each question.tags as tag (tag)}
+                  <span class="tag">{tag}</span>
+                {/each}
+              </div>
+            {/if}
+          </div>
+
+          <div class="question-content">
+            <div class="question-text">
+              <MarkdownPreview md={question.question} />
+            </div>
+            {#if question.expectedAnswer}
+              <details class="expected-answer">
+                <summary>Expected Answer</summary>
+                <div class="expected-answer-content">
+                  <MarkdownPreview md={question.expectedAnswer} />
+                </div>
+              </details>
+            {/if}
+          </div>
+
+          {#if question.difficulty && question.difficulty.length > 0}
+            <div class="rating-info">
+              <small>Difficulty: {question.difficulty.join(", ")}</small>
             </div>
           {/if}
-        </div>
 
-        <div class="question-content">
-          <h3>{question.question}</h3>
-          {#if question.expectedAnswer}
-            <details class="expected-answer">
-              <summary>Expected Answer</summary>
-              <p>{question.expectedAnswer}</p>
-            </details>
-          {/if}
-        </div>
-
-        {#if question.difficulty && question.difficulty.length > 0}
-          <div class="rating-info">
-            <small>Difficulty: {question.difficulty.join(", ")}</small>
+          <div class="card-actions">
+            {#if alreadyIn}
+              <button type="button" class="action-btn add" disabled>Already in session</button>
+            {:else}
+              <button type="button" onclick={() => onAdd(question)} class="action-btn add">
+                + Add to Session
+              </button>
+            {/if}
           </div>
-        {/if}
-
-        <div class="card-actions">
-          {#if existingQuestionIds.includes(question.id)}
-            <button type="button" class="action-btn add" disabled> Already in session </button>
-          {:else}
-            <button type="button" onclick={() => onAdd(question)} class="action-btn add">
-              + Add to Session
-            </button>
-          {/if}
         </div>
-      </div>
-    {/each}
-
-    {#if filteredQuestions().length === 0}
-      <div class="empty-state">
-        <p>No questions found. Try adjusting your filters.</p>
+      {/each}
+    </div>
+  {:else}
+    <div class="browser-table-wrap">
+      <table class="questions-table">
+        <thead>
+          <tr>
+            <th class="col-check">
+              <input
+                type="checkbox"
+                checked={allEligibleSelected}
+                indeterminate={tableSelected.size > 0 && !allEligibleSelected}
+                onchange={toggleSelectAll}
+                disabled={eligibleInView.length === 0}
+              />
+            </th>
+            <th class="col-type">Type</th>
+            <th class="col-difficulty">Difficulty</th>
+            <th class="col-question">Question</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each filteredQuestions() as question (question.id)}
+            {@const alreadyIn = existingQuestionIds.includes(question.id)}
+            <tr
+              class:already-in-session={alreadyIn}
+              class:row-selected={tableSelected.has(question.id)}
+              onclick={() => !alreadyIn && toggleTableRow(question.id)}
+              style={!alreadyIn ? "cursor:pointer" : ""}
+            >
+              <td class="col-check">
+                <input
+                  type="checkbox"
+                  checked={tableSelected.has(question.id)}
+                  disabled={alreadyIn}
+                  onclick={(e) => e.stopPropagation()}
+                  onchange={() => toggleTableRow(question.id)}
+                />
+              </td>
+              <td class="col-type">
+                <span class="question-type" class:rating={question.questionType === QuestionType.Rating}>
+                  {question.questionType}
+                </span>
+              </td>
+              <td class="col-difficulty">
+                {#if question.difficulty && question.difficulty.length > 0}
+                  {question.difficulty.join(", ")}
+                {:else}
+                  <span class="no-value">—</span>
+                {/if}
+              </td>
+              <td class="col-question">{truncateWords(question.question, 50)}</td>
+              <td class="col-action">
+                {#if alreadyIn}
+                  <span class="already-badge">In session</span>
+                {:else}
+                  <button
+                    type="button"
+                    onclick={(e) => { e.stopPropagation(); onAdd(question); }}
+                    class="add-btn"
+                  >
+                    + Add
+                  </button>
+                {/if}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+    {#if tableSelected.size > 0}
+      <div class="table-bulk-actions">
+        <button type="button" class="bulk-add-btn" onclick={addSelected}>
+          + Add {tableSelected.size} Selected Question{tableSelected.size !== 1 ? "s" : ""}
+        </button>
       </div>
     {/if}
-  </div>
+  {/if}
 </SessionModal>
 
 <style>
+  /* Card grid */
   .questions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -148,6 +280,10 @@
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
+  .question-card.already-in-session {
+    opacity: 0.6;
+  }
+
   .question-header {
     display: flex;
     justify-content: space-between;
@@ -164,6 +300,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
+    flex-shrink: 0;
   }
 
   .question-type.rating {
@@ -187,13 +324,28 @@
 
   .question-content {
     margin-bottom: 1rem;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
-  .question-content h3 {
-    margin: 0 0 0.5rem 0;
-    color: var(--color-text);
-    font-size: 1rem;
-    line-height: 1.4;
+  .question-text {
+    font-size: 0.95rem;
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .question-text::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, transparent, white);
+    pointer-events: none;
   }
 
   .expected-answer {
@@ -211,16 +363,19 @@
     text-decoration: underline;
   }
 
-  .expected-answer p {
-    margin: 0.5rem 0 0 0;
-    color: var(--color-text-secondary);
+  .expected-answer-content {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f9f9f9;
+    border-radius: 4px;
     font-size: 0.9rem;
-    line-height: 1.5;
+    color: var(--color-text-secondary);
   }
 
   .rating-info {
     margin-bottom: 1rem;
     color: var(--color-text-secondary);
+    font-size: 0.85rem;
   }
 
   .card-actions {
@@ -257,13 +412,110 @@
     cursor: not-allowed;
   }
 
+  /* Table view */
+  .browser-table-wrap {
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+
+  .col-check {
+    width: 36px;
+    text-align: center;
+    padding-left: 0.75rem;
+  }
+
+  .col-type {
+    width: 80px;
+  }
+
+  .col-difficulty {
+    width: 90px;
+    text-align: center;
+  }
+
+  .col-question {
+    color: var(--color-text);
+    max-width: 500px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .col-action {
+    width: 100px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .already-in-session {
+    opacity: 0.55;
+  }
+
+  .row-selected {
+    background: #f0f7ff;
+  }
+
+  .already-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: #f0f0f0;
+    color: #999;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .add-btn {
+    padding: 0.3rem 0.75rem;
+    background: #4caf50 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+
+  .add-btn:hover {
+    background: #45a049 !important;
+    border-color: transparent !important;
+  }
+
+  .no-value {
+    color: #bbb;
+  }
+
+  .table-bulk-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem 0.5rem 0.25rem;
+  }
+
+  .bulk-add-btn {
+    padding: 0.6rem 1.25rem;
+    background: #4caf50 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+
+  .bulk-add-btn:hover {
+    background: #45a049 !important;
+    border-color: transparent !important;
+  }
+
   .empty-state {
-    grid-column: 1 / -1;
     text-align: center;
     padding: 3rem;
     color: var(--color-text-secondary);
   }
 
+  /* Dark mode */
   :global([data-theme="dark"]) .question-card {
     background: var(--color-bg-dark);
     border-color: var(--color-border-dark);
@@ -273,8 +525,8 @@
     border-color: #4da3ff;
   }
 
-  :global([data-theme="dark"]) .question-content h3 {
-    color: #ffffff;
+  :global([data-theme="dark"]) .question-text::after {
+    background: linear-gradient(to bottom, transparent, #1a1a1a);
   }
 
   :global([data-theme="dark"]) .tag {
@@ -282,7 +534,8 @@
     color: var(--color-text-muted);
   }
 
-  :global([data-theme="dark"]) .expected-answer p {
+  :global([data-theme="dark"]) .expected-answer-content {
+    background: var(--color-bg-dark-2);
     color: var(--color-text-muted);
   }
 
@@ -291,7 +544,40 @@
     color: var(--color-text-secondary);
   }
 
+  :global([data-theme="dark"]) .already-badge {
+    background: var(--color-bg-dark-3);
+    color: #777;
+  }
+
+  :global([data-theme="dark"]) .add-btn {
+    background: #2e7d32 !important;
+  }
+
+  :global([data-theme="dark"]) .add-btn:hover {
+    background: #388e3c !important;
+  }
+
+  :global([data-theme="dark"]) .col-question {
+    color: #ddd;
+  }
+
   :global([data-theme="dark"]) .empty-state {
     color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .card-actions {
+    border-top-color: #444;
+  }
+
+  :global([data-theme="dark"]) .row-selected {
+    background: #1a2a3a;
+  }
+
+  :global([data-theme="dark"]) .bulk-add-btn {
+    background: #2e7d32 !important;
+  }
+
+  :global([data-theme="dark"]) .bulk-add-btn:hover {
+    background: #388e3c !important;
   }
 </style>
