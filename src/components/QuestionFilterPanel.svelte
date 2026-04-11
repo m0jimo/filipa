@@ -87,15 +87,20 @@
 
 <div class="qfp-filters">
   <div class="qfp-filter-row">
-    <input
-      type="text"
-      bind:value={searchQuery}
-      placeholder="Search questions..."
-      class="qfp-search-input"
-      autocomplete="off"
-      data-lpignore="true"
-      data-form-type="other"
-    />
+    <div class="qfp-input-wrapper">
+      <input
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Search questions..."
+        class="qfp-search-input"
+        autocomplete="off"
+        data-lpignore="true"
+        data-form-type="other"
+      />
+      {#if searchQuery}
+        <button type="button" class="qfp-input-clear" onclick={() => (searchQuery = "")} title="Clear" aria-label="Clear search">×</button>
+      {/if}
+    </div>
 
     <div class="qfp-multiselect-container">
       <button
@@ -191,15 +196,20 @@
 
   {#if allTags.length > 0}
     <div class="qfp-tag-filter-row">
-      <input
-        type="text"
-        class="qfp-tag-search-input"
-        placeholder="Filter tags..."
-        bind:value={tagSearch}
-        autocomplete="off"
-        data-lpignore="true"
-        data-form-type="other"
-      />
+      <div class="qfp-input-wrapper">
+        <input
+          type="text"
+          class="qfp-tag-search-input"
+          placeholder="Filter tags..."
+          bind:value={tagSearch}
+          autocomplete="off"
+          data-lpignore="true"
+          data-form-type="other"
+        />
+        {#if tagSearch}
+          <button type="button" class="qfp-input-clear" onclick={() => (tagSearch = "")} title="Clear" aria-label="Clear tag filter">×</button>
+        {/if}
+      </div>
       <button
         type="button"
         class="qfp-tag-toggle-btn"
@@ -239,13 +249,41 @@
     align-items: center;
   }
 
+  .qfp-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .qfp-input-clear {
+    position: absolute;
+    right: 0.4rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    padding: 0.1rem 0.25rem;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qfp-input-clear:hover {
+    color: var(--color-text);
+    background: var(--color-bg-subtle);
+  }
+
   .qfp-search-input {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 2rem 0.5rem 1rem;
     border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
-    min-width: 200px;
-    flex: 1;
+    width: 100%;
   }
 
   .qfp-search-input:focus {
@@ -348,12 +386,18 @@
     align-items: center;
   }
 
+  .qfp-tag-filter-row .qfp-input-wrapper {
+    min-width: unset;
+    flex: unset;
+    width: 160px;
+  }
+
   .qfp-tag-search-input {
-    padding: 0.4rem 0.75rem;
+    padding: 0.4rem 1.75rem 0.4rem 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.85rem;
-    width: 160px;
+    width: 100%;
   }
 
   .qfp-tag-search-input:focus {
@@ -412,6 +456,15 @@
   /* Dark mode */
   :global([data-theme="dark"]) .qfp-filters {
     background: var(--color-bg-dark-2);
+  }
+
+  :global([data-theme="dark"]) .qfp-input-clear {
+    color: #999;
+  }
+
+  :global([data-theme="dark"]) .qfp-input-clear:hover {
+    color: #ffffff;
+    background: var(--color-bg-dark-3);
   }
 
   :global([data-theme="dark"]) .qfp-search-input {
