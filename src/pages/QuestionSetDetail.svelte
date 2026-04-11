@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { push } from "svelte-spa-router";
-  import { questionSetDB, questionDB } from "../lib/db";
-  import type { QuestionSet, Question } from "../lib/types";
-  import { QuestionType } from "../lib/types";
+  import {onMount} from "svelte";
+  import {push} from "svelte-spa-router";
+  import {questionDB, questionSetDB} from "../lib/db";
+  import type {Question, QuestionSet} from "../lib/types";
+  import {QuestionType} from "../lib/types";
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import AddQuestionsModal from "../lib/AddQuestionsModal.svelte";
-  import { userSettings, type QuestionViewMode } from "../lib/userSettings";
+  import {type QuestionViewMode, userSettings} from "../lib/userSettings";
   import ReorderableTable from "../components/ReorderableTable.svelte";
 
-  let { params }: { params: { setId: string } } = $props();
+  let {params}: { params: { setId: string } } = $props();
 
   let set: QuestionSet | null = $state(null);
   let questions: Question[] = $state([]);
@@ -22,7 +22,7 @@
   let viewMode = $state<QuestionViewMode>($userSettings.questionViewMode);
 
   let showEditModal = $state(false);
-  let editFormData = $state({ name: "", notes: "" });
+  let editFormData = $state({name: "", notes: ""});
   let savingEdit = $state(false);
 
   let showDeleteConfirm = $state(false);
@@ -62,7 +62,7 @@
 
   const openEditModal = () => {
     if (!set) return;
-    editFormData = { name: set.name, notes: set.notes };
+    editFormData = {name: set.name, notes: set.notes};
     showEditModal = true;
   };
 
@@ -77,7 +77,7 @@
         notes: editFormData.notes.trim(),
         questionIds: [...set.questionIds],
         createdAt: set.createdAt,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       await questionSetDB.update(updated);
       set = updated;
@@ -108,7 +108,7 @@
     notes: base.notes,
     questionIds: [...questionIds],
     createdAt: base.createdAt,
-    updatedAt: new Date(),
+    updatedAt: new Date()
   });
 
   const handleRemoveQuestion = async (questionId: string) => {
@@ -175,7 +175,7 @@
 </script>
 
 <div class="page question-set-detail">
-  <Navigation />
+  <Navigation/>
   <Breadcrumbs
     items={[
       { label: "Home", href: "/" },
@@ -195,7 +195,7 @@
         <div class="header-title-row">
           <h1>{set.name}</h1>
           <span class="question-count-badge"
-            >{questions.length} question{questions.length !== 1 ? "s" : ""}</span
+          >{questions.length} question{questions.length !== 1 ? "s" : ""}</span
           >
         </div>
         {#if set.notes}
@@ -220,7 +220,8 @@
               viewMode = "cards";
               userSettings.setQuestionViewMode("cards");
             }}
-            title="Card view">⊞</button
+            title="Card view">⊞
+          </button
           >
           <button
             type="button"
@@ -230,7 +231,8 @@
               viewMode = "table";
               userSettings.setQuestionViewMode("table");
             }}
-            title="Table view">☰</button
+            title="Table view">☰
+          </button
           >
         </div>
         <button onclick={() => (showAddModal = true)} class="primary">+ Add Questions</button>
@@ -253,7 +255,8 @@
                 class="reorder-btn"
                 onclick={() => moveUp(index)}
                 disabled={index === 0}
-                title="Move up">▲</button
+                title="Move up">▲
+              </button
               >
               <span class="order-label">{index + 1}</span>
               <button
@@ -261,7 +264,8 @@
                 class="reorder-btn"
                 onclick={() => moveDown(index)}
                 disabled={index === questions.length - 1}
-                title="Move down">▼</button
+                title="Move down">▼
+              </button
               >
             </div>
             <div class="question-main">
@@ -282,13 +286,13 @@
               </div>
               <div class="question-content">
                 <div class="question-text">
-                  <MarkdownPreview md={question.question} />
+                  <MarkdownPreview md={question.question}/>
                 </div>
                 {#if question.expectedAnswer}
                   <details class="expected-answer">
                     <summary>Expected Answer</summary>
                     <div class="expected-answer-content">
-                      <MarkdownPreview md={question.expectedAnswer} />
+                      <MarkdownPreview md={question.expectedAnswer}/>
                     </div>
                   </details>
                 {/if}
@@ -302,7 +306,8 @@
                 <button
                   onclick={() => (removeConfirmId = question.id)}
                   class="action-btn delete-narrow"
-                  title="Remove from set">🗑️ Remove</button
+                  title="Remove from set">🗑️ Remove
+                </button
                 >
               </div>
             </div>
@@ -322,12 +327,11 @@
             <th class="col-type">Type</th>
             <th class="col-difficulty">Difficulty</th>
             <th class="col-question">Question</th>
-            <th class="col-reorder">Order</th>
-            <th class="col-actions"></th>
+            <th class="col-actions">Actions</th>
           </tr>
         {/snippet}
 
-        {#snippet bodyRow(question, index)}
+        {#snippet bodyRow(question, index, _selected, moveUp, moveDown)}
           <td class="col-order">{index + 1}</td>
           <td class="col-type">
             <span
@@ -347,7 +351,20 @@
             <button
               onclick={(e) => { e.stopPropagation(); removeConfirmId = question.id; }}
               class="icon-btn"
-              title="Remove from set">🗑️</button>
+              title="Remove from set">🗑️
+            </button>
+            <button
+              onclick={(e) => { e.stopPropagation(); moveUp(); }}
+              class="icon-btn"
+              disabled={index === 0}
+              title="Move up">▲
+            </button>
+            <button
+              onclick={(e) => { e.stopPropagation(); moveDown(); }}
+              class="icon-btn"
+              disabled={index === questions.length - 1}
+              title="Move down">▼
+            </button>
           </td>
         {/snippet}
       </ReorderableTable>
@@ -384,10 +401,11 @@
         type="button"
         onclick={() => (showEditModal = false)}
         class="secondary"
-        disabled={savingEdit}>Cancel</button
+        disabled={savingEdit}>Cancel
+      </button
       >
       <button type="submit" class="primary" disabled={savingEdit}
-        >{savingEdit ? "Saving..." : "Update"}</button
+      >{savingEdit ? "Saving..." : "Update"}</button
       >
     </div>
   </form>
@@ -409,10 +427,11 @@
       type="button"
       onclick={() => (showDeleteConfirm = false)}
       class="secondary"
-      disabled={deleting}>Cancel</button
+      disabled={deleting}>Cancel
+    </button
     >
     <button type="button" onclick={handleDeleteSet} class="danger" disabled={deleting}
-      >{deleting ? "Deleting..." : "Delete"}</button
+    >{deleting ? "Deleting..." : "Delete"}</button
     >
   </div>
 </SessionModal>
@@ -432,7 +451,8 @@
     <button
       type="button"
       onclick={() => removeConfirmId && handleRemoveQuestion(removeConfirmId)}
-      class="danger">Remove</button
+      class="danger">Remove
+    </button
     >
   </div>
 </SessionModal>
@@ -553,10 +573,9 @@
     font-size: 0.65rem;
     color: #888;
     line-height: 1;
-    transition:
-      background 0.15s,
-      border-color 0.15s,
-      color 0.15s;
+    transition: background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
   }
 
   .reorder-btn:hover:not(:disabled) {
@@ -687,10 +706,6 @@
     table-layout: fixed;
   }
 
-  :global(.questions-set-table thead th) {
-    white-space: nowrap;
-  }
-
   .col-order {
     width: 36px;
     text-align: center;
@@ -715,8 +730,10 @@
   }
 
   .col-actions {
-    width: 40px;
-    text-align: center;
+    width: 100px;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 0.5rem;
   }
 
   .no-value {
@@ -732,9 +749,8 @@
     border-radius: 3px;
     line-height: 1;
     opacity: 0.6;
-    transition:
-      opacity 0.15s,
-      background 0.15s;
+    transition: opacity 0.15s,
+    background 0.15s;
   }
 
   .icon-btn:hover:not(:disabled) {
