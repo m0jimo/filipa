@@ -11,6 +11,15 @@
     children?: import("svelte").Snippet;
   } = $props();
 
+  let dialogRef: HTMLDivElement | null = $state(null);
+
+  $effect(() => {
+    if (show && dialogRef) {
+      const cancelBtn = dialogRef.querySelector<HTMLElement>("button.secondary");
+      cancelBtn?.focus();
+    }
+  });
+
   const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && show) {
       onClose();
@@ -28,7 +37,7 @@
 
 {#if show}
   <div class="dialog-overlay" role="presentation" onclick={handleOverlayClick}>
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby={title ? "dialog-title" : undefined} onclick={(e) => e.stopPropagation()}>
+    <div bind:this={dialogRef} class="dialog" role="dialog" aria-modal="true" aria-labelledby={title ? "dialog-title" : undefined} onclick={(e) => e.stopPropagation()}>
       {#if title}
         <div class="dialog-header">
           <h2 id="dialog-title">{title}</h2>

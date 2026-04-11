@@ -1180,6 +1180,7 @@
   onClose={cancelDeleteSession}
   title="Delete Session?"
   size="small"
+  focusCancel
 >
   <p class="confirm-text">
     Are you sure you want to delete this session? This action cannot be undone.
@@ -1202,6 +1203,7 @@
   onClose={cancelResetSession}
   title="Clear Session?"
   size="small"
+  focusCancel
 >
   <p class="confirm-text">
     This will clear all answers, ratings, notes, and presentation state for every question in this

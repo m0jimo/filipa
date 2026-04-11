@@ -417,6 +417,7 @@
   onClose={() => (showDeleteConfirm = false)}
   title="Delete Question Set?"
   size="small"
+  focusCancel
 >
   <p class="confirm-text">
     Are you sure you want to delete <strong>{set?.name}</strong>? The questions in the catalog will
@@ -442,6 +443,7 @@
   onClose={() => (removeConfirmId = null)}
   title="Remove Question?"
   size="small"
+  focusCancel
 >
   <p class="confirm-text">
     Remove this question from the set? It will remain in the question catalog.

@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { onMount } from "svelte";
 
   let {
     show = false,
     onClose,
     title = "",
     size = "medium",
+    focusCancel = false,
     children,
   }: {
     show: boolean;
     onClose: () => void;
     title?: string;
     size?: "small" | "medium" | "large";
+    focusCancel?: boolean;
     children?: import("svelte").Snippet;
   } = $props();
 
@@ -35,38 +36,43 @@
     }
   }
 
-  // Focus trap - keep focus within modal when open
-  onMount(() => {
-    if (show && modalRef) {
-      const focusableElements = modalRef.querySelectorAll(
-        "button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"
-      );
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+  // Focus management and trap when modal opens
+  $effect(() => {
+    if (!show || !modalRef) return;
 
-      // Focus first element when modal opens
+    const focusableElements = modalRef.querySelectorAll<HTMLElement>(
+      "button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    // Focus cancel button or first element when modal opens
+    if (focusCancel) {
+      const cancelBtn = modalRef.querySelector<HTMLElement>("button.secondary");
+      (cancelBtn ?? firstElement)?.focus();
+    } else {
       firstElement?.focus();
-
-      // Trap focus within modal
-      const handleTabKey = (e: KeyboardEvent) => {
-        if (e.key !== "Tab") return;
-
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement?.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement?.focus();
-            e.preventDefault();
-          }
-        }
-      };
-
-      document.addEventListener("keydown", handleTabKey);
-      return () => document.removeEventListener("keydown", handleTabKey);
     }
+
+    // Trap focus within modal
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleTabKey);
+    return () => document.removeEventListener("keydown", handleTabKey);
   });
 
   // Handle overlay click — blocked when dirty
