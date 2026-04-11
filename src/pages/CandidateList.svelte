@@ -1497,19 +1497,6 @@
     background: #2a4a5a;
   }
 
-  .action-btn.select-interview {
-    flex: 2;
-    background: var(--color-primary);
-    color: white;
-    font-weight: 600;
-  }
-
-  .action-btn.select-interview:hover {
-    background: var(--color-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
-  }
-
   /* Responsive Design */
   @media (max-width: 768px) {
     .candidate-list > header,
