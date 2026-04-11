@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] — 2026-04-11
+
+### Added
+
+- add inline clear button to text inputs
+- add ReorderableTable component with keyboard reorder support
+- component style
+- add skip toggle to exclude questions from Prev/Next navigation
+- reuse single window across session switches
+- merge add-question modals into tabs, add edit question and catalog sync
+- add ad-hoc question creation and save-to-catalog feature
+- show selected type names and add difficulty filter to catalog dialog
+- extract shared QuestionListView component and improve browser modal
+- component for QuestionFilterPanel
+
+### Fixed
+
+- auto-focus Cancel button in confirmation dialogs
+- merge reorder buttons into actions column
+
+### Changed
+
+- replace native confirm() with CompactDialog
+
+### Documentation
+
+- add Svelte 5 reactive proxy IndexedDB pitfall
+
+### Chore
+
+- fix 10 security vulnerabilities via npm audit fix
+
+
 ## [0.4.0] — 2026-04-10
 
 ### Added
