@@ -11,6 +11,7 @@
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
+  import CompactDialog from "../lib/CompactDialog.svelte";
 
   let {params = {sessionId: ""}}: { params: { sessionId: string } } = $props();
 
@@ -37,6 +38,12 @@
   let editingSessionQuestion: SessionQuestion | null = $state(null);
   let editQuestionFormData = $state({ question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" });
   let savingEditQuestion = $state(false);
+
+  // Confirm dialogs
+  let confirmRemoveQuestionId = $state<string | null>(null);
+  let confirmResetQuestion = $state<SessionQuestion | null>(null);
+  let confirmSaveToCatalogSQ = $state<SessionQuestion | null>(null);
+  let confirmSaveToCatalogMode = $state<"add" | "update">("add");
 
   // Question list keyboard reorder selection
   let selectedQuestionIndex = $state<number | null>(null);
@@ -375,9 +382,16 @@
     }
   }
 
-  async function saveToCatalog(sq: SessionQuestion) {
+  function saveToCatalog(sq: SessionQuestion) {
+    confirmSaveToCatalogSQ = sq;
+    confirmSaveToCatalogMode = sq.isAdHoc ? "add" : "update";
+  }
+
+  async function confirmSaveToCatalogAction() {
+    const sq = confirmSaveToCatalogSQ;
+    confirmSaveToCatalogSQ = null;
+    if (!sq) return;
     if (sq.isAdHoc) {
-      if (!confirm("Add this question to the Question Catalog?")) return;
       try {
         await questionDB.create(cleanQuestionObj(sq.questionObj));
         const updated: SessionQuestion = { ...sq, isAdHoc: false, updatedAt: new Date() };
@@ -387,7 +401,6 @@
         alert("Failed to save to catalog: " + (err instanceof Error ? err.message : "Unknown error"));
       }
     } else {
-      if (!confirm("Update this question in the Question Catalog with the current version?")) return;
       try {
         const existing = await questionDB.read(sq.questionObj.id);
         if (existing) {
@@ -447,9 +460,14 @@
     }
   }
 
-  async function removeQuestion(questionId: string) {
-    if (!confirm("Remove this question from the session?")) return;
+  function removeQuestion(questionId: string) {
+    confirmRemoveQuestionId = questionId;
+  }
 
+  async function confirmRemoveQuestionAction() {
+    const questionId = confirmRemoveQuestionId;
+    confirmRemoveQuestionId = null;
+    if (!questionId) return;
     try {
       await sessionQuestionDB.delete(questionId);
       await loadSession();
@@ -677,10 +695,14 @@
     }, 500) as unknown as number;
   }
 
-  async function resetRecord(question: SessionQuestion) {
-    if (!confirm("Reset this question's record? This will clear the answer, rating, and notes."))
-      return;
+  function resetRecord(question: SessionQuestion) {
+    confirmResetQuestion = question;
+  }
 
+  async function confirmResetRecordAction() {
+    const question = confirmResetQuestion;
+    confirmResetQuestion = null;
+    if (!question) return;
     try {
       question.answer = "";
       question.questionRating = 0;
@@ -1165,6 +1187,53 @@
     </div>
   </div>
 </SessionModal>
+
+<!-- Remove Question Confirmation -->
+<CompactDialog
+  show={!!confirmRemoveQuestionId}
+  onClose={() => (confirmRemoveQuestionId = null)}
+  title="Remove Question?"
+>
+  <p class="confirm-text">Remove this question from the session?</p>
+  <div class="modal-actions">
+    <button type="button" onclick={() => (confirmRemoveQuestionId = null)} class="secondary">Cancel</button>
+    <button type="button" onclick={confirmRemoveQuestionAction} class="danger">Remove</button>
+  </div>
+</CompactDialog>
+
+<!-- Reset Record Confirmation -->
+<CompactDialog
+  show={!!confirmResetQuestion}
+  onClose={() => (confirmResetQuestion = null)}
+  title="Reset Record?"
+>
+  <p class="confirm-text">This will clear the answer, rating, and notes for this question.</p>
+  <div class="modal-actions">
+    <button type="button" onclick={() => (confirmResetQuestion = null)} class="secondary">Cancel</button>
+    <button type="button" onclick={confirmResetRecordAction} class="danger">Reset</button>
+  </div>
+</CompactDialog>
+
+<!-- Save to Catalog Confirmation -->
+<CompactDialog
+  show={!!confirmSaveToCatalogSQ}
+  onClose={() => (confirmSaveToCatalogSQ = null)}
+  title={confirmSaveToCatalogMode === "add" ? "Add to Catalog?" : "Update Catalog?"}
+>
+  <p class="confirm-text">
+    {#if confirmSaveToCatalogMode === "add"}
+      Add this question to the Question Catalog?
+    {:else}
+      Update this question in the Question Catalog with the current version?
+    {/if}
+  </p>
+  <div class="modal-actions">
+    <button type="button" onclick={() => (confirmSaveToCatalogSQ = null)} class="secondary">Cancel</button>
+    <button type="button" onclick={confirmSaveToCatalogAction} class="primary">
+      {confirmSaveToCatalogMode === "add" ? "Add" : "Update"}
+    </button>
+  </div>
+</CompactDialog>
 
 <style>
 
