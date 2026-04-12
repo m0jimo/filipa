@@ -20,6 +20,7 @@
     "/questions": QuestionCatalog,
     "/candidate/:candidateId": CandidateDetail,
     "/session/:sessionId": SessionInterview,
+    "/candidate-view": CandidateView,
     "/candidate-view/:sessionId": CandidateView,
     "/about": About,
     "/settings": Settings,

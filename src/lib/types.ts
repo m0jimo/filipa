@@ -52,8 +52,10 @@ export interface Session {
   date: Date;
   /** General notes about the session */
   notes: string;
-  /** Index of currently active question during interview (for sync) */
+  /** Index of currently active question during interview (for sync with candidate view) */
   currentQuestionIndex: number;
+  /** ID of the currently active question (session-independent "Showing" state) */
+  currentQuestionId: string | null;
   /** Manual sort order within candidate's session list */
   sortOrder: number;
   /** Timestamp when session was created */

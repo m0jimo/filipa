@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Session, SessionQuestion } from "./types";
   import { QuestionType } from "./types";
+  import { activeQuestionId } from "./candidateWindowStore.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import RatingSlider from "../components/RatingSlider.svelte";
 
@@ -10,7 +11,6 @@
     session,
     totalQuestions,
     expandedQuestionId,
-    candidateWindowOpen,
     scrollToQuestionId,
     onMoveUp,
     onMoveDown,
@@ -32,7 +32,6 @@
     session: Session;
     totalQuestions: number;
     expandedQuestionId: string | null;
-    candidateWindowOpen: boolean;
     scrollToQuestionId: string | null;
     onMoveUp: (index: number) => void;
     onMoveDown: (index: number) => void;
@@ -50,7 +49,7 @@
     onSelect?: () => void;
   } = $props();
 
-  const isActive = $derived(candidateWindowOpen && index === session.currentQuestionIndex);
+  const isActive = $derived(question.id === activeQuestionId.value);
   const isExpanded = $derived(expandedQuestionId === question.id);
   const isAnswered = $derived(question.answer.trim().length > 0);
   const hasRecording = $derived(
@@ -209,9 +208,9 @@
         onclick={() => onSetActive(index)}
         class="action-btn-header present"
         class:answered={isAnswered && !isActive}
-        class:showing={isActive && candidateWindowOpen}
+        class:showing={isActive}
       >
-        {isActive && candidateWindowOpen ? "Showing" : "Present"}
+        {isActive ? "Showing" : "Present"}
       </button>
       <div class="question-actions-inline">
         <button

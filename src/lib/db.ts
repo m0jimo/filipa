@@ -17,7 +17,7 @@ import type {
 // ============================================================================
 
 const DB_NAME = "FilipaDB";
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 // Object store names
 export const STORES = {
@@ -99,6 +99,25 @@ export async function initDB(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains(STORES.CONFIG)) {
         db.createObjectStore(STORES.CONFIG, { keyPath: "id" });
+      }
+
+      // Migration from version 5 to 6: Add currentQuestionId to sessions store
+      if (oldVersion < 6 && db.objectStoreNames.contains(STORES.SESSIONS)) {
+        const transaction = (event.target as IDBOpenDBRequest).transaction!;
+        const sessionStore = transaction.objectStore(STORES.SESSIONS);
+        // Backfill currentQuestionId: null for all existing sessions
+        const cursorRequest6 = sessionStore.openCursor();
+        cursorRequest6.onsuccess = (e) => {
+          const cursor = (e.target as IDBRequest).result;
+          if (cursor) {
+            const session = cursor.value;
+            if (session.currentQuestionId === undefined) {
+              session.currentQuestionId = null;
+              cursor.update(session);
+            }
+            cursor.continue();
+          }
+        };
       }
 
       // Migration from version 4 to 5: Add sortOrder index to sessions store

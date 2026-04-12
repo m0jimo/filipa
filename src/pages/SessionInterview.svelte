@@ -2,8 +2,8 @@
   import {onDestroy, onMount} from "svelte";
   import candidateWindowSvg from "../assets/filipa-candidate-window.svg";
   import {candidateDB, generateId, generateQuestionHash, questionDB, questionSetDB, sessionDB, sessionQuestionDB} from "../lib/db";
-  import {getSharedCandidateWindow, setSharedCandidateWindow} from "../lib/candidateWindowStore";
-  import type {Candidate, FilipaUpdateMessage, Question, QuestionSet, Session, SessionQuestion} from "../lib/types";
+  import {getSharedCandidateWindow, setSharedCandidateWindow, setActiveQuestion as storeSetActiveQuestion, clearActiveQuestion} from "../lib/candidateWindowStore.svelte";
+  import type {Candidate, Question, QuestionSet, Session, SessionQuestion} from "../lib/types";
   import {QuestionType} from "../lib/types";
   import MarkdownEditor from "../components/MarkdownEditor.svelte";
   import SessionQuestionItem from "../lib/SessionQuestionItem.svelte";
@@ -92,51 +92,18 @@
   }
 
   onMount(async () => {
-    // Restore shared candidate window reference if still open from a previous session.
-    // Do NOT set candidateWindowOpen=true here — it will be set when the candidate view
-    // sends "candidate-window-opened" for this specific session.
+    // Restore shared candidate window reference if still open from a previous visit.
     const shared = getSharedCandidateWindow();
     if (shared && !shared.closed) {
       candidateWindow = shared;
-      startWindowCheck();
     }
+
+    // Fixed global channel — same name regardless of session
+    candidateChannel = new BroadcastChannel("filipa-candidate");
 
     await loadSession();
     await loadCatalogFingerprints();
-    // Initialize BroadcastChannel for session updates
-    if (session) {
-      sessionChannel = new BroadcastChannel(`filipa-session-${session.id}`);
-      // Listen for candidate window lifecycle events
-      sessionChannel.onmessage = (event) => {
-        if (event.data?.type === "candidate-window-opened") {
-          candidateWindowOpen = true;
-          startWindowCheck();
-        } else if (event.data?.type === "candidate-window-closing") {
-          candidateWindowOpen = false;
-          stopWindowCheck();
-        }
-      };
-    }
   });
-
-  function startWindowCheck() {
-    // Clear any existing interval
-    stopWindowCheck();
-    // Lightweight check every 2 seconds as fallback for cases where onDestroy doesn't fire
-    windowCheckInterval = setInterval(() => {
-      if (candidateWindow && candidateWindow.closed) {
-        candidateWindowOpen = false;
-        stopWindowCheck();
-      }
-    }, 5000);
-  }
-
-  function stopWindowCheck() {
-    if (windowCheckInterval) {
-      clearInterval(windowCheckInterval);
-      windowCheckInterval = null;
-    }
-  }
 
   async function loadSession() {
     try {
@@ -193,23 +160,14 @@
     showAddQuestionsModal = false;
   }
 
-  // Ensures the candidate window exists and is navigated to the current session URL.
-  // Returns true if the window was already showing this session, false if it was navigated.
+  // Ensures the candidate window exists at the fixed candidate view URL.
+  // Returns true if the window was already open, false if it was just opened.
   function ensureCandidateWindow(): boolean {
-    if (!session) return false;
-    const url = `${window.location.origin}${window.location.pathname}#/candidate-view/${session.id}`;
+    const url = `${window.location.origin}${window.location.pathname}#/candidate-view`;
     const shared = getSharedCandidateWindow();
     if (shared && !shared.closed) {
-      let currentHash = "";
-      try { currentHash = shared.location.hash; } catch { /* cross-origin guard */ }
-      if (currentHash === `#/candidate-view/${session.id}`) {
-        candidateWindow = shared;
-        return true;
-      }
-      // Showing a different session — navigate it
-      shared.location.href = url;
       candidateWindow = shared;
-      return false;
+      return true;
     }
     // No window open — open a new one with a fixed name
     // Must be synchronous (before any await) so browsers treat it as a user gesture
@@ -225,26 +183,27 @@
   async function openCandidateView() {
     if (!session) return;
 
-    // Save DB update first so the candidate view reads the correct state on mount
+    // Must open window synchronously before any await — Safari blocks window.open() after async gaps
+    ensureCandidateWindow();
+
+    // Save DB update so the candidate view reads the correct state on mount
     session.currentQuestionIndex = -1;
+    session.currentQuestionId = null;
     session.updatedAt = new Date();
     const cleanSess = cleanSession(session);
     await sessionDB.update(cleanSess);
     session = session;
 
-    const alreadyOnThisSession = ensureCandidateWindow();
+    // Clear active question globally — show welcome screen
+    clearActiveQuestion();
 
-    if (alreadyOnThisSession) {
-      // Window is already on this session — send messages to trigger a refresh
-      if (sessionChannel) {
-        sessionChannel.postMessage({type: "filipa-question-update", sessionId: session.id});
-      }
-      if (candidateWindow && !candidateWindow.closed) {
-        candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
-      }
+    // Send null questionId to show the welcome screen
+    if (candidateChannel) {
+      candidateChannel.postMessage({ type: "filipa-question-update", questionId: null });
     }
-    // If not already on this session, the window is navigating to the new URL.
-    // The candidate view will read the correct currentQuestionIndex from DB on mount.
+    if (candidateWindow) {
+      candidateWindow.postMessage({ type: "filipa-question-update", questionId: null }, "*");
+    }
   }
 
 
@@ -526,6 +485,7 @@
         const newIndex = questions.findIndex((q) => q.id === activeQuestionId);
         if (newIndex !== -1 && newIndex !== session.currentQuestionIndex) {
           session.currentQuestionIndex = newIndex;
+          session.currentQuestionId = activeQuestionId;
           session.updatedAt = new Date();
           const cleanSess = cleanSession(session);
           await sessionDB.update(cleanSess);
@@ -595,24 +555,27 @@
       date: new Date(s.date),
       notes: s.notes,
       currentQuestionIndex: s.currentQuestionIndex,
+      currentQuestionId: s.currentQuestionId ?? null,
       sortOrder: s.sortOrder ?? 0,
       createdAt: new Date(s.createdAt),
       updatedAt: new Date(s.updatedAt)
     };
   }
 
-  let candidateWindow: Window | null = null;
-  let sessionChannel: BroadcastChannel | null = null;
-  let candidateWindowOpen = $state(false);
-  let windowCheckInterval: ReturnType<typeof setInterval> | null = null;
+  let candidateWindow = $state<Window | null>(null);
+  let candidateChannel: BroadcastChannel | null = null;
   let scrollToQuestionId = $state<string | null>(null);
 
   async function setActiveQuestion(index: number, shouldScroll = false) {
     if (!session) return;
 
+    // Must open window synchronously before any await — Safari blocks window.open() after async gaps
+    ensureCandidateWindow();
+
     try {
-      // Save DB state first so the candidate view reads the correct question on mount
+      // Save DB state so the candidate view reads the correct question on mount
       session.currentQuestionIndex = index;
+      session.currentQuestionId = questions[index].id;
       session.updatedAt = new Date();
       const cleanSess = cleanSession(session);
       await sessionDB.update(cleanSess);
@@ -635,23 +598,15 @@
         scrollToQuestionId = null;
       }
 
-      // Ensure the candidate window exists and is on this session.
-      // If it was navigated to a new URL it will read the correct index from DB on mount.
-      const alreadyOnThisSession = ensureCandidateWindow();
+      // Update global store so isActive reflects correctly across sessions
+      storeSetActiveQuestion(session.id, questions[index].id);
 
-      if (alreadyOnThisSession) {
-        // Window is already showing this session — send messages to trigger a refresh
-        if (sessionChannel) {
-          const message: FilipaUpdateMessage = {
-            type: "filipa-question-update",
-            sessionId: session.id,
-            timestamp: Date.now()
-          };
-          sessionChannel.postMessage(message);
-        }
-        if (candidateWindow && !candidateWindow.closed) {
-          candidateWindow.postMessage({type: "filipa-question-update", sessionId: session.id}, "*");
-        }
+      // Send question ID directly — no DB lookup needed in candidate view
+      if (candidateChannel) {
+        candidateChannel.postMessage({ type: "filipa-question-update", questionId: questions[index].id });
+      }
+      if (candidateWindow) {
+        candidateWindow.postMessage({ type: "filipa-question-update", questionId: questions[index].id }, "*");
       }
 
       // Don't reload - just trigger reactivity by reassigning
@@ -781,10 +736,9 @@
   }
 
   onDestroy(() => {
-    if (sessionChannel) {
-      sessionChannel.close();
+    if (candidateChannel) {
+      candidateChannel.close();
     }
-    stopWindowCheck();
   });
 </script>
 
@@ -858,17 +812,7 @@
             <button type="button" onclick={openNotesModal} class="secondary">📝 Notes</button>
             <button type="button" onclick={() => openAddQuestionsModal()} class="primary">+ Add Questions …</button>
             <button type="button" onclick={openNewQuestionModal} class="primary">+ New Question</button>
-            <div class="window-status-container">
-              {#if candidateWindowOpen}
-                <span class="window-status open">● Candidate Window</span>
-              {:else if candidateWindow}
-                <span class="window-status closed">● Candidate Window</span>
-              {:else}
-                <span class="window-status-placeholder"></span>
-              {/if}
-            </div>
           </div>
-          <!-- keep horizontal space for showing window-status        -->
 
           {#if questions.length > 0}
             <div class="navigation-buttons">
@@ -924,7 +868,6 @@
                 {session}
                 totalQuestions={questions.length}
                 {expandedQuestionId}
-                {candidateWindowOpen}
                 {scrollToQuestionId}
                 onMoveUp={moveQuestionUp}
                 onMoveDown={moveQuestionDown}
@@ -1267,41 +1210,6 @@
     font-size: 0.9rem;
   }
 
-  .window-status-container {
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    flex-basis: 100%;
-  }
-
-  .window-status {
-    font-size: 0.9rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    white-space: nowrap;
-    width: 100%;
-  }
-
-  .window-status.open {
-    color: #2e7d32;
-    background: #e8f5e9;
-  }
-
-  .window-status.closed {
-    color: #d32f2f;
-    background: #ffebee;
-  }
-
-  .window-status-placeholder {
-    display: inline-block;
-    height: 2.5rem;
-    width: 1px;
-  }
-
   .content {
     display: grid;
     grid-template-columns: 250px 1fr;
@@ -1460,17 +1368,7 @@
     color: var(--color-text-muted);
   }
 
-  :global([data-theme="dark"]) .window-status.open {
-    color: #a5d6a7;
-    background: #1b5e20;
-  }
-
-  :global([data-theme="dark"]) .window-status.closed {
-    color: #ef9a9a;
-    background: #b71c1c;
-  }
-
-  :global([data-theme="dark"]) .stats {
+:global([data-theme="dark"]) .stats {
     background: var(--color-bg-dark-2);
   }
 

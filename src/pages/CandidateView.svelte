@@ -1,127 +1,41 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { fly, fade } from "svelte/transition";
-  import { sessionDB, sessionQuestionDB } from "../lib/db";
-  import type { Session, SessionQuestion } from "../lib/types";
+  import { sessionQuestionDB } from "../lib/db";
+  import type { SessionQuestion } from "../lib/types";
   import { candidateThemeStore } from "../lib/candidateThemeStore";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
 
-  let { params = { sessionId: "" } }: { params: { sessionId: string } } = $props();
-
-  let session: Session | null = $state(null);
-  let questions: SessionQuestion[] = $state([]);
   let currentQuestion: SessionQuestion | null = $state(null);
   let fontSize = $state(26);
-  let loading = $state(true);
-  let error = $state<string | null>(null);
 
-  // Captured per-session so async callbacks always reference the session they were created for
-  let activeSessionId = "";
-
-  async function refreshFromDB() {
-    const sessionId = activeSessionId;
-    const updatedSession = await sessionDB.read(sessionId);
-    const updatedQuestions = await sessionQuestionDB.listBySessionId(sessionId);
-    updatedQuestions.sort((a, b) => a.order - b.order);
-
-    if (updatedQuestions.length !== questions.length) {
-      questions = updatedQuestions;
-    }
-
-    if (updatedSession) {
-      const indexChanged = updatedSession.currentQuestionIndex !== session?.currentQuestionIndex;
-      const expectedQuestion =
-        updatedSession.currentQuestionIndex >= 0 &&
-        updatedSession.currentQuestionIndex < updatedQuestions.length
-          ? updatedQuestions[updatedSession.currentQuestionIndex]
-          : null;
-      const questionOutOfSync = currentQuestion?.id !== expectedQuestion?.id;
-
-      // Update if index changed OR if current question is out of sync with database
-      if (indexChanged || questionOutOfSync) {
-        session = updatedSession;
-        currentQuestion = expectedQuestion;
-      }
-    }
-  }
+  let channel: BroadcastChannel | null = null;
 
   onMount(() => {
     candidateThemeStore.initialize();
-  });
 
-  // Re-runs whenever params.sessionId changes (svelte-spa-router reuses the component)
-  $effect(() => {
-    const sessionId = params.sessionId;
-    activeSessionId = sessionId;
-
-    let channel: BroadcastChannel | null = null;
-    let handler: ((event: MessageEvent) => void) | null = null;
-
-    loading = true;
-    error = null;
-    session = null;
-    questions = [];
-    currentQuestion = null;
-
-    (async () => {
-      try {
-        const loadedSession = await sessionDB.read(sessionId);
-
-        // Bail out if the session changed again before this async resolved
-        if (activeSessionId !== sessionId) return;
-
-        if (!loadedSession) {
-          error = "Session not found";
-          loading = false;
+    channel = new BroadcastChannel("filipa-candidate");
+    channel.onmessage = async (event) => {
+      if (event.data?.type === "filipa-question-update") {
+        const { questionId } = event.data;
+        if (!questionId) {
+          currentQuestion = null;
           return;
         }
-
-        const loadedQuestions = await sessionQuestionDB.listBySessionId(sessionId);
-        if (activeSessionId !== sessionId) return;
-
-        loadedQuestions.sort((a, b) => a.order - b.order);
-        session = loadedSession;
-        questions = loadedQuestions;
-        currentQuestion =
-          loadedSession.currentQuestionIndex >= 0 &&
-          loadedSession.currentQuestionIndex < loadedQuestions.length
-            ? loadedQuestions[loadedSession.currentQuestionIndex]
-            : null;
-        loading = false;
-
-        // Set up BroadcastChannel for this session
-        channel = new BroadcastChannel(`filipa-session-${sessionId}`);
-        channel.onmessage = (event) => {
-          if (event.data?.type === "filipa-question-update" && event.data?.sessionId === sessionId) {
-            refreshFromDB();
-          }
-        };
-
-        // Notify interviewer that candidate window is now showing this session
-        channel.postMessage({ type: "candidate-window-opened", sessionId });
-
-        // postMessage fallback from interviewer window
-        handler = (event: MessageEvent) => {
-          if (event.data?.type === "filipa-question-update" && event.data?.sessionId === sessionId) {
-            refreshFromDB();
-          }
-        };
-        window.addEventListener("message", handler);
-      } catch (err) {
-        if (activeSessionId !== sessionId) return;
-        error = err instanceof Error ? err.message : "Failed to load session";
-        loading = false;
-      }
-    })();
-
-    // Cleanup runs before the next effect (session change) or on component destroy
-    return () => {
-      if (handler) window.removeEventListener("message", handler);
-      if (channel) {
-        channel.postMessage({ type: "candidate-window-closing", sessionId });
-        channel.close();
+        const q = await sessionQuestionDB.read(questionId);
+        currentQuestion = q;
       }
     };
+
+    // Announce to interviewer that the window is ready
+    channel.postMessage({ type: "candidate-window-opened" });
+  });
+
+  onDestroy(() => {
+    if (channel) {
+      channel.postMessage({ type: "candidate-window-closing" });
+      channel.close();
+    }
   });
 
   function increaseFontSize() {
@@ -138,67 +52,56 @@
 </svelte:head>
 
 <div class="candidate-view">
-  {#if loading}
-    <div class="loading">
-      <p>Loading interview session...</p>
+  <header>
+    <div class="session-info">
+      <h1>Filipa <span class="window-label">— Candidate Window</span></h1>
     </div>
-  {:else if error}
-    <div class="error-state">
-      <p class="error">{error}</p>
+    <div class="controls">
+      <div class="font-controls">
+        <button onclick={decreaseFontSize} aria-label="Decrease font size">A-</button>
+        <span class="font-size-label">{fontSize}px</span>
+        <button onclick={increaseFontSize} aria-label="Increase font size">A+</button>
+      </div>
+      <button
+        class="theme-toggle-btn"
+        onclick={() => candidateThemeStore.toggle()}
+        title="Toggle theme"
+      >
+        {$candidateThemeStore === "light" ? "🌙" : "☀️"}
+      </button>
     </div>
-  {:else if session}
-    <header>
-      <div class="session-info">
-        <h1>Filipa <span class="window-label">— Candidate Window</span></h1>
-      </div>
-      <div class="controls">
-        <div class="font-controls">
-          <button onclick={decreaseFontSize} aria-label="Decrease font size">A-</button>
-          <span class="font-size-label">{fontSize}px</span>
-          <button onclick={increaseFontSize} aria-label="Increase font size">A+</button>
-        </div>
-        <button
-          class="theme-toggle-btn"
-          onclick={() => candidateThemeStore.toggle()}
-          title="Toggle theme"
-        >
-          {$candidateThemeStore === "light" ? "🌙" : "☀️"}
-        </button>
-      </div>
-    </header>
+  </header>
 
-    <main>
-      <div class="content-container">
-        {#if currentQuestion}
-          {#key currentQuestion.id}
-            <div
-              class="question-display"
-              style="font-size: {fontSize}px"
-              in:fly={{ x: 1000, duration: 500, delay: 100 }}
-              out:fly={{ x: -1000, duration: 500 }}
-            >
-              <div class="question-text">
-                <MarkdownPreview md={currentQuestion.questionObj.question} />
-              </div>
+  <main>
+    <div class="content-container">
+      {#if currentQuestion}
+        {#key currentQuestion.id}
+          <div
+            class="question-display"
+            style="font-size: {fontSize}px"
+            in:fly={{ x: 1000, duration: 500, delay: 100 }}
+            out:fly={{ x: -1000, duration: 500 }}
+          >
+            <div class="question-text">
+              <MarkdownPreview md={currentQuestion.questionObj.question} />
             </div>
-          {/key}
-        {:else}
-          <div class="waiting-state" in:fade={{ duration: 300 }}>
-            <div class="waiting-icon">👋</div>
-            <h2 style="font-size: {fontSize}px">Welcome to Your Interview Session</h2>
-            <p style="font-size: {fontSize * 0.7}px">
-              The session is ready. Your interviewer will present questions here when they're ready
-              to begin.
-            </p>
-            <p class="waiting-hint" style="font-size: {fontSize * 0.6}px">
-              Please wait for the interviewer to start...
-            </p>
           </div>
-        {/if}
-      </div>
-    </main>
-
-  {/if}
+        {/key}
+      {:else}
+        <div class="waiting-state" in:fade={{ duration: 300 }}>
+          <div class="waiting-icon">👋</div>
+          <h2 style="font-size: {fontSize}px">Welcome to Your Interview Session</h2>
+          <p style="font-size: {fontSize * 0.7}px">
+            The session is ready. Your interviewer will present questions here when they're ready
+            to begin.
+          </p>
+          <p class="waiting-hint" style="font-size: {fontSize * 0.6}px">
+            Please wait for the interviewer to start...
+          </p>
+        </div>
+      {/if}
+    </div>
+  </main>
 </div>
 
 <style>
@@ -345,12 +248,6 @@
     margin-bottom: 0;
   }
 
-  .loading,
-  .error-state {
-    text-align: center;
-    padding: 3rem;
-  }
-
   .waiting-state {
     max-width: 600px;
     text-align: center;
@@ -395,14 +292,6 @@
     color: #999 !important;
     font-size: 1rem !important;
     font-style: italic;
-  }
-
-  .error {
-    color: #d32f2f;
-    background: #ffebee;
-    padding: 1rem 2rem;
-    border-radius: 4px;
-    display: inline-block;
   }
 
   :global([data-theme="dark"]) .candidate-view {
@@ -463,6 +352,4 @@
   :global([data-theme="dark"]) .waiting-hint {
     color: var(--color-text-secondary) !important;
   }
-
-
 </style>
