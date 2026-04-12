@@ -812,15 +812,7 @@
             <button type="button" onclick={openNotesModal} class="secondary">📝 Notes</button>
             <button type="button" onclick={() => openAddQuestionsModal()} class="primary">+ Add Questions …</button>
             <button type="button" onclick={openNewQuestionModal} class="primary">+ New Question</button>
-            <div class="window-status-container">
-              {#if candidateWindow}
-                <span class="window-status open">● Candidate Window</span>
-              {:else}
-                <span class="window-status-placeholder"></span>
-              {/if}
-            </div>
           </div>
-          <!-- keep horizontal space for showing window-status        -->
 
           {#if questions.length > 0}
             <div class="navigation-buttons">
@@ -1218,36 +1210,6 @@
     font-size: 0.9rem;
   }
 
-  .window-status-container {
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    flex-basis: 100%;
-  }
-
-  .window-status {
-    font-size: 0.9rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    white-space: nowrap;
-    width: 100%;
-  }
-
-  .window-status.open {
-    color: #2e7d32;
-    background: #e8f5e9;
-  }
-
-.window-status-placeholder {
-    display: inline-block;
-    height: 2.5rem;
-    width: 1px;
-  }
-
   .content {
     display: grid;
     grid-template-columns: 250px 1fr;
@@ -1404,11 +1366,6 @@
 
   :global([data-theme="dark"]) .meta {
     color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .window-status.open {
-    color: #a5d6a7;
-    background: #1b5e20;
   }
 
 :global([data-theme="dark"]) .stats {
