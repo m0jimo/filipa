@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1] — 2026-04-12
+
+### Fixed
+
+- open candidate window synchronously before awaits for Safari compatibility
+- remove candidate window status indicator
+- decouple presenting from session and window state
+
+
 ## [0.5.0] — 2026-04-11
 
 ### Added
