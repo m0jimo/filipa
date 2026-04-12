@@ -183,7 +183,10 @@
   async function openCandidateView() {
     if (!session) return;
 
-    // Save DB update first so the candidate view reads the correct state on mount
+    // Must open window synchronously before any await — Safari blocks window.open() after async gaps
+    ensureCandidateWindow();
+
+    // Save DB update so the candidate view reads the correct state on mount
     session.currentQuestionIndex = -1;
     session.currentQuestionId = null;
     session.updatedAt = new Date();
@@ -193,8 +196,6 @@
 
     // Clear active question globally — show welcome screen
     clearActiveQuestion();
-
-    ensureCandidateWindow();
 
     // Send null questionId to show the welcome screen
     if (candidateChannel) {
@@ -568,8 +569,11 @@
   async function setActiveQuestion(index: number, shouldScroll = false) {
     if (!session) return;
 
+    // Must open window synchronously before any await — Safari blocks window.open() after async gaps
+    ensureCandidateWindow();
+
     try {
-      // Save DB state first so the candidate view reads the correct question on mount
+      // Save DB state so the candidate view reads the correct question on mount
       session.currentQuestionIndex = index;
       session.currentQuestionId = questions[index].id;
       session.updatedAt = new Date();
@@ -594,12 +598,8 @@
         scrollToQuestionId = null;
       }
 
-      // Ensure the candidate window exists and is on this session.
-      // If it was navigated to a new URL it will read the correct index from DB on mount.
       // Update global store so isActive reflects correctly across sessions
       storeSetActiveQuestion(session.id, questions[index].id);
-
-      ensureCandidateWindow();
 
       // Send question ID directly — no DB lookup needed in candidate view
       if (candidateChannel) {
