@@ -86,18 +86,23 @@
   let importInProgress = $state(false);
   let importFileInput: HTMLInputElement | null = $state(null);
 
+  type ImportAction = "skip" | "add" | "update";
+
+  type PreviewQuestion = {
+    question: string;
+    expectedAnswer: string;
+    tags: string[];
+    questionType: string;
+    difficulty: number[];
+    hash: string;
+    isDuplicate: boolean;
+    existingQuestion: Question | undefined;
+    importAction: ImportAction;
+  };
+
   const triggerFileUpload = () => importFileInput?.click();
   let importPreview = $state<{
-    questions: Array<{
-      question: string;
-      expectedAnswer: string;
-      tags: string[];
-      questionType: string;
-      difficulty: number[];
-      hash: string;
-      isDuplicate: boolean;
-      selected: boolean;
-    }>;
+    questions: PreviewQuestion[];
     errors: string[];
     warnings: string[];
     fileType: string;
@@ -413,6 +418,7 @@
         // Check if this question already exists
         const duplicates = await questionDB.listByHash(hash);
         const isDuplicate = duplicates.length > 0;
+        const existingQuestion: Question | undefined = duplicates[0];
 
         if (isDuplicate) {
           importPreview.warnings.push(
@@ -428,7 +434,8 @@
           difficulty: Array.isArray(q.difficulty) ? q.difficulty : [],
           hash,
           isDuplicate,
-          selected: !isDuplicate, // Auto-deselect duplicates
+          existingQuestion,
+          importAction: isDuplicate ? "skip" : "add",
         });
       }
     } catch (err) {
@@ -497,6 +504,7 @@
         // Check if this question already exists
         const duplicates = await questionDB.listByHash(hash);
         const isDuplicate = duplicates.length > 0;
+        const existingQuestion: Question | undefined = duplicates[0];
 
         if (isDuplicate) {
           importPreview.warnings.push(
@@ -512,7 +520,8 @@
           difficulty,
           hash,
           isDuplicate,
-          selected: !isDuplicate, // Auto-deselect duplicates
+          existingQuestion,
+          importAction: isDuplicate ? "skip" : "add",
         });
       }
 
@@ -531,8 +540,8 @@
   async function confirmImport() {
     if (!importPreview) return;
 
-    const selectedQuestions = importPreview.questions.filter((q) => q.selected);
-    if (selectedQuestions.length === 0) {
+    const questionsToProcess = importPreview.questions.filter((q) => q.importAction !== "skip");
+    if (questionsToProcess.length === 0) {
       alert("Please select at least one question to import");
       return;
     }
@@ -541,28 +550,43 @@
     importResults = { success: 0, errors: [], warnings: [] };
 
     try {
-      for (let i = 0; i < selectedQuestions.length; i++) {
+      for (let i = 0; i < questionsToProcess.length; i++) {
         try {
-          const q = selectedQuestions[i];
+          const q = questionsToProcess[i];
           const now = new Date();
+          const resolvedType =
+            q.questionType.toLowerCase() === QuestionType.Rating
+              ? QuestionType.Rating
+              : QuestionType.Text;
 
-          // Create plain copies of arrays to avoid Svelte proxy issues with IndexedDB
-          const newQuestion: Question = {
-            id: generateId(),
-            question: q.question,
-            expectedAnswer: q.expectedAnswer,
-            tags: [...q.tags],
-            questionType:
-              q.questionType.toLowerCase() === QuestionType.Rating
-                ? QuestionType.Rating
-                : QuestionType.Text,
-            difficulty: q.difficulty ? [...q.difficulty] : [],
-            hash: q.hash,
-            createdAt: now,
-            updatedAt: now,
-          };
-
-          await questionDB.create(newQuestion);
+          if (q.importAction === "update" && q.existingQuestion) {
+            // Preserve original id and createdAt; update all content fields
+            const updated: Question = {
+              ...q.existingQuestion,
+              question: q.question,
+              expectedAnswer: q.expectedAnswer,
+              tags: [...q.tags],
+              questionType: resolvedType,
+              difficulty: q.difficulty ? [...q.difficulty] : [],
+              hash: q.hash,
+              updatedAt: now,
+            };
+            await questionDB.update(updated);
+          } else {
+            // importAction === "add": create new record
+            const newQuestion: Question = {
+              id: generateId(),
+              question: q.question,
+              expectedAnswer: q.expectedAnswer,
+              tags: [...q.tags],
+              questionType: resolvedType,
+              difficulty: q.difficulty ? [...q.difficulty] : [],
+              hash: q.hash,
+              createdAt: now,
+              updatedAt: now,
+            };
+            await questionDB.create(newQuestion);
+          }
           importResults.success++;
         } catch (err) {
           importResults.errors.push(
@@ -586,21 +610,34 @@
     importPreview = null;
   }
 
+  const setImportAction = (index: number, action: ImportAction) => {
+    if (!importPreview) return;
+    importPreview.questions[index].importAction = action;
+    selectAll = importPreview.questions.every((q) => q.importAction !== "skip");
+  };
+
   function toggleSelectAll() {
     if (!importPreview) return;
     selectAll = !selectAll;
-    importPreview.questions.forEach((q) => (q.selected = selectAll));
+    importPreview.questions.forEach((q) => {
+      if (selectAll) {
+        q.importAction = q.isDuplicate ? "update" : "add";
+      } else {
+        q.importAction = "skip";
+      }
+    });
   }
 
   function toggleQuestionSelection(index: number) {
     if (!importPreview) return;
-    importPreview.questions[index].selected = !importPreview.questions[index].selected;
+    const q = importPreview.questions[index];
+    q.importAction = q.importAction === "add" ? "skip" : "add";
     // Update selectAll checkbox
-    selectAll = importPreview.questions.every((q) => q.selected);
+    selectAll = importPreview.questions.every((q) => q.importAction !== "skip");
   }
 
   function getSelectedCount() {
-    return importPreview?.questions.filter((q) => q.selected).length || 0;
+    return importPreview?.questions.filter((q) => q.importAction !== "skip").length || 0;
   }
 
   // Export functions
@@ -992,10 +1029,11 @@
 </CompactDialog>
 
 <!-- Import Modal -->
-<CompactDialog
+<SessionModal
   show={showImportModal}
   onClose={closeImportModal}
   title="Import Questions"
+  size="large"
 >
   {#if !importPreview && !importResults}
     <div class="import-instructions">
@@ -1130,17 +1168,53 @@ Type: text</code
           </div>
 
           {#each importPreview.questions as q, index (index)}
-            <div
-              class="preview-question-card"
-              class:duplicate={q.isDuplicate}
-              class:selected={q.selected}
-            >
-              <div class="preview-header">
-                <span class="preview-number">#{index + 1}</span>
-                <span class="preview-type">{q.questionType}</span>
+            <div class="preview-question-item">
+              <div class="preview-question-controls">
+                <span class="preview-controls-left">
+                  <span class="preview-number">#{index + 1}</span>
+                  {#if q.isDuplicate}<span class="duplicate-badge">Duplicate</span>{/if}
+                </span>
                 {#if q.isDuplicate}
-                  <span class="duplicate-badge">⚠ Duplicate</span>
+                  <div class="import-action-toggle" role="group" aria-label="Import action">
+                    <button
+                      type="button"
+                      class="action-btn"
+                      class:active={q.importAction === "skip"}
+                      onclick={() => setImportAction(index, "skip")}
+                    >Skip</button>
+                    <button
+                      type="button"
+                      class="action-btn"
+                      class:active={q.importAction === "add"}
+                      onclick={() => setImportAction(index, "add")}
+                    >Add New</button>
+                    <button
+                      type="button"
+                      class="action-btn action-btn-update"
+                      class:active={q.importAction === "update"}
+                      onclick={() => setImportAction(index, "update")}
+                    >Update</button>
+                  </div>
+                {:else}
+                  <label class="preview-add-label">
+                    <input
+                      type="checkbox"
+                      class="preview-checkbox"
+                      checked={q.importAction === "add"}
+                      onchange={() => toggleQuestionSelection(index)}
+                    />
+                    Import
+                  </label>
                 {/if}
+              </div>
+              <div
+                class="preview-question-card"
+                class:duplicate={q.isDuplicate}
+                class:selected={q.importAction !== "skip"}
+                class:action-update={q.importAction === "update"}
+              >
+              <div class="preview-header">
+                <span class="preview-type">{q.questionType}</span>
                 {#if q.tags.length > 0}
                   <div class="preview-tags">
                     {#each q.tags as tag (tag)}
@@ -1148,20 +1222,26 @@ Type: text</code
                     {/each}
                   </div>
                 {/if}
-                <input
-                  type="checkbox"
-                  class="preview-checkbox"
-                  checked={q.selected}
-                  onchange={() => toggleQuestionSelection(index)}
-                  title="Select for import"
-                />
               </div>
               <div class="preview-content">
                 <p class="preview-question-text">{q.question}</p>
                 {#if q.difficulty && q.difficulty.length > 0}
                   <p class="preview-rating"><small>Difficulty: {q.difficulty.join(", ")}</small></p>
                 {/if}
+                {#if q.isDuplicate && q.existingQuestion && q.importAction === "update"}
+                  <div class="diff-block">
+                    <div class="diff-col diff-col-existing">
+                      <span class="diff-label">Existing answer</span>
+                      <p class="diff-answer">{q.existingQuestion.expectedAnswer || "(none)"}</p>
+                    </div>
+                    <div class="diff-col diff-col-incoming">
+                      <span class="diff-label">Incoming answer</span>
+                      <p class="diff-answer">{q.expectedAnswer || "(none)"}</p>
+                    </div>
+                  </div>
+                {/if}
               </div>
+            </div>
             </div>
           {/each}
         </div>
@@ -1221,7 +1301,7 @@ Type: text</code
       </div>
     </div>
   {/if}
-</CompactDialog>
+</SessionModal>
 
 <!-- Export Modal -->
 <CompactDialog
@@ -1494,9 +1574,48 @@ Type: text</code
   }
 
   .preview-questions {
-    max-height: 400px;
-    overflow-y: auto;
     margin: 1rem 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .preview-question-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .preview-question-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0 0.25rem;
+    justify-content: space-between;
+  }
+
+  .preview-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .preview-add-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .preview-add-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
   }
 
   .preview-questions-header {
@@ -1506,6 +1625,7 @@ Type: text</code
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid #ddd;
+    grid-column: 1 / -1;
   }
 
   .select-all-label {
@@ -1527,7 +1647,6 @@ Type: text</code
 
   .preview-question-card {
     padding: 1.5rem;
-    margin-bottom: 1rem;
     border: 1px solid var(--color-border);
     border-radius: 8px;
     background: white;
@@ -1848,5 +1967,129 @@ Type: text</code
     background: #1a2a3a;
     border-color: var(--color-primary-dark);
     color: var(--color-primary-dark);
+  }
+
+  /* Import action toggle (3-way: Skip / Add New / Update) */
+  .import-action-toggle {
+    display: flex;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: none;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .action-btn:last-child {
+    border-right: none;
+  }
+
+  .action-btn:hover:not(.active) {
+    background: var(--color-bg);
+  }
+
+  .action-btn.active {
+    background: var(--color-primary);
+    color: white;
+  }
+
+  .action-btn-update.active {
+    background: #e65100;
+    color: white;
+  }
+
+  /* Card state for "update" action */
+  .preview-question-card.action-update {
+    border-color: #e65100;
+    background: #fff8f5;
+    box-shadow: 0 2px 8px rgba(230, 81, 0, 0.1);
+  }
+
+  /* Diff block shown when "Update" is selected */
+  .diff-block {
+    margin-top: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: 0.85rem;
+  }
+
+  .diff-col {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .diff-col-existing {
+    border-bottom: 1px solid var(--color-border);
+    border-left: 3px solid #bdbdbd;
+    background: var(--color-bg-subtle);
+  }
+
+  .diff-col-incoming {
+    border-left: 3px solid #e65100;
+  }
+
+  .diff-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .diff-answer {
+    margin: 0;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Dark mode for new elements */
+  :global([data-theme="dark"]) .import-action-toggle {
+    border-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .action-btn {
+    background: var(--color-bg-dark-3);
+    color: var(--color-text-muted);
+    border-right-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .action-btn:hover:not(.active) {
+    background: var(--color-bg-dark-2);
+  }
+
+  :global([data-theme="dark"]) .preview-question-card.action-update {
+    background: #2a1a0e;
+    border-color: #e65100;
+  }
+
+  :global([data-theme="dark"]) .diff-block {
+    border-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .diff-col-existing {
+    background: var(--color-bg-dark-3);
+    border-bottom-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .diff-col-incoming {
+    background: #2a1a0e;
+  }
+
+  :global([data-theme="dark"]) .diff-answer {
+    color: #ccc;
   }
 </style>

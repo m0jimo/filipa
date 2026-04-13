@@ -12,6 +12,7 @@
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
   import SessionModal from "../lib/SessionModal.svelte";
   import CompactDialog from "../lib/CompactDialog.svelte";
+  import { backupNudge } from "../lib/backupNudge";
 
   let {params = {sessionId: ""}}: { params: { sessionId: string } } = $props();
 
@@ -260,6 +261,10 @@
 
       await loadSession();
       closeAddQuestionsModal();
+      // Bulk add is always a significant change worth backing up
+      if (toAdd.length >= 5) {
+        backupNudge.markSignificantChange();
+      }
     } catch (err) {
       alert(
         "Failed to add question set: " + (err instanceof Error ? err.message : "Unknown error")
@@ -644,6 +649,13 @@
         await sessionQuestionDB.update(cleanQuestion);
         // Don't reload - the state is already updated via binding
         questions = questions;
+        // Check if ≥80% of questions are answered — nudge backup if so
+        if (questions.length > 0) {
+          const answered = questions.filter((q) => q.answer.trim() !== "" || q.questionRating > 0).length;
+          if (answered / questions.length >= 0.8) {
+            backupNudge.markSignificantChange();
+          }
+        }
       } catch (err) {
         console.error("Failed to save answer:", err);
       }

@@ -2,8 +2,22 @@
   import { onMount } from "svelte";
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
-  import { exportDatabase, importDatabase, clearDatabase } from "../lib/db";
+  import {
+    exportDatabase,
+    importDatabase,
+    clearDatabase,
+    listBackupVersions,
+    exportBackupVersion,
+    deleteBackupVersion,
+    listSnapshots,
+    exportSnapshot,
+    deleteSnapshot,
+    createSnapshot,
+    pruneOldSnapshots,
+    restoreSnapshot,
+  } from "../lib/db";
   import { userSettings } from "../lib/userSettings";
+  import { backupNudge } from "../lib/backupNudge";
 
   const LOCAL_STORAGE_KEYS = ["theme", "candidate-theme", "userSettings"] as const;
 
@@ -34,6 +48,22 @@
   let importSuccess = $state(false);
   let actionInProgress = $state(false);
   let showDangerZone = $state(false);
+
+  // Backup archives
+  let backupVersions = $state<number[]>([]);
+  let archivesLoading = $state(false);
+  let archiveActionVersion = $state<number | null>(null);
+  let archiveError = $state<string | null>(null);
+  let deleteConfirmVersion = $state<number | null>(null);
+
+  // Auto-snapshots
+  let snapshots = $state<string[]>([]);
+  let snapshotsLoading = $state(false);
+  let snapshotActionName = $state<string | null>(null);
+  let snapshotError = $state<string | null>(null);
+  let snapshotSuccess = $state<string | null>(null);
+  let deleteConfirmSnapshot = $state<string | null>(null);
+  let snapshotCreating = $state(false);
 
   const loadStats = async () => {
     try {
@@ -81,6 +111,7 @@
       a.download = `filipa-backup-${dateStr}.filipa`;
       a.click();
       URL.revokeObjectURL(url);
+      backupNudge.markBackupDone();
     } finally {
       actionInProgress = false;
     }
@@ -133,8 +164,158 @@
     }
   };
 
+  const loadArchives = async () => {
+    archivesLoading = true;
+    try {
+      backupVersions = await listBackupVersions();
+    } finally {
+      archivesLoading = false;
+    }
+  };
+
+  const exportArchive = async (version: number) => {
+    archiveActionVersion = version;
+    archiveError = null;
+    try {
+      const dbData = await exportBackupVersion(version);
+      const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        indexedDB: dbData,
+        localStorage: {},
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `filipa-backup-v${version}.filipa`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      archiveError = err instanceof Error ? err.message : "Export failed";
+    } finally {
+      archiveActionVersion = null;
+    }
+  };
+
+  const confirmDeleteArchive = (version: number) => {
+    deleteConfirmVersion = version;
+  };
+
+  const deleteArchive = async (version: number) => {
+    archiveActionVersion = version;
+    archiveError = null;
+    deleteConfirmVersion = null;
+    try {
+      await deleteBackupVersion(version);
+      backupVersions = backupVersions.filter((v) => v !== version);
+    } catch (err) {
+      archiveError = err instanceof Error ? err.message : "Delete failed";
+    } finally {
+      archiveActionVersion = null;
+    }
+  };
+
+  const formatSnapshotDate = (name: string): string => {
+    // Name format: FilipaDB_snapshot_2026-04-13T10-30-00-000Z
+    const prefix = "FilipaDB_snapshot_";
+    const ts = name.slice(prefix.length).replace(/T(\d{2})-(\d{2})-(\d{2})-\d+Z$/, "T$1:$2:$3Z");
+    try {
+      return new Date(ts).toLocaleString();
+    } catch {
+      return name.slice(prefix.length);
+    }
+  };
+
+  const loadSnapshotList = async () => {
+    snapshotsLoading = true;
+    try {
+      snapshots = await listSnapshots();
+    } finally {
+      snapshotsLoading = false;
+    }
+  };
+
+  const createSnapshotNow = async () => {
+    snapshotCreating = true;
+    snapshotError = null;
+    snapshotSuccess = null;
+    try {
+      await createSnapshot();
+      await pruneOldSnapshots($userSettings.maxSnapshots);
+      snapshots = await listSnapshots();
+      snapshotSuccess = "Snapshot created successfully.";
+    } catch (err) {
+      snapshotError = err instanceof Error ? err.message : "Failed to create snapshot";
+    } finally {
+      snapshotCreating = false;
+    }
+  };
+
+  const exportSnapshotFile = async (name: string) => {
+    snapshotActionName = name;
+    snapshotError = null;
+    try {
+      const dbData = await exportSnapshot(name);
+      const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        indexedDB: dbData,
+        localStorage: {},
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const dateStr = formatSnapshotDate(name).replace(/[/:, ]/g, "-");
+      a.href = url;
+      a.download = `filipa-snapshot-${dateStr}.filipa`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      snapshotError = err instanceof Error ? err.message : "Export failed";
+    } finally {
+      snapshotActionName = null;
+    }
+  };
+
+  const confirmDeleteSnapshot = (name: string) => {
+    deleteConfirmSnapshot = name;
+  };
+
+  const doDeleteSnapshot = async (name: string) => {
+    snapshotActionName = name;
+    snapshotError = null;
+    deleteConfirmSnapshot = null;
+    try {
+      await deleteSnapshot(name);
+      snapshots = snapshots.filter((s) => s !== name);
+    } catch (err) {
+      snapshotError = err instanceof Error ? err.message : "Delete failed";
+    } finally {
+      snapshotActionName = null;
+    }
+  };
+
+  let restoreResult = $state<{ ok: boolean; message: string } | null>(null);
+  let restoring = $state(false);
+
+  const doRestoreSnapshot = async (name: string) => {
+    restoring = true;
+    restoreResult = null;
+    try {
+      await restoreSnapshot(name);
+      restoreResult = { ok: true, message: "Snapshot restored successfully. Reload to apply changes." };
+    } catch (err) {
+      restoreResult = { ok: false, message: err instanceof Error ? err.message : "Restore failed" };
+    } finally {
+      restoring = false;
+    }
+  };
+
   onMount(() => {
     loadStats();
+    loadArchives();
+    loadSnapshotList();
   });
 </script>
 
@@ -209,6 +390,190 @@
       {/if}
       {#if importSuccess}
         <p class="success">Backup imported successfully. Reloading…</p>
+      {/if}
+    </section>
+
+    <section class="settings-section">
+      <h2>Backup Archives</h2>
+      <p>
+        Filipa automatically creates a snapshot before each database upgrade.
+        You can export these snapshots to a file or delete them to free space.
+      </p>
+
+      <div class="backup-limit-row">
+        <label for="max-backups">Keep automatic backups:</label>
+        <input
+          id="max-backups"
+          type="number"
+          min="1"
+          max="4"
+          value={$userSettings.maxBackups}
+          onchange={(e) => userSettings.setMaxBackups(parseInt((e.target as HTMLInputElement).value, 10))}
+          class="max-backups-input"
+        />
+        <span class="max-backups-hint">(1–4 versions)</span>
+      </div>
+
+      {#if archivesLoading}
+        <p class="loading">Loading archives…</p>
+      {:else if backupVersions.length === 0}
+        <p class="no-archives">No automatic backups found. They are created automatically before each database upgrade.</p>
+      {:else}
+        <ul class="archive-list">
+          {#each backupVersions as version (version)}
+            <li class="archive-item">
+              <span class="archive-label">Database v{version} snapshot</span>
+              <div class="archive-actions">
+                {#if deleteConfirmVersion === version}
+                  <span class="archive-confirm-text">Delete this backup?</span>
+                  <button
+                    class="danger small"
+                    onclick={() => deleteArchive(version)}
+                    disabled={archiveActionVersion === version}
+                  >
+                    Yes, delete
+                  </button>
+                  <button class="secondary small" onclick={() => (deleteConfirmVersion = null)}>
+                    Cancel
+                  </button>
+                {:else}
+                  <button
+                    class="secondary small"
+                    onclick={() => exportArchive(version)}
+                    disabled={archiveActionVersion === version}
+                  >
+                    {archiveActionVersion === version ? "Exporting…" : "Export to file"}
+                  </button>
+                  <button
+                    class="danger small"
+                    onclick={() => confirmDeleteArchive(version)}
+                    disabled={archiveActionVersion === version}
+                  >
+                    Delete
+                  </button>
+                {/if}
+              </div>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      {#if archiveError}
+        <p class="error">{archiveError}</p>
+      {/if}
+    </section>
+
+    <section class="settings-section">
+      <h2>Auto-Snapshots</h2>
+      <p>
+        A snapshot is a copy of your database saved automatically in the browser when unsaved
+        changes are detected. If your database becomes corrupted, you can restore from a snapshot
+        directly on this page.
+      </p>
+      <p class="snapshot-hint">
+        To restore manually: open browser DevTools → Application → IndexedDB, rename
+        <code>FilipaDB_snapshot_…</code> to <code>FilipaDB</code>, then reload the page.
+      </p>
+
+      <div class="toggle-row snapshot-toggle-row">
+        <label for="auto-snapshot-toggle" class="toggle-label">
+          Automatically create a snapshot when unsaved changes are detected
+        </label>
+        <input
+          id="auto-snapshot-toggle"
+          type="checkbox"
+          checked={$userSettings.autoSnapshot}
+          onchange={(e) => userSettings.setAutoSnapshot((e.target as HTMLInputElement).checked)}
+        />
+      </div>
+
+      {#if $userSettings.autoSnapshot}
+        <div class="backup-limit-row snapshot-limit-row">
+          <label for="max-snapshots">Keep last:</label>
+          <input
+            id="max-snapshots"
+            type="number"
+            min="1"
+            max="2"
+            value={$userSettings.maxSnapshots}
+            onchange={(e) => userSettings.setMaxSnapshots(parseInt((e.target as HTMLInputElement).value, 10))}
+            class="max-backups-input"
+          />
+          <span class="max-backups-hint">(1–2 snapshots)</span>
+          <button class="secondary small snapshot-now-btn" onclick={createSnapshotNow} disabled={snapshotCreating}>
+            {snapshotCreating ? "Creating…" : "Create snapshot now"}
+          </button>
+        </div>
+      {:else}
+        <div class="snapshot-manual-row">
+          <button class="secondary small" onclick={createSnapshotNow} disabled={snapshotCreating}>
+            {snapshotCreating ? "Creating…" : "Create snapshot now"}
+          </button>
+        </div>
+      {/if}
+
+      {#if snapshotSuccess}
+        <p class="success">{snapshotSuccess}</p>
+      {/if}
+      {#if snapshotError}
+        <p class="error">{snapshotError}</p>
+      {/if}
+
+      {#if restoreResult}
+        <p class:success={restoreResult.ok} class:error={!restoreResult.ok}>{restoreResult.message}</p>
+        {#if restoreResult.ok}
+          <button class="primary small" onclick={() => location.reload()}>Reload now</button>
+        {/if}
+      {/if}
+
+      {#if snapshotsLoading}
+        <p class="loading">Loading snapshots…</p>
+      {:else if snapshots.length === 0}
+        <p class="no-archives">No snapshots found. They are created automatically when unsaved changes are detected.</p>
+      {:else}
+        <ul class="archive-list">
+          {#each snapshots as name (name)}
+            <li class="archive-item">
+              <span class="archive-label">Snapshot – {formatSnapshotDate(name)}</span>
+              <div class="archive-actions">
+                {#if deleteConfirmSnapshot === name}
+                  <span class="archive-confirm-text">Delete this snapshot?</span>
+                  <button
+                    class="danger small"
+                    onclick={() => doDeleteSnapshot(name)}
+                    disabled={snapshotActionName === name}
+                  >
+                    Yes, delete
+                  </button>
+                  <button class="secondary small" onclick={() => (deleteConfirmSnapshot = null)}>
+                    Cancel
+                  </button>
+                {:else}
+                  <button
+                    class="secondary small"
+                    onclick={() => doRestoreSnapshot(name)}
+                    disabled={restoring || snapshotActionName === name}
+                  >
+                    {restoring && snapshotActionName === name ? "Restoring…" : "Restore"}
+                  </button>
+                  <button
+                    class="secondary small"
+                    onclick={() => exportSnapshotFile(name)}
+                    disabled={snapshotActionName === name}
+                  >
+                    {snapshotActionName === name ? "Exporting…" : "Export to file"}
+                  </button>
+                  <button
+                    class="danger small"
+                    onclick={() => confirmDeleteSnapshot(name)}
+                    disabled={snapshotActionName === name}
+                  >
+                    Delete
+                  </button>
+                {/if}
+              </div>
+            </li>
+          {/each}
+        </ul>
       {/if}
     </section>
 
@@ -441,5 +806,141 @@
 
   :global([data-theme="dark"]) .toggle-label {
     color: var(--color-text-muted);
+  }
+
+  .backup-limit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  .max-backups-input {
+    width: 4rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .max-backups-hint {
+    color: #888;
+    font-size: 0.85rem;
+  }
+
+  .no-archives {
+    color: #888;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .archive-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .archive-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    background: var(--color-bg, #f9f9f9);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 6px;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .archive-label {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+  }
+
+  .archive-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .archive-confirm-text {
+    font-size: 0.85rem;
+    color: #cc0000;
+  }
+
+  button.small {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+  }
+
+  :global([data-theme="dark"]) .backup-limit-row {
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .max-backups-input {
+    background: var(--color-bg-dark-2);
+    color: #e0e0e0;
+    border-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .archive-item {
+    background: var(--color-bg-dark-2, #2a2a2a);
+    border-color: var(--color-border-dark, #444);
+  }
+
+  :global([data-theme="dark"]) .archive-label {
+    color: #e0e0e0;
+  }
+
+  .snapshot-hint {
+    font-size: 0.875rem;
+    color: #666;
+    background: var(--color-bg, #f9f9f9);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .snapshot-hint code {
+    font-family: monospace;
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
+    padding: 0.1rem 0.3rem;
+  }
+
+  .snapshot-toggle-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .snapshot-limit-row {
+    flex-wrap: wrap;
+  }
+
+  .snapshot-now-btn {
+    margin-left: auto;
+  }
+
+  .snapshot-manual-row {
+    margin-bottom: 1rem;
+  }
+
+  :global([data-theme="dark"]) .snapshot-hint {
+    color: var(--color-text-muted);
+    background: var(--color-bg-dark-2, #2a2a2a);
+    border-color: var(--color-border-dark, #444);
+  }
+
+  :global([data-theme="dark"]) .snapshot-hint code {
+    background: rgba(255, 255, 255, 0.1);
   }
 </style>

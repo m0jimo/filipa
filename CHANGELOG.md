@@ -7,13 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.5.1] — 2026-04-12
+## [0.5.1] — 2026-04-13
+
+### Added
+
+- auto-snapshot: automatically create a browser-side IndexedDB snapshot when unsaved changes are detected (backup nudge trigger)
+- auto-snapshot settings: enable/disable toggle and keep-last count (1–2) in Settings → Auto-Snapshots
+- "Create snapshot now" manual button in Settings
+- per-snapshot Restore, Export to file, and Delete actions in Settings
+- DB error screen now lists available snapshots and offers one-click restore when the database fails to open
 
 ### Fixed
 
 - open candidate window synchronously before awaits for Safari compatibility
 - remove candidate window status indicator
 - decouple presenting from session and window state
+
+### Chore
+
+- launch settings for Claude
 
 
 ## [0.5.0] — 2026-04-11
