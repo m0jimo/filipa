@@ -1,11 +1,42 @@
 <script lang="ts">
   import { link } from "svelte-spa-router";
   import { themeStore } from "./themeStore";
+  import { backupNudge, shouldShowBackupButton } from "./backupNudge";
+  import { exportDatabase } from "./db";
+
   let {
     showAppName = true,
   }: {
     showAppName?: boolean;
   } = $props();
+
+  let backupInProgress = $state(false);
+
+  const handleBackup = async () => {
+    backupInProgress = true;
+    try {
+      const dbData = await exportDatabase();
+      const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        indexedDB: dbData,
+        localStorage: (["theme", "candidate-theme", "userSettings"] as const).reduce<Record<string, string | null>>(
+          (acc, key) => { acc[key] = localStorage.getItem(key); return acc; },
+          {}
+        ),
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `filipa-backup-${new Date().toISOString().slice(0, 10)}.filipa`;
+      a.click();
+      URL.revokeObjectURL(url);
+      backupNudge.markBackupDone();
+    } finally {
+      backupInProgress = false;
+    }
+  };
 </script>
 
 <nav class="navigation-tabs">
@@ -43,6 +74,19 @@
     </div>
   {/if}
   <div class="spacer"></div>
+  {#if $shouldShowBackupButton}
+    <button
+      class="backup-nudge-btn"
+      title="Save a backup of your data"
+      onclick={handleBackup}
+      disabled={backupInProgress}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="backup-icon" aria-hidden="true">
+        <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+      </svg>
+      {backupInProgress ? "Saving…" : "Backup"}
+    </button>
+  {/if}
   <button class="theme-toggle" onclick={() => themeStore.toggle()} title="Toggle theme">
     {$themeStore === "light" ? "🌙" : "☀️"}
   </button>
@@ -344,5 +388,48 @@
   :global([data-theme="dark"]) .help-link:hover {
     color: var(--color-primary-dark);
     background: #1a2a3a;
+  }
+
+  .backup-nudge-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: auto 0;
+    margin-left: 0.5rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px;
+    background: #fff3cd;
+    border: 1px solid #f0ad4e;
+    color: #7d4e00;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background 0.2s,
+      color 0.2s;
+    white-space: nowrap;
+  }
+
+  .backup-nudge-btn:hover {
+    background: #fde8a0;
+    color: #5a3800;
+  }
+
+  .backup-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+
+  :global([data-theme="dark"]) .backup-nudge-btn {
+    background: #3a2e00;
+    border-color: #8a6200;
+    color: #ffc94d;
+  }
+
+  :global([data-theme="dark"]) .backup-nudge-btn:hover {
+    background: #4a3a00;
+    color: #ffd966;
   }
 </style>

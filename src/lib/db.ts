@@ -33,7 +33,168 @@ export const STORES = {
 // Database Initialization
 // ============================================================================
 
+const BACKUP_DB_PREFIX = "FilipaDB_backup_v";
+
 let dbInstance: IDBDatabase | null = null;
+
+/**
+ * Read the currently stored DB version without triggering an upgrade.
+ * Returns 0 if the database does not exist yet.
+ */
+async function getStoredDBVersion(): Promise<number> {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(DB_NAME);
+    request.onsuccess = () => {
+      const version = request.result.version;
+      request.result.close();
+      resolve(version);
+    };
+    request.onupgradeneeded = (event) => {
+      // Brand-new DB — version will be 1, close without doing anything
+      (event.target as IDBOpenDBRequest).result.close();
+      resolve(0);
+    };
+    request.onerror = () => resolve(0);
+  });
+}
+
+/**
+ * Create a snapshot copy of FilipaDB into FilipaDB_backup_v{version}.
+ * Reads all stores from the source DB and writes them verbatim into the backup DB.
+ */
+export async function snapshotDB(fromVersion: number): Promise<void> {
+  const backupName = `${BACKUP_DB_PREFIX}${fromVersion}`;
+
+  // Read all data from the current live DB (open at stored version, no upgrade)
+  const sourceData = await new Promise<Record<string, unknown[]>>((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME);
+    req.onsuccess = async () => {
+      const db = req.result;
+      try {
+        const data = await exportFromDB(db);
+        db.close();
+        resolve(data);
+      } catch (err) {
+        db.close();
+        reject(err);
+      }
+    };
+    req.onerror = () => reject(req.error);
+    req.onupgradeneeded = () => {
+      // No data in a fresh DB — nothing to snapshot
+      (req.result as IDBDatabase).close();
+      resolve({});
+    };
+  });
+
+  if (Object.keys(sourceData).length === 0) return;
+
+  const storeNames = Object.keys(sourceData);
+
+  // Open/create the backup DB
+  await new Promise<void>((resolve, reject) => {
+    const backupReq = indexedDB.open(backupName, 1);
+
+    backupReq.onupgradeneeded = (event) => {
+      const backupDB = (event.target as IDBOpenDBRequest).result;
+      for (const storeName of storeNames) {
+        if (!backupDB.objectStoreNames.contains(storeName)) {
+          backupDB.createObjectStore(storeName, { keyPath: "id" });
+        }
+      }
+    };
+
+    backupReq.onsuccess = async () => {
+      const backupDB = backupReq.result;
+      try {
+        for (const [storeName, records] of Object.entries(sourceData)) {
+          if (!backupDB.objectStoreNames.contains(storeName) || records.length === 0) continue;
+          const tx = backupDB.transaction(storeName, "readwrite");
+          const store = tx.objectStore(storeName);
+          for (const record of records) {
+            await new Promise<void>((res, rej) => {
+              const putReq = store.put(record);
+              putReq.onsuccess = () => res();
+              putReq.onerror = () => rej(putReq.error);
+            });
+          }
+        }
+        backupDB.close();
+        resolve();
+      } catch (err) {
+        backupDB.close();
+        reject(err);
+      }
+    };
+
+    backupReq.onerror = () => reject(backupReq.error);
+  });
+}
+
+/**
+ * List all backup DB versions available in IndexedDB.
+ * Returns version numbers sorted descending (newest first).
+ */
+export async function listBackupVersions(): Promise<number[]> {
+  if (!("databases" in indexedDB)) return [];
+  const databases = await indexedDB.databases();
+  return databases
+    .map((d) => d.name ?? "")
+    .filter((name) => name.startsWith(BACKUP_DB_PREFIX))
+    .map((name) => parseInt(name.slice(BACKUP_DB_PREFIX.length), 10))
+    .filter((v) => !isNaN(v))
+    .sort((a, b) => b - a);
+}
+
+/**
+ * Export all data from a backup DB version as a .filipa-compatible object.
+ */
+export async function exportBackupVersion(version: number): Promise<Record<string, unknown[]>> {
+  const backupName = `${BACKUP_DB_PREFIX}${version}`;
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(backupName);
+    req.onsuccess = async () => {
+      const db = req.result;
+      try {
+        const data = await exportFromDB(db);
+        db.close();
+        resolve(data);
+      } catch (err) {
+        db.close();
+        reject(err);
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Delete a specific backup DB version.
+ */
+export async function deleteBackupVersion(version: number): Promise<void> {
+  const backupName = `${BACKUP_DB_PREFIX}${version}`;
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(backupName);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Keep only the `maxToKeep` most recent backups and delete the rest.
+ * Versions are sorted descending (newest first), so we delete from the tail.
+ */
+export async function pruneOldBackups(maxToKeep: number): Promise<void> {
+  const versions = await listBackupVersions();
+  const toDelete = versions.slice(maxToKeep);
+  for (const version of toDelete) {
+    try {
+      await deleteBackupVersion(version);
+    } catch (err) {
+      console.warn(`Failed to delete backup v${version}:`, err);
+    }
+  }
+}
 
 /**
  * Initialize the IndexDB database with all required object stores
@@ -41,6 +202,29 @@ let dbInstance: IDBDatabase | null = null;
 export async function initDB(): Promise<IDBDatabase> {
   if (dbInstance) {
     return dbInstance;
+  }
+
+  // Check stored version before opening — if an upgrade is needed, snapshot first
+  const storedVersion = await getStoredDBVersion();
+  if (storedVersion > 0 && storedVersion < DB_VERSION) {
+    try {
+      await snapshotDB(storedVersion);
+      // Prune old backups respecting the user's maxBackups preference
+      const maxBackups = (() => {
+        try {
+          const raw = localStorage.getItem("userSettings");
+          const parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+          const v = parsed["maxBackups"];
+          return typeof v === "number" && v >= 1 && v <= 4 ? v : 2;
+        } catch {
+          return 2;
+        }
+      })();
+      await pruneOldBackups(maxBackups);
+    } catch (err) {
+      // Snapshot failure must not block the upgrade
+      console.warn("Pre-upgrade snapshot failed:", err);
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -176,6 +360,43 @@ export async function initDB(): Promise<IDBDatabase> {
       }
     };
   });
+}
+
+/**
+ * Open the database at its current stored version without triggering any upgrades.
+ * Used for emergency data export when a version conflict is detected.
+ */
+export async function openDBAtStoredVersion(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    // Opening without a version argument opens at the current stored version
+    const request = indexedDB.open(DB_NAME);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(new Error(`Failed to open database for rescue: ${request.error?.message}`));
+    // onupgradeneeded fires only for brand-new DBs — that's fine, resolve normally
+    request.onupgradeneeded = () => {
+      // Fresh DB, no data to rescue
+    };
+  });
+}
+
+/**
+ * Export all data from an already-opened DB connection (used for rescue export).
+ */
+export async function exportFromDB(db: IDBDatabase): Promise<Record<string, unknown[]>> {
+  const storeNames = Array.from(db.objectStoreNames);
+  const data: Record<string, unknown[]> = {};
+
+  for (const storeName of storeNames) {
+    data[storeName] = await new Promise<unknown[]>((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readonly");
+      const store = transaction.objectStore(storeName);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  return data;
 }
 
 /**
@@ -537,7 +758,60 @@ export async function isDatabaseEmpty(): Promise<boolean> {
 }
 
 /**
- * Import data into database (merge mode)
+ * Normalize a single imported record to match the current schema.
+ * Applies all historical field migrations so old backups become valid on import.
+ */
+function normalizeImportedRecord(storeName: string, record: Record<string, unknown>): Record<string, unknown> {
+  const r = { ...record };
+
+  if (storeName === STORES.CANDIDATES) {
+    // v0.3.x used firstName + lastName instead of displayName
+    if (!r["displayName"]) {
+      const first = (r["firstName"] as string | undefined) ?? "";
+      const last = (r["lastName"] as string | undefined) ?? "";
+      r["displayName"] = [first, last].filter(Boolean).join(" ").trim() || "Unknown";
+    }
+  }
+
+  if (storeName === STORES.QUESTIONS) {
+    // v1→v2: ensure hash exists
+    if (!r["hash"]) {
+      r["hash"] = "";
+    }
+    // v2→v3: rename rating → difficulty
+    if (r["rating"] !== undefined && r["difficulty"] === undefined) {
+      r["difficulty"] = r["rating"];
+      delete r["rating"];
+    }
+    if (r["difficulty"] === undefined) {
+      r["difficulty"] = [];
+    }
+  }
+
+  if (storeName === STORES.SESSIONS) {
+    // v4→v5: backfill sortOrder
+    if (r["sortOrder"] === undefined) {
+      r["sortOrder"] = 0;
+    }
+    // v5→v6: backfill currentQuestionId
+    if (r["currentQuestionId"] === undefined) {
+      r["currentQuestionId"] = null;
+    }
+  }
+
+  if (storeName === STORES.SESSION_QUESTIONS) {
+    // Normalize nested questionObj if present
+    if (r["questionObj"] && typeof r["questionObj"] === "object") {
+      r["questionObj"] = normalizeImportedRecord(STORES.QUESTIONS, r["questionObj"] as Record<string, unknown>);
+    }
+  }
+
+  return r;
+}
+
+/**
+ * Import data into database (merge mode).
+ * Records are normalized to the current schema before insertion so old backups import cleanly.
  */
 export async function importDatabase(data: Record<string, unknown[]>): Promise<void> {
   const db = await getDB();
@@ -552,8 +826,9 @@ export async function importDatabase(data: Record<string, unknown[]>): Promise<v
     const store = transaction.objectStore(storeName);
 
     for (const record of records) {
+      const normalized = normalizeImportedRecord(storeName, record as Record<string, unknown>);
       await new Promise<void>((resolve, reject) => {
-        const request = store.put(record);
+        const request = store.put(normalized);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });

@@ -86,6 +86,7 @@ offline/regulated environments with dual-view interface for interviewer and cand
 7. **Test both paths**: fresh install (oldVersion === 0) and upgrade from each prior version.
 
 ### Current migration history
+- three DB Index versions must be possible to upgrade. If not possible, inform user to download older version for loading the DB data.
 
 | Version | Change                                                                    |
 |---------|---------------------------------------------------------------------------|

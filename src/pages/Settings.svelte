@@ -2,8 +2,16 @@
   import { onMount } from "svelte";
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
-  import { exportDatabase, importDatabase, clearDatabase } from "../lib/db";
+  import {
+    exportDatabase,
+    importDatabase,
+    clearDatabase,
+    listBackupVersions,
+    exportBackupVersion,
+    deleteBackupVersion,
+  } from "../lib/db";
   import { userSettings } from "../lib/userSettings";
+  import { backupNudge } from "../lib/backupNudge";
 
   const LOCAL_STORAGE_KEYS = ["theme", "candidate-theme", "userSettings"] as const;
 
@@ -34,6 +42,13 @@
   let importSuccess = $state(false);
   let actionInProgress = $state(false);
   let showDangerZone = $state(false);
+
+  // Backup archives
+  let backupVersions = $state<number[]>([]);
+  let archivesLoading = $state(false);
+  let archiveActionVersion = $state<number | null>(null);
+  let archiveError = $state<string | null>(null);
+  let deleteConfirmVersion = $state<number | null>(null);
 
   const loadStats = async () => {
     try {
@@ -81,6 +96,7 @@
       a.download = `filipa-backup-${dateStr}.filipa`;
       a.click();
       URL.revokeObjectURL(url);
+      backupNudge.markBackupDone();
     } finally {
       actionInProgress = false;
     }
@@ -133,8 +149,61 @@
     }
   };
 
+  const loadArchives = async () => {
+    archivesLoading = true;
+    try {
+      backupVersions = await listBackupVersions();
+    } finally {
+      archivesLoading = false;
+    }
+  };
+
+  const exportArchive = async (version: number) => {
+    archiveActionVersion = version;
+    archiveError = null;
+    try {
+      const dbData = await exportBackupVersion(version);
+      const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        indexedDB: dbData,
+        localStorage: {},
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `filipa-backup-v${version}.filipa`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      archiveError = err instanceof Error ? err.message : "Export failed";
+    } finally {
+      archiveActionVersion = null;
+    }
+  };
+
+  const confirmDeleteArchive = (version: number) => {
+    deleteConfirmVersion = version;
+  };
+
+  const deleteArchive = async (version: number) => {
+    archiveActionVersion = version;
+    archiveError = null;
+    deleteConfirmVersion = null;
+    try {
+      await deleteBackupVersion(version);
+      backupVersions = backupVersions.filter((v) => v !== version);
+    } catch (err) {
+      archiveError = err instanceof Error ? err.message : "Delete failed";
+    } finally {
+      archiveActionVersion = null;
+    }
+  };
+
   onMount(() => {
     loadStats();
+    loadArchives();
   });
 </script>
 
@@ -209,6 +278,75 @@
       {/if}
       {#if importSuccess}
         <p class="success">Backup imported successfully. Reloading…</p>
+      {/if}
+    </section>
+
+    <section class="settings-section">
+      <h2>Backup Archives</h2>
+      <p>
+        Filipa automatically creates a snapshot before each database upgrade.
+        You can export these snapshots to a file or delete them to free space.
+      </p>
+
+      <div class="backup-limit-row">
+        <label for="max-backups">Keep automatic backups:</label>
+        <input
+          id="max-backups"
+          type="number"
+          min="1"
+          max="4"
+          value={$userSettings.maxBackups}
+          onchange={(e) => userSettings.setMaxBackups(parseInt((e.target as HTMLInputElement).value, 10))}
+          class="max-backups-input"
+        />
+        <span class="max-backups-hint">(1–4 versions)</span>
+      </div>
+
+      {#if archivesLoading}
+        <p class="loading">Loading archives…</p>
+      {:else if backupVersions.length === 0}
+        <p class="no-archives">No automatic backups found. They are created automatically before each database upgrade.</p>
+      {:else}
+        <ul class="archive-list">
+          {#each backupVersions as version (version)}
+            <li class="archive-item">
+              <span class="archive-label">Database v{version} snapshot</span>
+              <div class="archive-actions">
+                {#if deleteConfirmVersion === version}
+                  <span class="archive-confirm-text">Delete this backup?</span>
+                  <button
+                    class="danger small"
+                    onclick={() => deleteArchive(version)}
+                    disabled={archiveActionVersion === version}
+                  >
+                    Yes, delete
+                  </button>
+                  <button class="secondary small" onclick={() => (deleteConfirmVersion = null)}>
+                    Cancel
+                  </button>
+                {:else}
+                  <button
+                    class="secondary small"
+                    onclick={() => exportArchive(version)}
+                    disabled={archiveActionVersion === version}
+                  >
+                    {archiveActionVersion === version ? "Exporting…" : "Export to file"}
+                  </button>
+                  <button
+                    class="danger small"
+                    onclick={() => confirmDeleteArchive(version)}
+                    disabled={archiveActionVersion === version}
+                  >
+                    Delete
+                  </button>
+                {/if}
+              </div>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      {#if archiveError}
+        <p class="error">{archiveError}</p>
       {/if}
     </section>
 
@@ -441,5 +579,97 @@
 
   :global([data-theme="dark"]) .toggle-label {
     color: var(--color-text-muted);
+  }
+
+  .backup-limit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  .max-backups-input {
+    width: 4rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .max-backups-hint {
+    color: #888;
+    font-size: 0.85rem;
+  }
+
+  .no-archives {
+    color: #888;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .archive-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .archive-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    background: var(--color-bg, #f9f9f9);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 6px;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .archive-label {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+  }
+
+  .archive-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .archive-confirm-text {
+    font-size: 0.85rem;
+    color: #cc0000;
+  }
+
+  button.small {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+  }
+
+  :global([data-theme="dark"]) .backup-limit-row {
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .max-backups-input {
+    background: var(--color-bg-dark-2);
+    color: #e0e0e0;
+    border-color: var(--color-border-dark);
+  }
+
+  :global([data-theme="dark"]) .archive-item {
+    background: var(--color-bg-dark-2, #2a2a2a);
+    border-color: var(--color-border-dark, #444);
+  }
+
+  :global([data-theme="dark"]) .archive-label {
+    color: #e0e0e0;
   }
 </style>

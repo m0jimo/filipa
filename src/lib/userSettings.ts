@@ -17,6 +17,7 @@ export interface UserSettings {
   questionViewMode: QuestionViewMode;
   editorViewModes: Record<string, EditorViewMode>;
   showWelcomeCard: boolean;
+  maxBackups: number;
 }
 
 const defaults: UserSettings = {
@@ -28,6 +29,7 @@ const defaults: UserSettings = {
   questionViewMode: "cards",
   editorViewModes: {},
   showWelcomeCard: true,
+  maxBackups: 2,
 };
 
 const VALID_EDITOR_MODES: EditorViewMode[] = ["raw", "split", "preview"];
@@ -53,6 +55,11 @@ const load = (): UserSettings => {
         }
       }
     }
+    const rawMaxBackups = parsed.maxBackups;
+    const maxBackups =
+      typeof rawMaxBackups === "number" && rawMaxBackups >= 1 && rawMaxBackups <= 4
+        ? rawMaxBackups
+        : 2;
     return {
       questionFilters: {
         selectedTypes: parsed.questionFilters?.selectedTypes ?? [],
@@ -62,6 +69,7 @@ const load = (): UserSettings => {
       questionViewMode: loadViewMode(),
       editorViewModes,
       showWelcomeCard: parsed.showWelcomeCard ?? true,
+      maxBackups,
     };
   } catch {
     return structuredClone(defaults);
@@ -121,6 +129,14 @@ const createUserSettingsStore = () => {
     setShowWelcomeCard: (val: boolean) => {
       update((current) => {
         const next = { ...current, showWelcomeCard: val };
+        save(next);
+        return next;
+      });
+    },
+    setMaxBackups: (val: number) => {
+      const clamped = Math.max(1, Math.min(4, Math.round(val)));
+      update((current) => {
+        const next = { ...current, maxBackups: clamped };
         save(next);
         return next;
       });
