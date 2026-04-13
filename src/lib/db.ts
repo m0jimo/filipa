@@ -34,6 +34,7 @@ export const STORES = {
 // ============================================================================
 
 const BACKUP_DB_PREFIX = "FilipaDB_backup_v";
+const SNAPSHOT_DB_PREFIX = "FilipaDB_snapshot_";
 
 let dbInstance: IDBDatabase | null = null;
 
@@ -194,6 +195,189 @@ export async function pruneOldBackups(maxToKeep: number): Promise<void> {
       console.warn(`Failed to delete backup v${version}:`, err);
     }
   }
+}
+
+// ============================================================================
+// Auto-Snapshot Functions
+// ============================================================================
+
+/**
+ * Create a timestamped snapshot of the live FilipaDB.
+ * Snapshot is stored as FilipaDB_snapshot_{ISO-timestamp}.
+ */
+export async function createSnapshot(): Promise<string> {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const snapshotName = `${SNAPSHOT_DB_PREFIX}${timestamp}`;
+
+  const sourceData = await new Promise<Record<string, unknown[]>>((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME);
+    req.onsuccess = async () => {
+      const db = req.result;
+      try {
+        const data = await exportFromDB(db);
+        db.close();
+        resolve(data);
+      } catch (err) {
+        db.close();
+        reject(err);
+      }
+    };
+    req.onerror = () => reject(req.error);
+    req.onupgradeneeded = () => {
+      (req.result as IDBDatabase).close();
+      resolve({});
+    };
+  });
+
+  if (Object.keys(sourceData).length === 0) return snapshotName;
+
+  const storeNames = Object.keys(sourceData);
+
+  await new Promise<void>((resolve, reject) => {
+    const snapReq = indexedDB.open(snapshotName, 1);
+
+    snapReq.onupgradeneeded = (event) => {
+      const snapDB = (event.target as IDBOpenDBRequest).result;
+      for (const storeName of storeNames) {
+        if (!snapDB.objectStoreNames.contains(storeName)) {
+          snapDB.createObjectStore(storeName, { keyPath: "id" });
+        }
+      }
+    };
+
+    snapReq.onsuccess = async () => {
+      const snapDB = snapReq.result;
+      try {
+        for (const [storeName, records] of Object.entries(sourceData)) {
+          if (!snapDB.objectStoreNames.contains(storeName) || records.length === 0) continue;
+          const tx = snapDB.transaction(storeName, "readwrite");
+          const store = tx.objectStore(storeName);
+          for (const record of records) {
+            await new Promise<void>((res, rej) => {
+              const putReq = store.put(record);
+              putReq.onsuccess = () => res();
+              putReq.onerror = () => rej(putReq.error);
+            });
+          }
+        }
+        snapDB.close();
+        resolve();
+      } catch (err) {
+        snapDB.close();
+        reject(err);
+      }
+    };
+
+    snapReq.onerror = () => reject(snapReq.error);
+  });
+
+  return snapshotName;
+}
+
+/**
+ * List all auto-snapshots. Returns names sorted descending (newest first).
+ */
+export async function listSnapshots(): Promise<string[]> {
+  if (!("databases" in indexedDB)) return [];
+  const databases = await indexedDB.databases();
+  return databases
+    .map((d) => d.name ?? "")
+    .filter((name) => name.startsWith(SNAPSHOT_DB_PREFIX))
+    .sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * Export a snapshot to a .filipa-compatible object.
+ */
+export async function exportSnapshot(snapshotName: string): Promise<Record<string, unknown[]>> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(snapshotName);
+    req.onsuccess = async () => {
+      const db = req.result;
+      try {
+        const data = await exportFromDB(db);
+        db.close();
+        resolve(data);
+      } catch (err) {
+        db.close();
+        reject(err);
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Delete a snapshot by name.
+ */
+export async function deleteSnapshot(snapshotName: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(snapshotName);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Keep only the `maxToKeep` most recent snapshots and delete the rest.
+ */
+export async function pruneOldSnapshots(maxToKeep: number): Promise<void> {
+  const names = await listSnapshots();
+  const toDelete = names.slice(maxToKeep);
+  for (const name of toDelete) {
+    try {
+      await deleteSnapshot(name);
+    } catch (err) {
+      console.warn(`Failed to delete snapshot ${name}:`, err);
+    }
+  }
+}
+
+/**
+ * Restore a snapshot back into the live FilipaDB.
+ * Clears existing data and re-populates from the snapshot.
+ */
+export async function restoreSnapshot(snapshotName: string): Promise<void> {
+  const snapshotData = await exportSnapshot(snapshotName);
+
+  // Close existing live DB connection so we can write to it fresh
+  if (dbInstance) {
+    dbInstance.close();
+    dbInstance = null;
+  }
+
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onupgradeneeded = (event) => resolve((event.target as IDBOpenDBRequest).result);
+  });
+
+  for (const [storeName, records] of Object.entries(snapshotData)) {
+    if (!db.objectStoreNames.contains(storeName)) continue;
+
+    // Clear existing records
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      const clearReq = store.clear();
+      clearReq.onsuccess = () => resolve();
+      clearReq.onerror = () => reject(clearReq.error);
+    });
+
+    // Write snapshot records
+    for (const record of records) {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(storeName, "readwrite");
+        const store = tx.objectStore(storeName);
+        const putReq = store.put(record);
+        putReq.onsuccess = () => resolve();
+        putReq.onerror = () => reject(putReq.error);
+      });
+    }
+  }
+
+  db.close();
 }
 
 /**
