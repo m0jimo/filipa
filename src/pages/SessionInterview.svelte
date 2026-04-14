@@ -102,37 +102,43 @@
     // Fixed global channel — same name regardless of session
     candidateChannel = new BroadcastChannel("filipa-candidate");
 
+    const resendCurrentQuestion = () => {
+      if (!session) return;
+      const questionId = session.currentQuestionId ?? null;
+      // localStorage is the primary reliable cross-window channel on Windows Chrome/Edge
+      // (BroadcastChannel and postMessage are unreliable on file:// in Chromium)
+      sendQuestionToCandidate(questionId);
+    };
+
     const handleCandidateReady = (data: { type: string }) => {
       if (data?.type === "candidate-window-opened") {
-        if (!session) return;
-        // Re-send via both channels so the candidate window gets the state
-        candidateChannel?.postMessage({
-          type: "filipa-question-update",
-          questionId: session.currentQuestionId ?? null,
-        });
-        if (candidateWindow && !candidateWindow.closed) {
-          // Use "*" for file:// protocol compatibility
-          candidateWindow.postMessage(
-            { type: "filipa-question-update", questionId: session.currentQuestionId ?? null },
-            "*"
-          );
-        }
+        resendCurrentQuestion();
       }
     };
 
     // When the candidate window finishes loading it sends "candidate-window-opened".
-    // Re-send the current question state so slow-loading windows (e.g. Windows/Chrome)
-    // don't get stuck on the Welcome screen because the first message arrived too early.
+    // Re-send the current question state so slow-loading windows don't miss the initial state.
     candidateChannel.onmessage = (event) => handleCandidateReady(event.data);
 
-    // Fallback: catch opener postMessage from candidate window (Safari iOS, etc.)
-    // Filter by message type instead of origin for file:// protocol compatibility
+    // storage event: candidate window writes "filipa-candidate-ready" key to signal it loaded.
+    // This is the most reliable cross-window signal on Windows Chrome/Edge with file:// protocol.
+    const onStorageEvent = (event: StorageEvent) => {
+      if (event.key === "filipa-candidate-ready") {
+        resendCurrentQuestion();
+      }
+    };
+    window.addEventListener("storage", onStorageEvent);
+
+    // Fallback: catch opener postMessage from candidate window (Safari, etc.)
     const onWindowMessage = (event: MessageEvent) => {
       if (event.data?.type !== "candidate-window-opened" && event.data?.type !== "candidate-window-closing") return;
       handleCandidateReady(event.data);
     };
     window.addEventListener("message", onWindowMessage);
-    candidateWindowMessageCleanup = () => window.removeEventListener("message", onWindowMessage);
+    candidateWindowMessageCleanup = () => {
+      window.removeEventListener("storage", onStorageEvent);
+      window.removeEventListener("message", onWindowMessage);
+    };
 
     await loadSession();
     await loadCatalogFingerprints();
@@ -230,13 +236,8 @@
     // Clear active question globally — show welcome screen
     clearActiveQuestion();
 
-    // Send null questionId to show the welcome screen
-    if (candidateChannel) {
-      candidateChannel.postMessage({ type: "filipa-question-update", questionId: null });
-    }
-    if (candidateWindow) {
-      candidateWindow.postMessage({ type: "filipa-question-update", questionId: null }, "*");
-    }
+    // Send null questionId to show the welcome screen via all channels
+    sendQuestionToCandidate(null);
   }
 
 
@@ -604,6 +605,31 @@
   let candidateWindowMessageCleanup: (() => void) | null = null;
   let scrollToQuestionId = $state<string | null>(null);
 
+  // Send question update to candidate window via all available channels.
+  // localStorage + storage event is the primary reliable channel on Windows Chrome/Edge
+  // with file:// protocol where BroadcastChannel is scoped per-origin and postMessage
+  // may fail when window.opener is null (Chromium security policy).
+  function sendQuestionToCandidate(questionId: string | null) {
+    // 1. localStorage — fires storage event cross-window, works on all browsers + file://
+    try {
+      localStorage.setItem("filipa-active-question", questionId ?? "");
+    } catch {
+      // Ignore (e.g. private browsing storage quota)
+    }
+    // 2. BroadcastChannel — same browser session, same origin
+    if (candidateChannel) {
+      candidateChannel.postMessage({ type: "filipa-question-update", questionId });
+    }
+    // 3. postMessage — works when window reference is valid and opener is not null
+    if (candidateWindow && !candidateWindow.closed) {
+      try {
+        candidateWindow.postMessage({ type: "filipa-question-update", questionId }, "*");
+      } catch {
+        // Ignore — stale cross-window reference
+      }
+    }
+  }
+
   async function setActiveQuestion(index: number, shouldScroll = false) {
     if (!session) return;
 
@@ -639,13 +665,8 @@
       // Update global store so isActive reflects correctly across sessions
       storeSetActiveQuestion(session.id, questions[index].id);
 
-      // Send question ID directly — no DB lookup needed in candidate view
-      if (candidateChannel) {
-        candidateChannel.postMessage({ type: "filipa-question-update", questionId: questions[index].id });
-      }
-      if (candidateWindow) {
-        candidateWindow.postMessage({ type: "filipa-question-update", questionId: questions[index].id }, "*");
-      }
+      // Send question ID to candidate window via all channels
+      sendQuestionToCandidate(questions[index].id);
 
       // Don't reload - just trigger reactivity by reassigning
       session = session;

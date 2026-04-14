@@ -25,26 +25,51 @@
   onMount(() => {
     candidateThemeStore.initialize();
 
-    // BroadcastChannel: works when both windows share the same origin and browser session
+    // 1. localStorage — read current question immediately in case we missed the push event
+    // (handles slow window loads on Windows Chrome where message arrives before listeners attach)
+    try {
+      const stored = localStorage.getItem("filipa-active-question");
+      if (stored !== null) {
+        handleQuestionUpdate({ type: "filipa-question-update", questionId: stored || null });
+      }
+    } catch {
+      // Ignore storage errors
+    }
+
+    // 2. storage event — primary reliable channel on Windows Chrome/Edge with file:// protocol.
+    // Fires cross-window whenever the interviewer writes to localStorage.
+    const onStorageEvent = (event: StorageEvent) => {
+      if (event.key === "filipa-active-question") {
+        handleQuestionUpdate({ type: "filipa-question-update", questionId: event.newValue || null });
+      }
+    };
+    window.addEventListener("storage", onStorageEvent);
+
+    // 3. BroadcastChannel — same browser session, same origin (fallback)
     channel = new BroadcastChannel("filipa-candidate");
     channel.onmessage = (event) => handleQuestionUpdate(event.data);
 
-    // window.message fallback: works cross-window via postMessage (Safari iOS, Chrome Windows)
-    // Use "*" origin check guard via type field to avoid processing unrelated messages
+    // 4. postMessage — works when window.opener is set (fallback)
     const onWindowMessage = (event: MessageEvent) => {
       if (event.data?.type !== "filipa-question-update") return;
       handleQuestionUpdate(event.data);
     };
     window.addEventListener("message", onWindowMessage);
 
-    // Announce to interviewer that the window is ready via both channels
+    // Signal to interviewer that we are ready via all available channels.
+    // localStorage storage event is the primary signal — reliable on Windows Chrome/Edge.
+    try {
+      localStorage.setItem("filipa-candidate-ready", Date.now().toString());
+    } catch {
+      // Ignore
+    }
     channel.postMessage({ type: "candidate-window-opened" });
-    // Also notify via opener in case BroadcastChannel is unreliable (use "*" for file:// compat)
     if (window.opener) {
       window.opener.postMessage({ type: "candidate-window-opened" }, "*");
     }
 
     return () => {
+      window.removeEventListener("storage", onStorageEvent);
       window.removeEventListener("message", onWindowMessage);
     };
   });
