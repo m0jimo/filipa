@@ -11,29 +11,50 @@
 
   let channel: BroadcastChannel | null = null;
 
+  async function handleQuestionUpdate(data: { type: string; questionId: string | null }) {
+    if (data?.type !== "filipa-question-update") return;
+    const { questionId } = data;
+    if (!questionId) {
+      currentQuestion = null;
+      return;
+    }
+    const q = await sessionQuestionDB.read(questionId);
+    currentQuestion = q;
+  }
+
   onMount(() => {
     candidateThemeStore.initialize();
 
+    // BroadcastChannel: works when both windows share the same origin and browser session
     channel = new BroadcastChannel("filipa-candidate");
-    channel.onmessage = async (event) => {
-      if (event.data?.type === "filipa-question-update") {
-        const { questionId } = event.data;
-        if (!questionId) {
-          currentQuestion = null;
-          return;
-        }
-        const q = await sessionQuestionDB.read(questionId);
-        currentQuestion = q;
-      }
-    };
+    channel.onmessage = (event) => handleQuestionUpdate(event.data);
 
-    // Announce to interviewer that the window is ready
+    // window.message fallback: works cross-window via postMessage (Safari iOS, Chrome Windows)
+    // Use "*" origin check guard via type field to avoid processing unrelated messages
+    const onWindowMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "filipa-question-update") return;
+      handleQuestionUpdate(event.data);
+    };
+    window.addEventListener("message", onWindowMessage);
+
+    // Announce to interviewer that the window is ready via both channels
     channel.postMessage({ type: "candidate-window-opened" });
+    // Also notify via opener in case BroadcastChannel is unreliable (use "*" for file:// compat)
+    if (window.opener) {
+      window.opener.postMessage({ type: "candidate-window-opened" }, "*");
+    }
+
+    return () => {
+      window.removeEventListener("message", onWindowMessage);
+    };
   });
 
   onDestroy(() => {
     if (channel) {
       channel.postMessage({ type: "candidate-window-closing" });
+      if (window.opener) {
+        window.opener.postMessage({ type: "candidate-window-closing" }, "*");
+      }
       channel.close();
     }
   });
