@@ -13,7 +13,7 @@
   import QuestionSets from "./pages/QuestionSets.svelte";
   import Help from "./pages/Help.svelte";
   import { themeStore } from "./lib/themeStore";
-  import { initDB, openDBAtStoredVersion, exportFromDB, listSnapshots, restoreSnapshot } from "./lib/db";
+  import { initDB, openDBAtStoredVersion, exportFromDB } from "./lib/db";
 
   // DB_VERSION is the version this build knows about (from db.ts constant)
   const APP_DB_VERSION = 6;
@@ -47,34 +47,6 @@
   let rescueExporting = $state(false);
   let rescueExported = $state(false);
   let rescueError = $state<string | null>(null);
-
-  // Snapshot recovery
-  let availableSnapshots = $state<string[]>([]);
-  let snapshotRestoring = $state(false);
-  let snapshotRestoreResult = $state<{ ok: boolean; message: string } | null>(null);
-
-  const formatSnapshotDate = (name: string): string => {
-    const prefix = "FilipaDB_snapshot_";
-    const ts = name.slice(prefix.length).replace(/T(\d{2})-(\d{2})-(\d{2})-\d+Z$/, "T$1:$2:$3Z");
-    try {
-      return new Date(ts).toLocaleString();
-    } catch {
-      return name.slice(prefix.length);
-    }
-  };
-
-  const handleRestoreSnapshot = async (name: string) => {
-    snapshotRestoring = true;
-    snapshotRestoreResult = null;
-    try {
-      await restoreSnapshot(name);
-      snapshotRestoreResult = { ok: true, message: "Snapshot restored. Click \"Reload now\" to continue." };
-    } catch (err) {
-      snapshotRestoreResult = { ok: false, message: err instanceof Error ? err.message : "Restore failed" };
-    } finally {
-      snapshotRestoring = false;
-    }
-  };
 
   const extractStoredVersion = (errorMsg: string): number | null => {
     const match = errorMsg.match(/requested version \((\d+)\) is less than the existing version \((\d+)\)/i)
@@ -132,12 +104,6 @@
         }
       } else {
         dbError = { kind: "unknown", storedVersion: null, message: msg };
-      }
-      // Load available snapshots to offer recovery
-      try {
-        availableSnapshots = await listSnapshots();
-      } catch {
-        availableSnapshots = [];
       }
     }
   });
@@ -229,38 +195,6 @@
         </details>
       {/if}
 
-      {#if availableSnapshots.length > 0}
-        <div class="snapshot-recovery">
-          <h2>Restore from snapshot</h2>
-          <p>
-            The following automatic snapshots are available. Restoring a snapshot will replace
-            your current database with the snapshot data.
-          </p>
-          {#if snapshotRestoreResult}
-            <p class:rescue-ok={snapshotRestoreResult.ok} class:rescue-error={!snapshotRestoreResult.ok}>
-              {snapshotRestoreResult.message}
-            </p>
-            {#if snapshotRestoreResult.ok}
-              <button class="primary" onclick={() => location.reload()}>Reload now</button>
-            {/if}
-          {:else}
-            <ul class="snapshot-recovery-list">
-              {#each availableSnapshots as name (name)}
-                <li class="snapshot-recovery-item">
-                  <span>Snapshot – {formatSnapshotDate(name)}</span>
-                  <button
-                    class="primary"
-                    onclick={() => handleRestoreSnapshot(name)}
-                    disabled={snapshotRestoring}
-                  >
-                    {snapshotRestoring ? "Restoring…" : "Restore this snapshot"}
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          {/if}
-        </div>
-      {/if}
     </div>
   </div>
 {:else}
@@ -394,49 +328,4 @@
     cursor: default;
   }
 
-  .snapshot-recovery {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e0e0e0;
-  }
-
-  .snapshot-recovery h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-
-  .snapshot-recovery p {
-    color: #555;
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .snapshot-recovery-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .snapshot-recovery-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.6rem 0.75rem;
-    background: #f9f9f9;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    color: #333;
-    flex-wrap: wrap;
-  }
-
-  .snapshot-recovery-item button {
-    flex-shrink: 0;
-  }
 </style>

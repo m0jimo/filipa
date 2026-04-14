@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { link } from "svelte-spa-router";
   import { questionSetDB, questionDB, generateId, generateQuestionHash } from "../lib/db";
+  import { backupNudge } from "../lib/backupNudge";
   import {
     QuestionType,
     type QuestionSet,
@@ -683,6 +684,9 @@
         }
       }
 
+      if (importResults.success > 0) {
+        backupNudge.markSignificantChange();
+      }
       await loadSets();
       importPreview = null;
     } catch (err) {
