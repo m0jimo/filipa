@@ -1384,7 +1384,7 @@ Type: text</code
   }
 
   .select-all-checkbox {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     margin-left: auto;
