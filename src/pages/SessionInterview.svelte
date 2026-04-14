@@ -102,18 +102,37 @@
     // Fixed global channel — same name regardless of session
     candidateChannel = new BroadcastChannel("filipa-candidate");
 
-    // When the candidate window finishes loading it sends "candidate-window-opened".
-    // Re-send the current question state so slow-loading windows (e.g. Windows/Chrome)
-    // don't get stuck on the Welcome screen because the first message arrived too early.
-    candidateChannel.onmessage = (event) => {
-      if (event.data?.type === "candidate-window-opened") {
+    const handleCandidateReady = (data: { type: string }) => {
+      if (data?.type === "candidate-window-opened") {
         if (!session) return;
+        // Re-send via both channels so the candidate window gets the state
         candidateChannel?.postMessage({
           type: "filipa-question-update",
           questionId: session.currentQuestionId ?? null,
         });
+        if (candidateWindow && !candidateWindow.closed) {
+          // Use "*" for file:// protocol compatibility
+          candidateWindow.postMessage(
+            { type: "filipa-question-update", questionId: session.currentQuestionId ?? null },
+            "*"
+          );
+        }
       }
     };
+
+    // When the candidate window finishes loading it sends "candidate-window-opened".
+    // Re-send the current question state so slow-loading windows (e.g. Windows/Chrome)
+    // don't get stuck on the Welcome screen because the first message arrived too early.
+    candidateChannel.onmessage = (event) => handleCandidateReady(event.data);
+
+    // Fallback: catch opener postMessage from candidate window (Safari iOS, etc.)
+    // Filter by message type instead of origin for file:// protocol compatibility
+    const onWindowMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "candidate-window-opened" && event.data?.type !== "candidate-window-closing") return;
+      handleCandidateReady(event.data);
+    };
+    window.addEventListener("message", onWindowMessage);
+    candidateWindowMessageCleanup = () => window.removeEventListener("message", onWindowMessage);
 
     await loadSession();
     await loadCatalogFingerprints();
@@ -582,6 +601,7 @@
 
   let candidateWindow = $state<Window | null>(null);
   let candidateChannel: BroadcastChannel | null = null;
+  let candidateWindowMessageCleanup: (() => void) | null = null;
   let scrollToQuestionId = $state<string | null>(null);
 
   async function setActiveQuestion(index: number, shouldScroll = false) {
@@ -764,6 +784,7 @@
     if (candidateChannel) {
       candidateChannel.close();
     }
+    candidateWindowMessageCleanup?.();
   });
 </script>
 

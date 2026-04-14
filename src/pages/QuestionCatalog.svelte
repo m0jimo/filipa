@@ -3,6 +3,7 @@
   import { link } from "svelte-spa-router";
   import candidateWindowSvg from "../assets/filipa-candidate-window.svg";
   import { questionDB, generateId, generateQuestionHash } from "../lib/db";
+  import { backupNudge } from "../lib/backupNudge";
   import { QuestionType, type Question } from "../lib/types";
   import Navigation from "../lib/Navigation.svelte";
   import Breadcrumbs from "../lib/Breadcrumbs.svelte";
@@ -595,6 +596,9 @@
         }
       }
 
+      if (importResults.success > 0) {
+        backupNudge.markSignificantChange();
+      }
       await loadQuestions();
       importPreview = null;
     } catch (err) {
@@ -1380,7 +1384,7 @@ Type: text</code
   }
 
   .select-all-checkbox {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     margin-left: auto;

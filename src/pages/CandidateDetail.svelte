@@ -9,6 +9,7 @@
     generateId,
     generateQuestionHash,
   } from "../lib/db";
+  import { backupNudge } from "../lib/backupNudge";
   import type { Candidate, Session, SessionQuestion } from "../lib/types";
   import { QuestionType } from "../lib/types";
 
@@ -233,6 +234,7 @@
           updatedAt: now,
         };
         await sessionDB.create(newSession);
+        backupNudge.markSignificantChange();
       }
 
       await loadData();

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { link } from "svelte-spa-router";
   import { candidateDB, sessionDB, sessionQuestionDB, questionDB, generateId } from "../lib/db";
+  import { backupNudge } from "../lib/backupNudge";
   import type { Candidate, Session, SessionQuestion, Question } from "../lib/types";
   import { QuestionType } from "../lib/types";
   import { loadConfig, getMarkdownFormatKey } from "../lib/configLoader";
@@ -260,6 +261,7 @@
           updatedAt: now,
         };
         await candidateDB.create(newCandidate);
+        backupNudge.markSignificantChange();
       }
 
       await loadCandidates();

@@ -18,8 +18,6 @@ export interface UserSettings {
   editorViewModes: Record<string, EditorViewMode>;
   showWelcomeCard: boolean;
   maxBackups: number;
-  autoSnapshot: boolean;
-  maxSnapshots: number;
 }
 
 const defaults: UserSettings = {
@@ -32,8 +30,6 @@ const defaults: UserSettings = {
   editorViewModes: {},
   showWelcomeCard: true,
   maxBackups: 2,
-  autoSnapshot: true,
-  maxSnapshots: 2,
 };
 
 const VALID_EDITOR_MODES: EditorViewMode[] = ["raw", "split", "preview"];
@@ -64,11 +60,6 @@ const load = (): UserSettings => {
       typeof rawMaxBackups === "number" && rawMaxBackups >= 1 && rawMaxBackups <= 4
         ? rawMaxBackups
         : 2;
-    const rawMaxSnapshots = parsed.maxSnapshots;
-    const maxSnapshots =
-      typeof rawMaxSnapshots === "number" && rawMaxSnapshots >= 1 && rawMaxSnapshots <= 2
-        ? rawMaxSnapshots
-        : 2;
     return {
       questionFilters: {
         selectedTypes: parsed.questionFilters?.selectedTypes ?? [],
@@ -79,8 +70,6 @@ const load = (): UserSettings => {
       editorViewModes,
       showWelcomeCard: parsed.showWelcomeCard ?? true,
       maxBackups,
-      autoSnapshot: parsed.autoSnapshot ?? true,
-      maxSnapshots,
     };
   } catch {
     return structuredClone(defaults);
@@ -148,21 +137,6 @@ const createUserSettingsStore = () => {
       const clamped = Math.max(1, Math.min(4, Math.round(val)));
       update((current) => {
         const next = { ...current, maxBackups: clamped };
-        save(next);
-        return next;
-      });
-    },
-    setAutoSnapshot: (val: boolean) => {
-      update((current) => {
-        const next = { ...current, autoSnapshot: val };
-        save(next);
-        return next;
-      });
-    },
-    setMaxSnapshots: (val: number) => {
-      const clamped = Math.max(1, Math.min(2, Math.round(val)));
-      update((current) => {
-        const next = { ...current, maxSnapshots: clamped };
         save(next);
         return next;
       });

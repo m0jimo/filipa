@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.2] — 2026-04-14
+
+### Added
+
+- auto-snapshot on backup nudge with recovery UI
+- suggest question import type (add new/skip/update/import
+- DB version compatibility guard, backup nudge, and settings improvements
+
+### Fixed
+
+- shrink Select All checkbox to content width
+- add postMessage fallback for cross-window communication
+- re-send question state when candidate window signals ready
+- restrict github-pages deploy to main branch only
+- open candidate window synchronously before awaits for Safari compatibility
+
+### Changed
+
+- remove in-browser auto-snapshot system, expand backup nudge triggers
+
+### Chore
+
+- add pre-push hook to enforce version bump before pushing main
+- bump version to 0.5.1 and update CHANGELOG
+- launch settings for Claude
+- release v0.5.1
+
+
 ## [0.5.1] — 2026-04-13
 
 ### Added
