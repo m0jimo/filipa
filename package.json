@@ -13,7 +13,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,svelte,css}\" \"*.{js,ts}\" && eslint . --fix",
     "release": "node scripts/release.js minor",
-    "release:patch": "node scripts/release.js patch"
+    "release:patch": "node scripts/release.js patch",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

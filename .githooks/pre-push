@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# .githooks/pre-push
+#
+# Blocks pushes to main unless the version in package.json has been bumped
+# relative to what is on the remote. Run one of these first:
+#
+#   npm run release        — bump minor version (0.x.0)
+#   npm run release:patch  — bump patch version (0.0.x)
+
+REMOTE="$1"
+REMOTE_URL="$2"
+
+# Only enforce on pushes that include the main branch
+pushing_main=false
+while read local_ref local_sha remote_ref remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    pushing_main=true
+    break
+  fi
+done
+
+if ! $pushing_main; then
+  exit 0
+fi
+
+LOCAL_VERSION=$(node -p "require('./package.json').version" 2>/dev/null)
+if [ -z "$LOCAL_VERSION" ]; then
+  echo "pre-push: could not read version from package.json" >&2
+  exit 1
+fi
+
+# Fetch the remote version without merging
+REMOTE_VERSION=$(git fetch "$REMOTE" main --quiet 2>/dev/null && \
+  git show FETCH_HEAD:package.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version" 2>/dev/null)
+
+if [ -z "$REMOTE_VERSION" ]; then
+  # Remote branch doesn't exist yet (first push) — allow it
+  exit 0
+fi
+
+if [ "$LOCAL_VERSION" = "$REMOTE_VERSION" ]; then
+  echo ""
+  echo "  ✗ Version not bumped — both local and remote main are at v${LOCAL_VERSION}."
+  echo ""
+  echo "  Run one of the following before pushing:"
+  echo "    npm run release        (minor bump → next 0.x.0)"
+  echo "    npm run release:patch  (patch bump → next 0.0.x)"
+  echo ""
+  exit 1
+fi
+
+echo "pre-push: version v${REMOTE_VERSION} → v${LOCAL_VERSION} ✓"
+exit 0
