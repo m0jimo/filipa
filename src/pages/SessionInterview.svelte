@@ -102,6 +102,19 @@
     // Fixed global channel — same name regardless of session
     candidateChannel = new BroadcastChannel("filipa-candidate");
 
+    // When the candidate window finishes loading it sends "candidate-window-opened".
+    // Re-send the current question state so slow-loading windows (e.g. Windows/Chrome)
+    // don't get stuck on the Welcome screen because the first message arrived too early.
+    candidateChannel.onmessage = (event) => {
+      if (event.data?.type === "candidate-window-opened") {
+        if (!session) return;
+        candidateChannel?.postMessage({
+          type: "filipa-question-update",
+          questionId: session.currentQuestionId ?? null,
+        });
+      }
+    };
+
     await loadSession();
     await loadCatalogFingerprints();
   });
