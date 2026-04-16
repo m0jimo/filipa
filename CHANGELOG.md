@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.5] — 2026-04-16
+
+### Fixed
+
+- remove $state from candidateWindow and drop cross-origin postMessage
+
+
 ## [0.5.4] — 2026-04-16
 
 ### Fixed
