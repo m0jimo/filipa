@@ -25,7 +25,7 @@
   onMount(() => {
     candidateThemeStore.initialize();
 
-    // 2. storage event — primary reliable channel on Windows Chrome/Edge with file:// protocol.
+    // storage event — primary reliable channel on Windows Chrome/Edge with file:// protocol.
     // Fires cross-window whenever the interviewer writes to localStorage.
     const onStorageEvent = (event: StorageEvent) => {
       if (event.key === "filipa-active-question") {
@@ -34,16 +34,13 @@
     };
     window.addEventListener("storage", onStorageEvent);
 
-    // 3. BroadcastChannel — same browser session, same origin (fallback)
-    channel = new BroadcastChannel("filipa-candidate");
-    channel.onmessage = (event) => handleQuestionUpdate(event.data);
-
-    // 4. postMessage — works when window.opener is set (fallback)
-    const onWindowMessage = (event: MessageEvent) => {
-      if (event.data?.type !== "filipa-question-update") return;
-      handleQuestionUpdate(event.data);
-    };
-    window.addEventListener("message", onWindowMessage);
+    // BroadcastChannel — same browser session, same origin (works on http/https)
+    try {
+      channel = new BroadcastChannel("filipa-candidate");
+      channel.onmessage = (event) => handleQuestionUpdate(event.data);
+    } catch {
+      // BroadcastChannel may be unavailable in some environments
+    }
 
     // Ensure DB is ready, then read initial state from localStorage.
     // Without awaiting initDB() first, sessionQuestionDB.read() can race with the
@@ -53,8 +50,8 @@
         // DB init failure is shown by App.svelte; carry on so the ready signal still fires
       })
       .finally(() => {
-        // 1. localStorage — read current question after DB is ready
-        // (handles slow window loads on Windows Chrome where message arrives before listeners attach)
+        // Read current question after DB is ready.
+        // Handles slow window loads where the storage event arrives before listeners attach.
         try {
           const stored = localStorage.getItem("filipa-active-question");
           if (stored !== null) {
@@ -64,35 +61,31 @@
           // Ignore storage errors
         }
 
-        // Signal to interviewer that we are ready via all available channels.
+        // Signal to interviewer that we are ready.
         // localStorage storage event is the primary signal — reliable on Windows Chrome/Edge.
+        // window.opener.postMessage is intentionally omitted: it throws SecurityError on
+        // file:// protocol (Chromium blocks cross-window postMessage between null-origin frames).
         try {
           localStorage.setItem("filipa-candidate-ready", Date.now().toString());
         } catch {
           // Ignore
         }
         if (channel) {
-          channel.postMessage({ type: "candidate-window-opened" });
-        }
-        if (window.opener) {
-          window.opener.postMessage({ type: "candidate-window-opened" }, "*");
+          try { channel.postMessage({ type: "candidate-window-opened" }); } catch { /* ignore */ }
         }
       });
 
     return () => {
       window.removeEventListener("storage", onStorageEvent);
-      window.removeEventListener("message", onWindowMessage);
     };
   });
 
   onDestroy(() => {
     if (channel) {
-      channel.postMessage({ type: "candidate-window-closing" });
-      if (window.opener) {
-        window.opener.postMessage({ type: "candidate-window-closing" }, "*");
-      }
+      try { channel.postMessage({ type: "candidate-window-closing" }); } catch { /* ignore */ }
       channel.close();
     }
+    // window.opener.postMessage throws SecurityError on file:// — omitted intentionally
   });
 
   function increaseFontSize() {

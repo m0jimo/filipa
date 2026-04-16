@@ -603,7 +603,7 @@
     };
   }
 
-  let candidateWindow = $state<Window | null>(null);
+  let candidateWindow: Window | null = null;
   let candidateChannel: BroadcastChannel | null = null;
   let candidateWindowMessageCleanup: (() => void) | null = null;
   let scrollToQuestionId = $state<string | null>(null);
@@ -614,23 +614,25 @@
   // may fail when window.opener is null (Chromium security policy).
   function sendQuestionToCandidate(questionId: string | null) {
     // 1. localStorage — fires storage event cross-window, works on all browsers + file://
+    // This is the only reliable channel on Chromium with file:// protocol.
+    // window.postMessage() throws SecurityError when both windows have null origin (file://).
     try {
       localStorage.setItem("filipa-active-question", questionId ?? "");
     } catch {
       // Ignore (e.g. private browsing storage quota)
     }
-    // 2. BroadcastChannel — same browser session, same origin
+    // 2. BroadcastChannel — same browser session, same origin (works on http/https, not file://)
     if (candidateChannel) {
-      candidateChannel.postMessage({ type: "filipa-question-update", questionId });
-    }
-    // 3. postMessage — works when window reference is valid and opener is not null
-    if (candidateWindow && !candidateWindow.closed) {
       try {
-        candidateWindow.postMessage({ type: "filipa-question-update", questionId }, "*");
+        candidateChannel.postMessage({ type: "filipa-question-update", questionId });
       } catch {
-        // Ignore — stale cross-window reference
+        // Ignore — may fail on file:// in some browsers
       }
     }
+    // NOTE: window.postMessage to candidateWindow is intentionally omitted.
+    // On file:// protocol, Chromium blocks cross-window postMessage between null-origin frames
+    // with a SecurityError even when using "*" as the target origin.
+    // localStorage storage events are sufficient and reliable for this use case.
   }
 
   async function setActiveQuestion(index: number, shouldScroll = false) {
