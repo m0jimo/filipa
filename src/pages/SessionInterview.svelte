@@ -24,13 +24,12 @@
 
   // Combined add-questions modal
   let showAddQuestionsModal = $state(false);
-  let addQuestionsTab = $state<"catalog" | "sets">("catalog");
+  let addQuestionsTab = $state<"catalog" | "sets" | "new">("catalog");
   let catalogQuestions: Question[] = $state([]);
   let availableQuestionSets: QuestionSet[] = $state([]);
   let questionSetBrowserLoading = $state(false);
 
-  // Ad-hoc question creation
-  let showNewQuestionModal = $state(false);
+  // Ad-hoc question creation (inside the add-questions modal)
   let newQuestionFormData = $state({ question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" });
   let savingNewQuestion = $state(false);
 
@@ -189,8 +188,11 @@
     }
   }
 
-  async function openAddQuestionsModal(tab: "catalog" | "sets" = "catalog") {
+  async function openAddQuestionsModal(tab: "catalog" | "sets" | "new" = "catalog") {
     addQuestionsTab = tab;
+    if (tab === "new") {
+      newQuestionFormData = { question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" };
+    }
     showAddQuestionsModal = true;
     await Promise.all([loadQuestionCatalog(), loadQuestionSets()]);
   }
@@ -347,15 +349,6 @@
     }
   }
 
-  function openNewQuestionModal() {
-    newQuestionFormData = { question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" };
-    showNewQuestionModal = true;
-  }
-
-  function closeNewQuestionModal() {
-    showNewQuestionModal = false;
-  }
-
   async function handleNewQuestionSubmit(event: Event) {
     event.preventDefault();
     if (!newQuestionFormData.question.trim()) { alert("Please enter a question"); return; }
@@ -376,7 +369,7 @@
         updatedAt: now,
       };
       await addQuestionToSession(newQuestion, true);
-      closeNewQuestionModal();
+      closeAddQuestionsModal();
     } finally {
       savingNewQuestion = false;
     }
@@ -883,7 +876,6 @@
             </button>
             <button type="button" onclick={openNotesModal} class="secondary">📝 Notes</button>
             <button type="button" onclick={() => openAddQuestionsModal()} class="primary">+ Add Questions …</button>
-            <button type="button" onclick={openNewQuestionModal} class="primary">+ New Question</button>
           </div>
 
           {#if questions.length > 0}
@@ -979,6 +971,12 @@
       class:active={addQuestionsTab === "sets"}
       onclick={() => (addQuestionsTab = "sets")}
     >From Question Set</button>
+    <button
+      type="button"
+      class="tab-btn"
+      class:active={addQuestionsTab === "new"}
+      onclick={() => { addQuestionsTab = "new"; newQuestionFormData = { question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" }; }}
+    >New Question</button>
   </div>
 
   {#if addQuestionsTab === "catalog"}
@@ -988,7 +986,7 @@
       onAdd={addQuestionToSession}
       onClose={closeAddQuestionsModal}
     />
-  {:else}
+  {:else if addQuestionsTab === "sets"}
     {#if questionSetBrowserLoading}
       <p class="loading-text">Loading question sets...</p>
     {:else if availableQuestionSets.length === 0}
@@ -1018,89 +1016,86 @@
         {/each}
       </div>
     {/if}
-  {/if}
-</SessionModal>
-
-<!-- New Ad-Hoc Question Modal -->
-<SessionModal show={showNewQuestionModal} title="New Question" size="large" onClose={closeNewQuestionModal}>
-  <form onsubmit={handleNewQuestionSubmit} autocomplete="off" data-form-type="other">
-    <div class="form-group">
-      <MarkdownEditor
-        bind:value={newQuestionFormData.question}
-        id="newQuestionText"
-        name="new-question-text-content"
-        label="Question"
-        required={true}
-        placeholder="Enter the question text"
-        rows={3}
-      />
-    </div>
-
-    <div class="form-group">
-      <MarkdownEditor
-        bind:value={newQuestionFormData.expectedAnswer}
-        id="newExpectedAnswer"
-        name="new-question-expected-answer"
-        label="Expected Answer"
-        placeholder="Enter the expected answer (visible only to interviewer)"
-        rows={5}
-        helpText="This will be visible only to the interviewer during the interview"
-      />
-    </div>
-
-    <div class="form-row">
+  {:else}
+    <form onsubmit={handleNewQuestionSubmit} autocomplete="off" data-form-type="other">
       <div class="form-group">
-        <label for="newQuestionType">Question Type <span class="required">*</span></label>
-        <select
-          id="newQuestionType"
-          name="new-question-type"
-          bind:value={newQuestionFormData.questionType}
-          required
-          autocomplete="off"
-          data-lpignore="true"
-          data-form-type="other"
-        >
-          <option value={QuestionType.Text}>Text</option>
-          <option value={QuestionType.Rating}>Rating</option>
-        </select>
+        <MarkdownEditor
+          bind:value={newQuestionFormData.question}
+          id="newQuestionText"
+          name="new-question-text-content"
+          label="Question"
+          required={true}
+          placeholder="Enter the question text"
+          rows={3}
+        />
       </div>
 
       <div class="form-group">
-        <label for="newQuestionTags">Tags</label>
+        <MarkdownEditor
+          bind:value={newQuestionFormData.expectedAnswer}
+          id="newExpectedAnswer"
+          name="new-question-expected-answer"
+          label="Expected Answer"
+          placeholder="Enter the expected answer (visible only to interviewer)"
+          rows={5}
+          helpText="This will be visible only to the interviewer during the interview"
+        />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newQuestionType">Question Type <span class="required">*</span></label>
+          <select
+            id="newQuestionType"
+            name="new-question-type"
+            bind:value={newQuestionFormData.questionType}
+            required
+            autocomplete="off"
+            data-lpignore="true"
+            data-form-type="other"
+          >
+            <option value={QuestionType.Text}>Text</option>
+            <option value={QuestionType.Rating}>Rating</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="newQuestionTags">Tags</label>
+          <input
+            id="newQuestionTags"
+            name="new-question-tags"
+            type="text"
+            bind:value={newQuestionFormData.tags}
+            placeholder="javascript, react, frontend"
+            autocomplete="off"
+            data-lpignore="true"
+            data-form-type="other"
+          />
+          <small>Separate tags with commas</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="newQuestionDifficulty">Difficulty</label>
         <input
-          id="newQuestionTags"
-          name="new-question-tags"
+          id="newQuestionDifficulty"
+          name="new-question-difficulty-levels"
           type="text"
-          bind:value={newQuestionFormData.tags}
-          placeholder="javascript, react, frontend"
+          bind:value={newQuestionFormData.difficulty}
+          placeholder="1,2,3,4,5,6,7,8,9,10"
           autocomplete="off"
           data-lpignore="true"
           data-form-type="other"
         />
-        <small>Separate tags with commas</small>
+        <small>Comma-separated numbers (1-10) indicating which difficulty levels this question applies to</small>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="newQuestionDifficulty">Difficulty</label>
-      <input
-        id="newQuestionDifficulty"
-        name="new-question-difficulty-levels"
-        type="text"
-        bind:value={newQuestionFormData.difficulty}
-        placeholder="1,2,3,4,5,6,7,8,9,10"
-        autocomplete="off"
-        data-lpignore="true"
-        data-form-type="other"
-      />
-      <small>Comma-separated numbers (1-10) indicating which difficulty levels this question applies to</small>
-    </div>
-
-    <div class="modal-actions">
-      <button type="button" onclick={closeNewQuestionModal} class="secondary" disabled={savingNewQuestion}>Cancel</button>
-      <button type="submit" class="primary" disabled={savingNewQuestion}>{savingNewQuestion ? "Adding..." : "Add to Session"}</button>
-    </div>
-  </form>
+      <div class="modal-actions">
+        <button type="button" onclick={closeAddQuestionsModal} class="secondary" disabled={savingNewQuestion}>Cancel</button>
+        <button type="submit" class="primary" disabled={savingNewQuestion}>{savingNewQuestion ? "Adding..." : "Add to Session"}</button>
+      </div>
+    </form>
+  {/if}
 </SessionModal>
 
 <!-- Edit Question Modal -->
