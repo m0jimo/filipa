@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.4] — 2026-04-16
+
+### Fixed
+
+- resolve DB race conditions and file:// URL bug breaking candidate window
+
+### Other
+
+- redeploy GitHub Pages with v0.5.3 fix
+
+
 ## [0.5.3] — 2026-04-14
 
 _No changes recorded._
