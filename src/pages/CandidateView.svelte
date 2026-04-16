@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fly, fade } from "svelte/transition";
-  import { sessionQuestionDB } from "../lib/db";
+  import { initDB, sessionQuestionDB } from "../lib/db";
   import type { SessionQuestion } from "../lib/types";
   import { candidateThemeStore } from "../lib/candidateThemeStore";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
@@ -25,17 +25,6 @@
   onMount(() => {
     candidateThemeStore.initialize();
 
-    // 1. localStorage — read current question immediately in case we missed the push event
-    // (handles slow window loads on Windows Chrome where message arrives before listeners attach)
-    try {
-      const stored = localStorage.getItem("filipa-active-question");
-      if (stored !== null) {
-        handleQuestionUpdate({ type: "filipa-question-update", questionId: stored || null });
-      }
-    } catch {
-      // Ignore storage errors
-    }
-
     // 2. storage event — primary reliable channel on Windows Chrome/Edge with file:// protocol.
     // Fires cross-window whenever the interviewer writes to localStorage.
     const onStorageEvent = (event: StorageEvent) => {
@@ -56,17 +45,39 @@
     };
     window.addEventListener("message", onWindowMessage);
 
-    // Signal to interviewer that we are ready via all available channels.
-    // localStorage storage event is the primary signal — reliable on Windows Chrome/Edge.
-    try {
-      localStorage.setItem("filipa-candidate-ready", Date.now().toString());
-    } catch {
-      // Ignore
-    }
-    channel.postMessage({ type: "candidate-window-opened" });
-    if (window.opener) {
-      window.opener.postMessage({ type: "candidate-window-opened" }, "*");
-    }
+    // Ensure DB is ready, then read initial state from localStorage.
+    // Without awaiting initDB() first, sessionQuestionDB.read() can race with the
+    // DB open sequence and return undefined, leaving the screen blank.
+    initDB()
+      .catch(() => {
+        // DB init failure is shown by App.svelte; carry on so the ready signal still fires
+      })
+      .finally(() => {
+        // 1. localStorage — read current question after DB is ready
+        // (handles slow window loads on Windows Chrome where message arrives before listeners attach)
+        try {
+          const stored = localStorage.getItem("filipa-active-question");
+          if (stored !== null) {
+            handleQuestionUpdate({ type: "filipa-question-update", questionId: stored || null });
+          }
+        } catch {
+          // Ignore storage errors
+        }
+
+        // Signal to interviewer that we are ready via all available channels.
+        // localStorage storage event is the primary signal — reliable on Windows Chrome/Edge.
+        try {
+          localStorage.setItem("filipa-candidate-ready", Date.now().toString());
+        } catch {
+          // Ignore
+        }
+        if (channel) {
+          channel.postMessage({ type: "candidate-window-opened" });
+        }
+        if (window.opener) {
+          window.opener.postMessage({ type: "candidate-window-opened" }, "*");
+        }
+      });
 
     return () => {
       window.removeEventListener("storage", onStorageEvent);

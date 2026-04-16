@@ -36,6 +36,7 @@ export const STORES = {
 const BACKUP_DB_PREFIX = "FilipaDB_backup_v";
 
 let dbInstance: IDBDatabase | null = null;
+let dbInitPromise: Promise<IDBDatabase> | null = null;
 
 /**
  * Read the currently stored DB version without triggering an upgrade.
@@ -199,11 +200,18 @@ export async function pruneOldBackups(maxToKeep: number): Promise<void> {
 /**
  * Initialize the IndexDB database with all required object stores
  */
-export async function initDB(): Promise<IDBDatabase> {
+export function initDB(): Promise<IDBDatabase> {
   if (dbInstance) {
-    return dbInstance;
+    return Promise.resolve(dbInstance);
+  }
+  // Guard against concurrent initDB() calls before the first one resolves.
+  // Assign the promise before any await so every concurrent caller waits on the
+  // same in-flight open sequence instead of starting a second one.
+  if (dbInitPromise) {
+    return dbInitPromise;
   }
 
+  dbInitPromise = (async () => {
   // Check stored version before opening — if an upgrade is needed, snapshot first
   const storedVersion = await getStoredDBVersion();
   if (storedVersion > 0 && storedVersion < DB_VERSION) {
@@ -227,10 +235,11 @@ export async function initDB(): Promise<IDBDatabase> {
     }
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
+      dbInitPromise = null;
       const msg = request.error?.message ?? "";
       if (msg.includes("less than the existing version") || request.error?.name === "VersionError") {
         reject(new Error(`DB_VERSION_CONFLICT: ${msg}`));
@@ -241,6 +250,7 @@ export async function initDB(): Promise<IDBDatabase> {
 
     request.onsuccess = () => {
       dbInstance = request.result;
+      dbInitPromise = null;
       resolve(dbInstance);
     };
 
@@ -360,6 +370,9 @@ export async function initDB(): Promise<IDBDatabase> {
       }
     };
   });
+  })();
+
+  return dbInitPromise;
 }
 
 /**

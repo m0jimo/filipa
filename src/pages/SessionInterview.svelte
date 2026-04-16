@@ -202,7 +202,10 @@
   // Ensures the candidate window exists at the fixed candidate view URL.
   // Returns true if the window was already open, false if it was just opened.
   function ensureCandidateWindow(): boolean {
-    const url = `${window.location.origin}${window.location.pathname}#/candidate-view`;
+    // window.location.origin returns "null" on file:// protocol in all Chromium browsers.
+    // Use href up to the hash instead so the URL works on both http and file://.
+    const base = window.location.href.split("#")[0];
+    const url = `${base}#/candidate-view`;
     const shared = getSharedCandidateWindow();
     if (shared && !shared.closed) {
       candidateWindow = shared;
