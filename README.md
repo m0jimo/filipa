@@ -135,3 +135,11 @@ After running `npm run build`, you can:
 ## License
 
 MIT (c) [Ota Vaclavik](https://github.com/m0jimo) — see [LICENSE](LICENSE) for details.
+
+---
+
+*Dedicated to Filipa, after whom this application is named.*
+
+<div align="center">
+  <img src="docs/Filipa_sketch.jpeg" alt="Filipa the guinea pig" width="300" />
+</div>
