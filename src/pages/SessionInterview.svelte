@@ -740,6 +740,11 @@
       await sessionQuestionDB.update(cleanQuestion);
       // Don't reload - just trigger reactivity
       questions = questions;
+      // Notify candidate window: hide rating for this question and re-fetch from DB
+      try {
+        localStorage.setItem("filipa-rating-visibility", JSON.stringify({ questionId: question.id, show: false }));
+      } catch { /* ignore */ }
+      sendQuestionToCandidate(`${question.id}:${Date.now()}`);
     } catch (err) {
       alert("Failed to reset question: " + (err instanceof Error ? err.message : "Unknown error"));
     }
