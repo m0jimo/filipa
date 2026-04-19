@@ -15,7 +15,7 @@ offline/regulated environments with dual-view interface for interviewer and cand
 - **Hash-based routing** (`svelte-spa-router`) instead of standard routing to work with `file://` protocol
 - **Relative paths**: `vite.config.ts` uses `base: "./"` so the built app can run from any location
 - Must work without internet connection after build
-- Build output in `dist/` can be zipped and shared or opened directly in browser
+- Build output in `dist/` can be zipped and shared or opened directly in browser via `dist/index.html`
 
 ### Technology Stack
 
@@ -150,3 +150,4 @@ localStorage.setItem("filipa-active-question", `${questionId}:${Date.now()}`);
 
 - Deployed to static hosting - GitHub Pages
 - Zipped and shared for offline usage in regulated environments
+- **Offline entry point**: users open `dist/index.html` directly in the browser (`file://` protocol) — no server needed
