@@ -4,6 +4,7 @@
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import QuestionPreviewModal from "../components/QuestionPreviewModal.svelte";
+  import IconEye from "../components/IconEye.svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   let previewQuestion = $state<Question | null>(null);
@@ -163,11 +164,11 @@
           <div class="card-actions">
             <button
               type="button"
-              class="action-btn preview"
+              class="action-btn preview standard"
               onclick={() => (previewQuestion = question)}
               title="Preview full question"
             >
-              👁 Preview
+              <IconEye /> Preview
             </button>
             {#if alreadyIn}
               <button type="button" class="action-btn add" disabled>Already in session</button>
@@ -390,12 +391,12 @@
     padding-top: 1rem;
     border-top: 1px solid #eee;
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
   }
 
   .action-btn {
-    width: 100%;
     padding: 0.75rem 1rem;
     border: none;
     border-radius: 4px;
@@ -406,6 +407,7 @@
   }
 
   .action-btn.add {
+    flex: 1;
     background: #4caf50;
     color: white;
   }
@@ -600,9 +602,17 @@
     border-radius: 4px;
     cursor: pointer;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     transition:
       background 0.15s,
       border-color 0.15s;
+  }
+
+  .action-btn.preview.standard {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
   }
 
   .action-btn.preview:hover {

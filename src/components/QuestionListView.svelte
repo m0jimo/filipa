@@ -1,6 +1,7 @@
 <script lang="ts">
   import { QuestionType, type Question } from "../lib/types";
   import MarkdownPreview from "./MarkdownPreview.svelte";
+  import IconEye from "./IconEye.svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   type SortColumn = "type" | "difficulty" | "createdAt";
@@ -129,7 +130,7 @@
                 class="action-btn preview"
                 title="Preview full question"
               >
-                👁 Preview
+                <IconEye />
               </button>
             {/if}
             <button
@@ -154,7 +155,7 @@
               class="action-btn preview"
               title="Preview full question"
             >
-              Preview
+              <IconEye /> Preview
             </button>
           </div>
         {/if}
@@ -273,6 +274,13 @@
             {/if}
             {#if showActions && onEdit}
               <td class="col-actions">
+                {#if onPreview}
+                  <button
+                    onclick={(e) => { e.stopPropagation(); onPreview(question); }}
+                    class="icon-btn preview-icon"
+                    title="Preview question"
+                  ><IconEye size={15} /></button>
+                {/if}
                 <button
                   onclick={(e) => onEdit!(question, e)}
                   class="icon-btn edit-icon"
@@ -282,6 +290,13 @@
             {/if}
             {#if showStatusBadge}
               <td class="col-status">
+                {#if onPreview}
+                  <button
+                    onclick={(e) => { e.stopPropagation(); onPreview(question); }}
+                    class="icon-btn preview-icon"
+                    title="Preview question"
+                  ><IconEye size={15} /></button>
+                {/if}
                 {#if alreadyIn}
                   <span class="already-badge">In set</span>
                 {/if}
@@ -550,9 +565,12 @@
     border: 1px solid var(--color-border);
     color: var(--color-primary);
     font-size: 0.85rem;
-    padding: 0.3rem 0.75rem;
+    padding: 0.3rem 0.5rem;
     border-radius: 4px;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     transition:
       background 0.15s,
       border-color 0.15s;
@@ -645,8 +663,9 @@
   }
 
   .col-status {
-    width: 70px;
+    width: 100px;
     text-align: right;
+    white-space: nowrap;
   }
 
   .no-value {

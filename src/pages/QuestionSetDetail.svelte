@@ -12,6 +12,7 @@
   import QuestionPreviewModal from "../components/QuestionPreviewModal.svelte";
   import {type QuestionViewMode, userSettings} from "../lib/userSettings";
   import ReorderableTable from "../components/ReorderableTable.svelte";
+  import IconEye from "../components/IconEye.svelte";
 
   let {params}: { params: { setId: string } } = $props();
 
@@ -309,7 +310,7 @@
                   onclick={() => (previewQuestion = question)}
                   class="action-btn preview"
                   title="Preview question"
-                >👁 Preview</button>
+                ><IconEye /> Preview</button>
                 <button
                   onclick={() => (removeConfirmId = question.id)}
                   class="action-btn delete-narrow"
@@ -358,7 +359,7 @@
             <button
               onclick={(e) => { e.stopPropagation(); previewQuestion = question; }}
               class="icon-btn"
-              title="Preview question">👁
+              title="Preview question"><IconEye size={15} />
             </button>
             <button
               onclick={(e) => { e.stopPropagation(); removeConfirmId = question.id; }}
@@ -728,6 +729,9 @@
     padding: 0.3rem 0.75rem;
     border-radius: 4px;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     transition:
       background 0.15s,
       border-color 0.15s;

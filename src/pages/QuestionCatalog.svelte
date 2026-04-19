@@ -12,8 +12,11 @@
   import MarkdownEditor from "../components/MarkdownEditor.svelte";
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
   import QuestionListView from "../components/QuestionListView.svelte";
+  import QuestionPreviewModal from "../components/QuestionPreviewModal.svelte";
   import { userSettings, type QuestionViewMode, type EditorViewMode } from "../lib/userSettings";
   import { SvelteSet } from "svelte/reactivity";
+
+  let previewQuestion = $state<Question | null>(null);
 
   let questions: Question[] = $state([]);
   let filteredQuestions: Question[] = $state([]);
@@ -889,6 +892,7 @@
         onToggleSort={toggleSort}
         onEdit={openEditModal}
         onDelete={confirmDelete}
+        onPreview={(q) => (previewQuestion = q)}
         showSorting={true}
         showActions={true}
         showCreatedDate={true}
@@ -897,6 +901,9 @@
     {/if}
   {/if}
 </div>
+
+<!-- Question Preview Modal -->
+<QuestionPreviewModal question={previewQuestion} onClose={() => (previewQuestion = null)} />
 
 <!-- Question Modal -->
 <SessionModal
