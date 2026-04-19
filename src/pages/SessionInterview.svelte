@@ -13,6 +13,7 @@
   import SessionModal from "../lib/SessionModal.svelte";
   import CompactDialog from "../lib/CompactDialog.svelte";
   import { backupNudge } from "../lib/backupNudge";
+  import Tabs from "../components/Tabs.svelte";
 
   let {params = {sessionId: ""}}: { params: { sessionId: string } } = $props();
 
@@ -958,26 +959,19 @@
 
 <!-- Add Questions Modal (tabbed) -->
 <SessionModal show={showAddQuestionsModal} title="Add Questions" size="large" onClose={closeAddQuestionsModal}>
-  <div class="tab-bar">
-    <button
-      type="button"
-      class="tab-btn"
-      class:active={addQuestionsTab === "catalog"}
-      onclick={() => (addQuestionsTab = "catalog")}
-    >From Catalog</button>
-    <button
-      type="button"
-      class="tab-btn"
-      class:active={addQuestionsTab === "sets"}
-      onclick={() => (addQuestionsTab = "sets")}
-    >From Question Set</button>
-    <button
-      type="button"
-      class="tab-btn"
-      class:active={addQuestionsTab === "new"}
-      onclick={() => { addQuestionsTab = "new"; newQuestionFormData = { question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" }; }}
-    >New Question</button>
-  </div>
+  <Tabs
+    tabs={[
+      { id: "catalog", label: "From Catalog" },
+      { id: "sets", label: "From Question Set" },
+      { id: "new", label: "New Question" },
+    ]}
+    bind:activeTab={addQuestionsTab}
+    onTabChange={(id) => {
+      if (id === "new") {
+        newQuestionFormData = { question: "", expectedAnswer: "", tags: "", questionType: QuestionType.Text, difficulty: "1,2,3,4,5,6,7,8,9,10" };
+      }
+    }}
+  />
 
   {#if addQuestionsTab === "catalog"}
     <QuestionBrowserModal
@@ -1578,45 +1572,4 @@
     margin-left: 0.25rem;
   }
 
-  .tab-bar {
-    display: flex;
-    gap: 0;
-    border-bottom: 2px solid var(--color-border);
-    margin-bottom: 1.25rem;
-  }
-
-  .tab-btn {
-    padding: 0.6rem 1.25rem;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    transition: color 0.15s, border-color 0.15s;
-  }
-
-  .tab-btn:hover {
-    color: var(--color-primary);
-  }
-
-  .tab-btn.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-  }
-
-  :global([data-theme="dark"]) .tab-btn {
-    color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .tab-btn:hover,
-  :global([data-theme="dark"]) .tab-btn.active {
-    color: var(--color-primary-dark);
-  }
-
-  :global([data-theme="dark"]) .tab-btn.active {
-    border-bottom-color: var(--color-primary-dark);
-  }
 </style>
