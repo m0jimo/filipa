@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] — 2026-04-19
+
+### Added
+
+- smooth question transitions in Candidate Window
+- show candidate self-rating on Candidate Window for Rating questions
+- add per-card Add to Set button and restrict selection to checkbox only
+- add consistent eye icon preview button across question views
+- add question preview modal across all question card views
+- replace inline tab bar with reusable Tabs component
+- move new question creation into third tab of Add Questions dialog
+
+### Fixed
+
+- reset rating visibility in candidate window when question is reset
+- replace irregular browser focus ring with consistent rounded outline on buttons
+- capitalize app title to match consistent "Filipa" branding
+- pin action buttons to bottom of Add Questions to Set dialog
+- pin Close button to bottom of Question Preview dialog
+- pin card action buttons to bottom of set question cards
+
+### Changed
+
+- replace inline tabs in SessionQuestionItem with reusable Tabs component
+
+### Documentation
+
+- clarify dist/index.html as the offline entry point
+- document cross-window communication requirements for file:// builds
+- dedicate app to Filipa with sketch image in README
+
+### Other
+
+- Move new question creation into third tab of Add Questions dialog
+
+
 ## [0.5.5] — 2026-04-16
 
 ### Fixed
