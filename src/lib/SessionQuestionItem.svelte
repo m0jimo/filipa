@@ -27,6 +27,7 @@
     onToggleSkip,
     isSelected = false,
     onSelect,
+    onRatingVisibilityChange,
   }: {
     question: SessionQuestion;
     index: number;
@@ -48,7 +49,10 @@
     onToggleSkip?: (questionId: string) => void;
     isSelected?: boolean;
     onSelect?: () => void;
+    onRatingVisibilityChange?: (questionId: string, show: boolean) => void;
   } = $props();
+
+  let showCandidateRating = $state(true);
 
   const isActive = $derived(question.id === activeQuestionId.value);
   const isExpanded = $derived(expandedQuestionId === question.id);
@@ -202,6 +206,19 @@
           title={isSkipped ? "Include in Prev/Next navigation" : "Exclude from Prev/Next navigation"}
         >
           ⊘
+        </button>
+      {/if}
+      {#if question.questionObj.questionType === QuestionType.Rating}
+        <button
+          type="button"
+          onclick={() => {
+            showCandidateRating = !showCandidateRating;
+            onRatingVisibilityChange?.(question.id, showCandidateRating);
+          }}
+          class="action-btn-header rating-visibility"
+          title={showCandidateRating ? "Hide rating from candidate" : "Show rating to candidate"}
+        >
+          {showCandidateRating ? "▣" : "□"}
         </button>
       {/if}
       <button
@@ -493,6 +510,17 @@
 
   .action-btn-header.skip-toggle.skipped:hover {
     background: #fff0e0;
+  }
+
+  .action-btn-header.rating-visibility {
+    background: white;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .action-btn-header.rating-visibility:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-text-secondary);
   }
 
   .action-btn-header.present {
@@ -914,6 +942,17 @@
 
   :global([data-theme="dark"]) .question-item.skipped {
     background-color: #1e1e1e;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.rating-visibility {
+    background: #2a2a2a;
+    color: #aaaaaa;
+    border-color: #444444;
+  }
+
+  :global([data-theme="dark"]) .action-btn-header.rating-visibility:hover {
+    background: #3a3a3a;
+    border-color: #aaaaaa;
   }
 
   :global([data-theme="dark"]) .action-btn-header.present.answered {

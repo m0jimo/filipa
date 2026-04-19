@@ -4,10 +4,14 @@
   import { initDB, sessionQuestionDB } from "../lib/db";
   import type { SessionQuestion } from "../lib/types";
   import { candidateThemeStore } from "../lib/candidateThemeStore";
+  import { QuestionType } from "../lib/types";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
+  import RatingSlider from "../components/RatingSlider.svelte";
 
   let currentQuestion: SessionQuestion | null = $state(null);
   let fontSize = $state(26);
+  // Per-question visibility map: questionId → boolean (true = show rating, default true)
+  let ratingVisibility: Record<string, boolean> = $state({});
 
   let channel: BroadcastChannel | null = null;
 
@@ -18,8 +22,18 @@
       currentQuestion = null;
       return;
     }
-    const q = await sessionQuestionDB.read(questionId);
+    // questionId may carry a ":timestamp" suffix when used as a re-trigger signal
+    const cleanId = questionId.split(":")[0];
+    const q = await sessionQuestionDB.read(cleanId);
     currentQuestion = q;
+    // Re-read visibility state whenever the question updates
+    try {
+      const vis = localStorage.getItem("filipa-rating-visibility");
+      if (vis) {
+        const { questionId: visId, show } = JSON.parse(vis) as { questionId: string; show: boolean };
+        ratingVisibility = { ...ratingVisibility, [visId]: show };
+      }
+    } catch { /* ignore */ }
   }
 
   onMount(() => {
@@ -125,18 +139,26 @@
   <main>
     <div class="content-container">
       {#if currentQuestion}
-        {#key currentQuestion.id}
-          <div
-            class="question-display"
-            style="font-size: {fontSize}px"
-            in:fly={{ x: 1000, duration: 500, delay: 100 }}
-            out:fly={{ x: -1000, duration: 500 }}
-          >
-            <div class="question-text">
-              <MarkdownPreview md={currentQuestion.questionObj.question} />
+        <div class="question-with-rating">
+          {#key currentQuestion.id}
+            <div
+              class="question-display"
+              style="font-size: {fontSize}px"
+              in:fly={{ x: 1000, duration: 500, delay: 100 }}
+              out:fly={{ x: -1000, duration: 500 }}
+            >
+              <div class="question-text">
+                <MarkdownPreview md={currentQuestion.questionObj.question} />
+              </div>
             </div>
-          </div>
-        {/key}
+          {/key}
+          {#if currentQuestion.questionObj.questionType === QuestionType.Rating
+               && ratingVisibility[currentQuestion.id] !== false}
+            <div class="candidate-rating-display">
+              <RatingSlider value={currentQuestion.questionRating} readonly={true} />
+            </div>
+          {/if}
+        </div>
       {:else}
         <div class="waiting-state" in:fade={{ duration: 300 }}>
           <div class="waiting-icon">👋</div>
@@ -257,6 +279,13 @@
     justify-content: center;
   }
 
+  .question-with-rating {
+    width: 100%;
+    max-width: 1600px;
+    display: flex;
+    flex-direction: column;
+  }
+
   .question-display {
     width: 100%;
     max-width: 1600px;
@@ -296,6 +325,17 @@
 
   .question-text :global(.markdown-preview p:last-child) {
     margin-bottom: 0;
+  }
+
+  .candidate-rating-display {
+    margin-top: 1rem;
+    padding: 1rem 2rem;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    font-size: 1rem;
+    max-width: 480px;
+    opacity: 0.85;
   }
 
   .waiting-state {
@@ -373,6 +413,11 @@
 
   :global([data-theme="dark"]) .font-size-label {
     color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .candidate-rating-display {
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border-dark);
   }
 
   :global([data-theme="dark"]) .question-text {

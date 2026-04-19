@@ -3,10 +3,12 @@
     value = $bindable(0),
     onchange,
     label = "Rating",
+    readonly = false,
   }: {
     value?: number;
     onchange?: (value: number) => void;
     label?: string;
+    readonly?: boolean;
   } = $props();
 
   const ratings = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -32,7 +34,7 @@
 <div class="rating-slider">
   <div class="rating-header">
     <span class="rating-label">{label}</span>
-    {#if value > 0}
+    {#if value > 0 && !readonly}
       <button type="button" class="clear-btn" onclick={clear} title="Clear rating">
         ✕
       </button>
@@ -47,11 +49,13 @@
           class="rating-dot"
           class:selected={value === n}
           class:filled={value >= n && value > 0}
+          class:readonly
           style="--dot-color: {getColor(n)}"
-          onclick={() => select(n)}
+          onclick={readonly ? undefined : () => select(n)}
           title="{n}/10"
           aria-label="Rate {n} out of 10"
           aria-pressed={value === n}
+          disabled={readonly}
         >
           <span class="dot-number">{n}</span>
         </button>
@@ -129,6 +133,11 @@
     transition: all 0.15s;
     padding: 0;
     min-width: 0;
+  }
+
+  .rating-dot.readonly {
+    cursor: default;
+    pointer-events: none;
   }
 
   .rating-dot:hover {

@@ -702,6 +702,13 @@
         await sessionQuestionDB.update(cleanQuestion);
         // Don't reload - the state is already updated via binding
         questions = questions;
+        // Push live rating update to candidate window for active Rating questions
+        if (question.questionObj.questionType === QuestionType.Rating && question.id === session?.currentQuestionId) {
+          // Re-send active question signal to trigger re-fetch in candidate window.
+          // Uses the already-proven filipa-active-question channel (reliable on file://).
+          // Append timestamp so the value differs from the last write and the storage event fires.
+          try { localStorage.setItem("filipa-active-question", `${question.id}:${Date.now()}`); } catch { /* ignore */ }
+        }
         // Check if ≥80% of questions are answered — nudge backup if so
         if (questions.length > 0) {
           const answered = questions.filter((q) => q.answer.trim() !== "" || q.questionRating > 0).length;
@@ -948,6 +955,13 @@
                 onToggleSkip={toggleSkip}
                 isSelected={selectedQuestionIndex === index}
                 onSelect={() => (selectedQuestionIndex = index)}
+                onRatingVisibilityChange={(questionId, show) => {
+                  // Store visibility state and re-trigger the proven active-question channel.
+                  try {
+                    localStorage.setItem("filipa-rating-visibility", JSON.stringify({ questionId, show }));
+                    localStorage.setItem("filipa-active-question", `${questionId}:${Date.now()}`);
+                  } catch { /* ignore */ }
+                }}
               />
             {/each}
           </div>
