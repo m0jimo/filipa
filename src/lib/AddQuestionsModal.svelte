@@ -130,6 +130,16 @@
     }
   };
 
+  const handleAddSingle = async (question: Question) => {
+    if (isAlreadyInSet(question.id)) return;
+    try {
+      confirming = true;
+      await onConfirm([question.id]);
+    } finally {
+      confirming = false;
+    }
+  };
+
 
   const eligibleCount = $derived(filteredQuestions.filter((q) => !isAlreadyInSet(q.id)).length);
   const allEligibleSelected = $derived(
@@ -191,6 +201,7 @@
           showSorting={true}
           clickableRows={true}
           onPreview={(q) => (previewQuestion = q)}
+          onAddToSet={handleAddSingle}
         />
       {/if}
 

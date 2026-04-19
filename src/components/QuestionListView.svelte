@@ -17,6 +17,7 @@
     onEdit,
     onDelete,
     onPreview,
+    onAddToSet,
     alreadyInSetIds = [],
     showSorting = false,
     showActions = false,
@@ -37,6 +38,7 @@
     onEdit?: (question: Question, event: MouseEvent) => void;
     onDelete?: (questionId: string, event: MouseEvent) => void;
     onPreview?: (question: Question) => void;
+    onAddToSet?: (question: Question) => void;
     alreadyInSetIds?: string[];
     showSorting?: boolean;
     showActions?: boolean;
@@ -61,13 +63,11 @@
     {#each questions as question (question.id)}
       {@const alreadyIn = isAlreadyInSet(question.id)}
       {@const selected = selectedSet.has(question.id)}
-      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <div
         class="question-card"
         class:picker-card={clickableRows}
         class:selected={selected && !alreadyIn}
         class:already-in-set={alreadyIn}
-        onclick={clickableRows ? () => onToggleSelect(question.id) : undefined}
       >
         <div class="question-header">
           <span class="question-type" class:rating={question.questionType === QuestionType.Rating}>
@@ -148,15 +148,30 @@
               Edit
             </button>
           </div>
-        {:else if onPreview}
+        {:else if onPreview || onAddToSet}
           <div class="card-actions">
-            <button
-              onclick={(e) => { e.stopPropagation(); onPreview(question); }}
-              class="action-btn preview"
-              title="Preview full question"
-            >
-              <IconEye /> Preview
-            </button>
+            {#if onPreview}
+              <button
+                onclick={(e) => { e.stopPropagation(); onPreview(question); }}
+                class="action-btn preview"
+                title="Preview full question"
+              >
+                <IconEye /> Preview
+              </button>
+            {/if}
+            {#if onAddToSet}
+              {#if alreadyIn}
+                <span class="already-badge card-already-badge">Already in set</span>
+              {:else}
+                <button
+                  type="button"
+                  onclick={(e) => { e.stopPropagation(); onAddToSet(question); }}
+                  class="action-btn add-to-set"
+                >
+                  + Add to Set
+                </button>
+              {/if}
+            {/if}
           </div>
         {/if}
       </div>
@@ -237,7 +252,6 @@
           <tr
             class:selected={selected && !alreadyIn}
             class:already-in-set={alreadyIn}
-            onclick={clickableRows ? () => onToggleSelect(question.id) : undefined}
           >
             <td class="col-check">
               <input
@@ -299,6 +313,13 @@
                 {/if}
                 {#if alreadyIn}
                   <span class="already-badge">In set</span>
+                {:else if onAddToSet}
+                  <button
+                    type="button"
+                    onclick={(e) => { e.stopPropagation(); onAddToSet(question); }}
+                    class="icon-btn add-icon"
+                    title="Add to set"
+                  >+ Add</button>
                 {/if}
               </td>
             {/if}
@@ -327,8 +348,7 @@
 
   /* Picker card overrides */
   .picker-card {
-    cursor: pointer;
-    user-select: none;
+    cursor: default;
     height: auto;
     min-height: 180px;
     display: flex;
@@ -342,10 +362,6 @@
     margin-top: auto;
   }
 
-  .picker-card:hover:not(.already-in-set) {
-    border-color: var(--color-primary);
-    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
-  }
 
   /* Catalog card: fixed height, hover */
   .question-card:not(.picker-card) {
@@ -581,6 +597,28 @@
     border-color: var(--color-primary);
   }
 
+  .action-btn.add-to-set {
+    flex: 1;
+    padding: 0.4rem 0.75rem;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+
+  .action-btn.add-to-set:hover {
+    background: #45a049;
+  }
+
+  .card-already-badge {
+    flex: 1;
+    text-align: center;
+  }
+
   /* Icon buttons (table) */
   .icon-btn {
     background: none;
@@ -599,6 +637,19 @@
   .icon-btn:hover {
     opacity: 1;
     background: #f0f0f0;
+  }
+
+  .icon-btn.add-icon {
+    opacity: 1;
+    background: #4caf50;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .icon-btn.add-icon:hover {
+    background: #45a049;
   }
 
   /* Table wrapper */
@@ -716,6 +767,22 @@
 
   :global([data-theme="dark"]) .icon-btn:hover {
     background: #2a2a2a;
+  }
+
+  :global([data-theme="dark"]) .icon-btn.add-icon {
+    background: #2e7d32;
+  }
+
+  :global([data-theme="dark"]) .icon-btn.add-icon:hover {
+    background: #388e3c;
+  }
+
+  :global([data-theme="dark"]) .action-btn.add-to-set {
+    background: #2e7d32;
+  }
+
+  :global([data-theme="dark"]) .action-btn.add-to-set:hover {
+    background: #388e3c;
   }
 
   :global([data-theme="dark"]) .col-question {
