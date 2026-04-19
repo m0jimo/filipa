@@ -109,6 +109,43 @@ call.
 
 Existing helpers: `cleanSessionQuestion()`, `cleanSession()`, `cleanQuestionObj()` in `SessionInterview.svelte`.
 
+## Cross-Window Communication (Interviewer ↔ Candidate)
+
+The interviewer (`SessionInterview.svelte`) and candidate (`CandidateView.svelte`) run in separate browser windows. Communication must work on `file://` (built `index.html` opened directly), where most cross-window APIs are restricted.
+
+### The only reliable channel on `file://`: `localStorage` + `storage` event
+
+| Channel                       | `file://` | `http://` | Notes                                        |
+|-------------------------------|-----------|-----------|----------------------------------------------|
+| `localStorage` storage event  | ✅        | ✅        | Primary channel — always use this            |
+| `BroadcastChannel`            | ❌        | ✅        | Null-origin scoping breaks it on `file://`   |
+| `window.postMessage`          | ❌        | ✅        | SecurityError on `file://` (null origin)     |
+
+**Rule: all cross-window signals must go through `localStorage.setItem()`.** `BroadcastChannel` is wired up as a secondary channel for `http://` only and must never be the sole signal path.
+
+### localStorage keys in use
+
+| Key                        | Written by           | Read by                             | Value                                           |
+|----------------------------|----------------------|-------------------------------------|-------------------------------------------------|
+| `filipa-active-question`   | Interviewer          | Candidate                           | `questionId` or `questionId:timestamp` or `""` |
+| `filipa-candidate-ready`   | Candidate (on mount) | Interviewer                         | `Date.now()` timestamp                          |
+| `filipa-rating-visibility` | Interviewer          | Candidate (on each question update) | JSON `{ questionId, show }`                     |
+
+### The timestamp trick
+
+`localStorage` storage events **only fire when the value changes**. If the same `questionId` needs to be re-sent (e.g. to push a rating update for the already-active question), append `:Date.now()` to make the value unique:
+```ts
+localStorage.setItem("filipa-active-question", `${questionId}:${Date.now()}`);
+```
+`CandidateView` strips the suffix with `.split(":")[0]` before using the ID.
+
+### Adding new cross-window signals
+
+1. **Always piggyback on `filipa-active-question`** for signals that relate to the current question — re-set it with a timestamp to force the storage event.
+2. **Store side-channel state** (like visibility flags) in a separate key and read it inside `handleQuestionUpdate` — not in a separate storage listener.
+3. **Never add a new localStorage key as the sole trigger** — it may not fire reliably on `file://` if it wasn't set before in that session.
+4. **Never use `BroadcastChannel` or `postMessage` as the primary signal** — only as an optional enhancement for `http://`.
+
 ## Deployment Notes
 
 - Deployed to static hosting - GitHub Pages
