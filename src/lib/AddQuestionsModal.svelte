@@ -4,6 +4,7 @@
   import SessionModal from "./SessionModal.svelte";
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
   import QuestionListView from "../components/QuestionListView.svelte";
+  import QuestionPreviewModal from "../components/QuestionPreviewModal.svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   let {
@@ -32,6 +33,7 @@
 
   let newlySelected = $state(new SvelteSet<string>());
   let confirming = $state(false);
+  let previewQuestion = $state<Question | null>(null);
 
   const selectedCount = $derived(newlySelected.size);
 
@@ -188,6 +190,7 @@
           showExpectedAnswer={true}
           showSorting={true}
           clickableRows={true}
+          onPreview={(q) => (previewQuestion = q)}
         />
       {/if}
 
@@ -211,6 +214,8 @@
     {/if}
   </div>
 </SessionModal>
+
+<QuestionPreviewModal question={previewQuestion} onClose={() => (previewQuestion = null)} />
 
 <style>
   .select-all-label {

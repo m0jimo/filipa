@@ -3,7 +3,10 @@
   import { QuestionType } from "./types";
   import QuestionFilterPanel from "../components/QuestionFilterPanel.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
+  import QuestionPreviewModal from "../components/QuestionPreviewModal.svelte";
   import { SvelteSet } from "svelte/reactivity";
+
+  let previewQuestion = $state<Question | null>(null);
 
   let {
     questions,
@@ -158,6 +161,14 @@
           {/if}
 
           <div class="card-actions">
+            <button
+              type="button"
+              class="action-btn preview"
+              onclick={() => (previewQuestion = question)}
+              title="Preview full question"
+            >
+              👁 Preview
+            </button>
             {#if alreadyIn}
               <button type="button" class="action-btn add" disabled>Already in session</button>
             {:else}
@@ -246,6 +257,8 @@
       </div>
     {/if}
   {/if}
+
+<QuestionPreviewModal question={previewQuestion} onClose={() => (previewQuestion = null)} />
 
 <style>
   /* Card grid */
@@ -376,6 +389,9 @@
     margin-top: auto;
     padding-top: 1rem;
     border-top: 1px solid #eee;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
   }
 
   .action-btn {
@@ -573,5 +589,24 @@
 
   :global([data-theme="dark"]) .bulk-add-btn:hover {
     background: #388e3c !important;
+  }
+
+  .action-btn.preview {
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .action-btn.preview:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-primary);
   }
 </style>

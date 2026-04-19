@@ -15,6 +15,7 @@
     onToggleSort,
     onEdit,
     onDelete,
+    onPreview,
     alreadyInSetIds = [],
     showSorting = false,
     showActions = false,
@@ -34,6 +35,7 @@
     onToggleSort?: (col: SortColumn) => void;
     onEdit?: (question: Question, event: MouseEvent) => void;
     onDelete?: (questionId: string, event: MouseEvent) => void;
+    onPreview?: (question: Question) => void;
     alreadyInSetIds?: string[];
     showSorting?: boolean;
     showActions?: boolean;
@@ -121,6 +123,15 @@
 
         {#if showActions && onEdit && onDelete}
           <div class="card-actions">
+            {#if onPreview}
+              <button
+                onclick={(e) => { e.stopPropagation(); onPreview(question); }}
+                class="action-btn preview"
+                title="Preview full question"
+              >
+                👁 Preview
+              </button>
+            {/if}
             <button
               onclick={(e) => onDelete!(question.id, e)}
               class="action-btn delete-narrow"
@@ -134,6 +145,16 @@
               title="Edit question"
             >
               Edit
+            </button>
+          </div>
+        {:else if onPreview}
+          <div class="card-actions">
+            <button
+              onclick={(e) => { e.stopPropagation(); onPreview(question); }}
+              class="action-btn preview"
+              title="Preview full question"
+            >
+              Preview
             </button>
           </div>
         {/if}
@@ -294,10 +315,16 @@
     cursor: pointer;
     user-select: none;
     height: auto;
-    min-height: unset;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
     transition:
       border-color 0.15s,
       box-shadow 0.15s;
+  }
+
+  .picker-card .card-actions {
+    margin-top: auto;
   }
 
   .picker-card:hover:not(.already-in-set) {
@@ -513,6 +540,27 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #eee;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .action-btn.preview {
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .action-btn.preview:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-primary);
   }
 
   /* Icon buttons (table) */

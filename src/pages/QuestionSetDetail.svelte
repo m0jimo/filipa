@@ -9,6 +9,7 @@
   import SessionModal from "../lib/SessionModal.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import AddQuestionsModal from "../lib/AddQuestionsModal.svelte";
+  import QuestionPreviewModal from "../components/QuestionPreviewModal.svelte";
   import {type QuestionViewMode, userSettings} from "../lib/userSettings";
   import ReorderableTable from "../components/ReorderableTable.svelte";
 
@@ -31,6 +32,7 @@
   let removeConfirmId: string | null = $state(null);
 
   let showAddModal = $state(false);
+  let previewQuestion = $state<Question | null>(null);
 
   onMount(() => {
     loadSetAndQuestions();
@@ -304,6 +306,11 @@
               {/if}
               <div class="card-actions">
                 <button
+                  onclick={() => (previewQuestion = question)}
+                  class="action-btn preview"
+                  title="Preview question"
+                >👁 Preview</button>
+                <button
                   onclick={() => (removeConfirmId = question.id)}
                   class="action-btn delete-narrow"
                   title="Remove from set">🗑️ Remove
@@ -348,6 +355,11 @@
           </td>
           <td class="col-question">{truncateWords(question.question, 50)}</td>
           <td class="col-actions">
+            <button
+              onclick={(e) => { e.stopPropagation(); previewQuestion = question; }}
+              class="icon-btn"
+              title="Preview question">👁
+            </button>
             <button
               onclick={(e) => { e.stopPropagation(); removeConfirmId = question.id; }}
               class="icon-btn"
@@ -458,6 +470,8 @@
     >
   </div>
 </SessionModal>
+
+<QuestionPreviewModal question={previewQuestion} onClose={() => (previewQuestion = null)} />
 
 <!-- Add Questions Picker Modal -->
 <AddQuestionsModal
@@ -701,6 +715,27 @@
     margin-top: 0.75rem;
     padding-top: 0.75rem;
     border-top: 1px solid #eee;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .action-btn.preview {
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .action-btn.preview:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-primary);
   }
 
   /* Table styles */
