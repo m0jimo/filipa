@@ -4,6 +4,7 @@
   import { activeQuestionId } from "./candidateWindowStore.svelte";
   import MarkdownPreview from "../components/MarkdownPreview.svelte";
   import RatingSlider from "../components/RatingSlider.svelte";
+  import Tabs from "../components/Tabs.svelte";
 
   let {
     question,
@@ -260,34 +261,17 @@
     {/if}
   </div>
 
-  <div class="question-tabs">
-    {#if question.questionObj.expectedAnswer}
-      <button
-        type="button"
-        class="tab-btn"
-        class:active={isExpanded && activeTab === "expected"}
-        onclick={() => handleTabClick("expected")}
-      >
-        💡 Expected Answer
-      </button>
-    {/if}
-    <button
-      type="button"
-      class="tab-btn record"
-      class:active={isExpanded && activeTab === "record"}
-      class:has-recording={hasRecording}
-      onclick={() => handleTabClick("record")}
-    >
-      {hasRecording ? "✓ Record Answer" : "⏺ Record Answer"}
-    </button>
-    {#if isExpanded}
-      <button
-        type="button"
-        class="tab-close"
-        onclick={() => onToggleRecording(question.id)}
-        title="Collapse"
-      >✕</button>
-    {/if}
+  <div class="question-tabs-wrapper" class:expanded={isExpanded}>
+    <Tabs
+      tabs={[
+        ...(question.questionObj.expectedAnswer ? [{ id: "expected", label: "💡 Expected Answer" }] : []),
+        { id: "record", label: hasRecording ? "✓ Record Answer" : "⏺ Record Answer", tabClass: hasRecording ? "has-recording" : "" },
+      ]}
+      activeTab={activeTab}
+      isTabActive={(id) => isExpanded && activeTab === id}
+      onTabChange={(id) => handleTabClick(id as "expected" | "record")}
+      onClose={isExpanded ? () => onToggleRecording(question.id) : undefined}
+    />
   </div>
 
   {#if isExpanded}
@@ -667,75 +651,36 @@
     font-size: 0.75rem;
   }
 
-  .question-tabs {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .question-tabs-wrapper {
     margin-top: 1.25rem;
-    padding: 0.375rem;
-    background: var(--color-bg-subtle);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
   }
 
-  .tab-btn {
-    padding: 0.45rem 1rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--color-text);
-    transition: all 0.15s;
-    white-space: nowrap;
+  .question-tabs-wrapper :global(.tabs) {
+    display: flex;
+    width: 100%;
+    margin-bottom: 0;
+    box-sizing: border-box;
   }
 
-  .tab-btn:hover {
-    background: white;
-    border-color: var(--color-border);
-    color: var(--color-primary);
+  .question-tabs-wrapper.expanded :global(.tabs) {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-bottom-color: transparent;
   }
 
-  .tab-btn.active {
-    background: white;
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    font-weight: 600;
-    box-shadow: 0 1px 3px rgba(0, 102, 204, 0.15);
-  }
-
-  .tab-btn.has-recording {
+  :global(.tab-btn.has-recording) {
     color: #2e7d32;
   }
 
-  .tab-btn.has-recording:hover {
+  :global(.tab-btn.has-recording:hover) {
     color: #2e7d32;
     border-color: #a5d6a7;
   }
 
-  .tab-btn.has-recording.active {
+  :global(.tab-btn.has-recording.active) {
     border-color: #4caf50;
     color: #2e7d32;
     box-shadow: 0 1px 3px rgba(76, 175, 80, 0.15);
-  }
-
-  .tab-close {
-    margin-left: auto;
-    padding: 0.25rem 0.5rem;
-    background: transparent;
-    border: 1px solid transparent;
-    cursor: pointer;
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    border-radius: 6px;
-    transition: all 0.15s;
-  }
-
-  .tab-close:hover {
-    background: white;
-    border-color: var(--color-border);
-    color: var(--color-text);
   }
 
   .tab-panel {
@@ -884,28 +829,6 @@
     color: var(--color-text-muted);
   }
 
-  :global([data-theme="dark"]) .question-tabs {
-    background: #2a2a2a;
-    border-color: var(--color-border-dark);
-  }
-
-  :global([data-theme="dark"]) .tab-btn {
-    color: #cccccc;
-  }
-
-  :global([data-theme="dark"]) .tab-btn:hover {
-    background: #3a3a3a;
-    border-color: var(--color-border-dark);
-    color: var(--color-primary-dark);
-  }
-
-  :global([data-theme="dark"]) .tab-btn.active {
-    background: #3a3a3a;
-    border-color: var(--color-primary-dark);
-    color: var(--color-primary-dark);
-    box-shadow: 0 1px 3px rgba(77, 163, 255, 0.2);
-  }
-
   :global([data-theme="dark"]) .tab-btn.has-recording {
     color: #a5d6a7;
   }
@@ -919,16 +842,6 @@
     border-color: #66bb6a;
     color: #a5d6a7;
     box-shadow: 0 1px 3px rgba(102, 187, 106, 0.2);
-  }
-
-  :global([data-theme="dark"]) .tab-close {
-    color: var(--color-text-muted);
-  }
-
-  :global([data-theme="dark"]) .tab-close:hover {
-    background: #3a3a3a;
-    border-color: var(--color-border-dark);
-    color: #ffffff;
   }
 
   :global([data-theme="dark"]) .tab-panel {

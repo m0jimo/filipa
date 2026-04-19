@@ -2,17 +2,24 @@
   type Tab = {
     id: string;
     label: string;
+    tabClass?: string;
   };
 
   let {
     tabs,
     activeTab = $bindable(),
     onTabChange,
+    isTabActive,
+    onClose,
   }: {
     tabs: Tab[];
     activeTab: string;
     onTabChange?: (id: string) => void;
+    isTabActive?: (id: string) => boolean;
+    onClose?: () => void;
   } = $props();
+
+  const tabIsActive = (id: string) => isTabActive ? isTabActive(id) : activeTab === id;
 </script>
 
 <div class="tabs" role="tablist">
@@ -20,14 +27,22 @@
     <button
       type="button"
       role="tab"
-      class="tab-btn"
-      class:active={activeTab === tab.id}
-      aria-selected={activeTab === tab.id}
+      class="tab-btn {tab.tabClass ?? ''}"
+      class:active={tabIsActive(tab.id)}
+      aria-selected={tabIsActive(tab.id)}
       onclick={() => { activeTab = tab.id; onTabChange?.(tab.id); }}
     >
       {tab.label}
     </button>
   {/each}
+  {#if onClose}
+    <button
+      type="button"
+      class="tab-close"
+      onclick={onClose}
+      title="Collapse"
+    >✕</button>
+  {/if}
 </div>
 
 <style>
@@ -86,5 +101,33 @@
     color: var(--color-primary-dark);
     outline-color: var(--color-border-dark);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  .tab-close {
+    margin-left: auto;
+    padding: 0.25rem 0.5rem;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+
+  .tab-close:hover {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  :global([data-theme="dark"]) .tab-close {
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .tab-close:hover {
+    background: var(--color-bg-dark-3);
+    border-color: var(--color-border-dark);
+    color: #ffffff;
   }
 </style>
