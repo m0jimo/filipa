@@ -619,6 +619,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
   }
 
   .question-header {
@@ -713,7 +714,7 @@
   }
 
   .card-actions {
-    margin-top: 0.75rem;
+    margin-top: auto;
     padding-top: 0.75rem;
     border-top: 1px solid #eee;
     display: flex;
