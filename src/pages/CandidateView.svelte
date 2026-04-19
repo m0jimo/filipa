@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fly, fade } from "svelte/transition";
+  import { cubicOut } from "svelte/easing";
   import { initDB, sessionQuestionDB } from "../lib/db";
   import type { SessionQuestion } from "../lib/types";
   import { candidateThemeStore } from "../lib/candidateThemeStore";
@@ -10,6 +11,7 @@
 
   let currentQuestion: SessionQuestion | null = $state(null);
   let fontSize = $state(26);
+  let slideDirection = $state(1); // 1 = left-to-right (new question), -1 = right-to-left
   // Per-question visibility map: questionId → boolean (true = show rating, default true)
   let ratingVisibility: Record<string, boolean> = $state({});
 
@@ -25,6 +27,7 @@
     // questionId may carry a ":timestamp" suffix when used as a re-trigger signal
     const cleanId = questionId.split(":")[0];
     const q = await sessionQuestionDB.read(cleanId);
+    slideDirection = 1;
     currentQuestion = q;
     // Re-read visibility state whenever the question updates
     try {
@@ -139,26 +142,24 @@
   <main>
     <div class="content-container">
       {#if currentQuestion}
-        <div class="question-with-rating">
-          {#key currentQuestion.id}
-            <div
-              class="question-display"
-              style="font-size: {fontSize}px"
-              in:fly={{ x: 1000, duration: 500, delay: 100 }}
-              out:fly={{ x: -1000, duration: 500 }}
-            >
-              <div class="question-text">
-                <MarkdownPreview md={currentQuestion.questionObj.question} />
+        {#key currentQuestion.id}
+          <div
+            class="question-with-rating"
+            in:fly={{ x: slideDirection * 120, duration: 380, delay: 320, easing: cubicOut, opacity: 0 }}
+            out:fly={{ x: slideDirection * -120, duration: 300, easing: cubicOut, opacity: 0 }}
+            style="font-size: {fontSize}px"
+          >
+            <div class="question-text">
+              <MarkdownPreview md={currentQuestion.questionObj.question} />
+            </div>
+            {#if currentQuestion.questionObj.questionType === QuestionType.Rating
+                 && ratingVisibility[currentQuestion.id] !== false}
+              <div class="candidate-rating-display" transition:fade={{ duration: 200 }}>
+                <RatingSlider value={currentQuestion.questionRating} readonly={true} />
               </div>
-            </div>
-          {/key}
-          {#if currentQuestion.questionObj.questionType === QuestionType.Rating
-               && ratingVisibility[currentQuestion.id] !== false}
-            <div class="candidate-rating-display">
-              <RatingSlider value={currentQuestion.questionRating} readonly={true} />
-            </div>
-          {/if}
-        </div>
+            {/if}
+          </div>
+        {/key}
       {:else}
         <div class="waiting-state" in:fade={{ duration: 300 }}>
           <div class="waiting-icon">👋</div>
@@ -273,22 +274,24 @@
   .content-container {
     width: 100%;
     max-width: 1600px;
-    min-height: 300px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    position: relative;
+    /* Clip outgoing cards so they slide off-screen without causing scrollbars */
+    overflow: hidden;
+    /* Ensure the container height tracks the incoming (positioned) card */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
   }
 
   .question-with-rating {
+    /* Stack all keyed instances in the same grid cell so they overlay each other.
+       This is the critical piece: the outgoing card is absolute-like in flow terms
+       but the incoming card's natural height determines the container height. */
+    grid-area: 1 / 1;
     width: 100%;
-    max-width: 1600px;
     display: flex;
     flex-direction: column;
-  }
-
-  .question-display {
-    width: 100%;
-    max-width: 1600px;
+    will-change: transform, opacity;
   }
 
   .question-text {
