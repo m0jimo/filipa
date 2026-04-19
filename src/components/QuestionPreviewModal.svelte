@@ -60,6 +60,12 @@
     flex-direction: column;
     gap: 1.5rem;
     padding-bottom: 0.5rem;
+    flex: 1;
+  }
+
+  .modal-actions {
+    margin-top: auto;
+    padding-top: 1rem;
   }
 
   .preview-meta {
