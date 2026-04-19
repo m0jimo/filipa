@@ -151,7 +151,7 @@
 </script>
 
 <SessionModal {show} {onClose} title="Add Questions to Set" size="large">
-  <div>
+  <div class="modal-body">
     {#if loading}
       <p class="loading">Loading questions...</p>
     {:else}
@@ -229,6 +229,18 @@
 <QuestionPreviewModal question={previewQuestion} onClose={() => (previewQuestion = null)} />
 
 <style>
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .modal-actions {
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+
   .select-all-label {
     display: flex;
     align-items: center;
