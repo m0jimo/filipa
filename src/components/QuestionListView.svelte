@@ -1,6 +1,7 @@
 <script lang="ts">
   import { QuestionType, type Question } from "../lib/types";
   import MarkdownPreview from "./MarkdownPreview.svelte";
+  import QuestionTextExpand from "./QuestionTextExpand.svelte";
   import IconEye from "./IconEye.svelte";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -50,11 +51,6 @@
     onToggleSelectAll?: () => void;
   } = $props();
 
-  const truncateWords = (text: string, max: number): string => {
-    const words = text.trim().split(/\s+/);
-    return words.length <= max ? text : words.slice(0, max).join(" ") + "…";
-  };
-
   const isAlreadyInSet = (id: string) => alreadyInSetIds.includes(id);
 </script>
 
@@ -95,9 +91,13 @@
         </div>
 
         <div class="question-content">
-          <div class="question-text">
-            <MarkdownPreview md={question.question} />
-          </div>
+          {#if clickableRows}
+            <QuestionTextExpand md={question.question} />
+          {:else}
+            <div class="question-text">
+              <MarkdownPreview md={question.question} />
+            </div>
+          {/if}
           {#if showExpectedAnswer && question.expectedAnswer}
             <details class="expected-answer">
               <summary>Expected Answer</summary>
@@ -278,7 +278,11 @@
                 <span class="no-value">—</span>
               {/if}
             </td>
-            <td class="col-question">{truncateWords(question.question, 50)}</td>
+            <td class="col-question">
+              <div class="table-question-text">
+                <MarkdownPreview md={question.question} />
+              </div>
+            </td>
             {#if showCreatedDate}
               <td class="col-created">
                 <span title="Updated: {new Date(question.updatedAt).toLocaleString()}">
@@ -350,7 +354,6 @@
   .picker-card {
     cursor: default;
     height: auto;
-    min-height: 180px;
     display: flex;
     flex-direction: column;
     transition:
@@ -376,10 +379,15 @@
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
 
+  .question-card {
+    --question-text-fade-color: white;
+  }
+
   .question-card.selected {
     border-color: #4caf50;
     background: #f1f8f4;
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+    --question-text-fade-color: #f1f8f4;
   }
 
   .question-card.already-in-set {
@@ -475,9 +483,8 @@
     max-height: 100px;
   }
 
-  .picker-card .question-text {
-    font-size: 0.9rem;
-    max-height: 80px;
+  .picker-card .question-content {
+    overflow: visible;
   }
 
   .question-text::after {
@@ -696,9 +703,43 @@
   .col-question {
     color: var(--color-text);
     max-width: 400px;
+  }
+
+  .table-question-text {
+    max-height: 3.5rem;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    position: relative;
+  }
+
+  .table-question-text::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1.5rem;
+    background: linear-gradient(to bottom, transparent, white);
+    pointer-events: none;
+  }
+
+  .table-question-text :global(.markdown-preview) {
+    font-size: 0.9rem;
+  }
+
+  .table-question-text :global(.markdown-preview p) {
+    margin: 0;
+  }
+
+  :global([data-theme="dark"]) .table-question-text::after {
+    background: linear-gradient(to bottom, transparent, #1a1a1a);
+  }
+
+  :global(.questions-table) tbody tr.selected .table-question-text::after {
+    background: linear-gradient(to bottom, transparent, #f1f8f4);
+  }
+
+  :global([data-theme="dark"]) :global(.questions-table) tbody tr.selected .table-question-text::after {
+    background: linear-gradient(to bottom, transparent, #2d3d2f);
   }
 
   .col-created {
@@ -730,9 +771,14 @@
   }
 
   /* Dark mode */
+  :global([data-theme="dark"]) .question-card {
+    --question-text-fade-color: #1a1a1a;
+  }
+
   :global([data-theme="dark"]) .question-card.selected {
     background: #2d3d2f;
     border-color: #4caf50;
+    --question-text-fade-color: #2d3d2f;
   }
 
   :global([data-theme="dark"]) .question-card.selected .question-text::after {
