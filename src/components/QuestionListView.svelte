@@ -345,8 +345,10 @@
   .picker-grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
-    max-height: 45vh;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    align-content: start;
     margin-bottom: 0.5rem;
   }
 
@@ -661,7 +663,8 @@
 
   /* Table wrapper */
   .picker-table-wrap {
-    max-height: 45vh;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     margin-bottom: 0.5rem;
   }
