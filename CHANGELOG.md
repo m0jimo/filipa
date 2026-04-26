@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] — 2026-04-26
+
+_No changes recorded._
+
+
 ## [0.6.0] — 2026-04-19
 
 ### Added
@@ -25,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - replace irregular browser focus ring with consistent rounded outline on buttons
 - capitalize app title to match consistent "Filipa" branding
 - pin action buttons to bottom of Add Questions to Set dialog
-- pin Close button to bottom of Question Preview dialog
+- pin Close button to bottom of Qu/estion Preview dialog
 - pin card action buttons to bottom of set question cards
 
 ### Changed
@@ -42,13 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Move new question creation into third tab of Add Questions dialog
 
-
 ## [0.5.5] — 2026-04-16
 
 ### Fixed
 
 - remove $state from candidateWindow and drop cross-origin postMessage
-
 
 ## [0.5.4] — 2026-04-16
 
@@ -60,11 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - redeploy GitHub Pages with v0.5.3 fix
 
-
 ## [0.5.3] — 2026-04-14
 
 _No changes recorded._
-
 
 ## [0.5.2] — 2026-04-14
 
@@ -93,12 +94,12 @@ _No changes recorded._
 - launch settings for Claude
 - release v0.5.1
 
-
 ## [0.5.1] — 2026-04-13
 
 ### Added
 
-- auto-snapshot: automatically create a browser-side IndexedDB snapshot when unsaved changes are detected (backup nudge trigger)
+- auto-snapshot: automatically create a browser-side IndexedDB snapshot when unsaved changes are detected (backup nudge
+  trigger)
 - auto-snapshot settings: enable/disable toggle and keep-last count (1–2) in Settings → Auto-Snapshots
 - "Create snapshot now" manual button in Settings
 - per-snapshot Restore, Export to file, and Delete actions in Settings
@@ -113,7 +114,6 @@ _No changes recorded._
 ### Chore
 
 - launch settings for Claude
-
 
 ## [0.5.0] — 2026-04-11
 
@@ -147,7 +147,6 @@ _No changes recorded._
 
 - fix 10 security vulnerabilities via npm audit fix
 
-
 ## [0.4.0] — 2026-04-10
 
 ### Added
@@ -165,18 +164,15 @@ _No changes recorded._
 - show full first element in question text, hide See more when no extra content
 - expand dialogs to 90vw/90vh, fix button alignment, prevent accidental close on dirty state
 
-
 ## [0.3.6] — 2026-02-19
 
 ### Chore
 
 - missing logo for README.md
 
-
 ## [0.3.5] — 2026-02-19
 
 _No changes recorded._
-
 
 ## [0.3.4] — 2026-02-19
 
@@ -188,13 +184,11 @@ _No changes recorded._
 
 - files locations for build needs
 
-
 ## [0.3.3] — 2026-02-19
 
 ### Documentation
 
 - space
-
 
 ## [0.3.2] — 2026-02-19
 
