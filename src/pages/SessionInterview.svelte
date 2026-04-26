@@ -14,6 +14,7 @@
   import CompactDialog from "../lib/CompactDialog.svelte";
   import { backupNudge } from "../lib/backupNudge";
   import Tabs from "../components/Tabs.svelte";
+  import PageActions from "../components/PageActions.svelte";
 
   let {params = {sessionId: ""}}: { params: { sessionId: string } } = $props();
 
@@ -49,10 +50,15 @@
   // Question list keyboard reorder selection
   let selectedQuestionIndex = $state<number | null>(null);
   let questionsListEl: HTMLDivElement | null = $state(null);
+  let isReorderMode = $state(false);
 
   const handleQuestionsKeydown = async (e: KeyboardEvent) => {
     if (selectedQuestionIndex === null) return;
-    if (e.key === "ArrowUp") {
+
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT") return;
+
+    if (isReorderMode && e.key === "ArrowUp") {
       e.preventDefault();
       if (selectedQuestionIndex > 0) {
         const next = selectedQuestionIndex - 1;
@@ -60,7 +66,7 @@
         selectedQuestionIndex = next;
         questionsListEl?.focus();
       }
-    } else if (e.key === "ArrowDown") {
+    } else if (isReorderMode && e.key === "ArrowDown") {
       e.preventDefault();
       if (selectedQuestionIndex < questions.length - 1) {
         const next = selectedQuestionIndex + 1;
@@ -921,6 +927,10 @@
       <main class="main-content">
         <div class="section-header">
           <h2>Questions ({questions.length})</h2>
+          <PageActions
+            {isReorderMode}
+            onToggleReorder={() => (isReorderMode = !isReorderMode)}
+          />
         </div>
 
         {#if questions.length === 0}
@@ -933,6 +943,7 @@
           <!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions -->
           <div
             class="questions-list"
+            class:reorder-mode={isReorderMode}
             tabindex="0"
             bind:this={questionsListEl}
             onkeydown={handleQuestionsKeydown}
@@ -1374,6 +1385,11 @@
 
   .empty-state {
     padding-top: 2rem;
+  }
+
+  .questions-list.reorder-mode {
+    outline: 2px dashed var(--color-primary, #0066cc);
+    border-radius: 6px;
   }
 
   .empty-state h3 {
