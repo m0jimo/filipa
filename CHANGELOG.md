@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.1] — 2026-04-26
+
+### Added
+
+- add expandable question text in Add Questions to Set dialog
+- add reorder mode toggle to fix arrow key conflicts in session
+
+### Fixed
+
+- expand questions grid to fill modal height
+
+
 ## [0.7.0] — 2026-04-26
 
 _No changes recorded._
