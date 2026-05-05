@@ -1,0 +1,57 @@
+[
+  {
+    "id": "f1a2b3c4-d5e6-7890-abcd-ef1234567890",
+    "question": "What is the difference between `==` and `===` in JavaScript? Give an example where they produce different results.",
+    "expectedAnswer": "- `==` is loose (abstract) equality — it performs **type coercion** before comparing\n- `===` is strict equality — it compares both **value and type** with no coercion\n\nExample:\n```js\n0 == '0'   // true  (string '0' is coerced to number 0)\n0 === '0'  // false (number vs string, different types)\n\nnull == undefined   // true\nnull === undefined  // false\n\n'' == false  // true  (both coerce to 0)\n'' === false // false\n```\n\n**Best practice**: always use `===` to avoid unexpected coercion bugs. Only use `==` if you explicitly want to check `null || undefined` in one expression (`value == null`).",
+    "tags": ["javascript", "basics", "comparison", "types"],
+    "questionType": "text",
+    "difficulty": [2, 3, 4],
+    "hash": "js-strict-cmp",
+    "createdAt": "2026-05-05T08:00:00.000Z",
+    "updatedAt": "2026-05-05T08:00:00.000Z"
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-fedcba987654",
+    "question": "What are the ways to add an item to an array in JavaScript? Which ones **mutate** the original array, and which ones return a **new array**?\n\n```js\nconst arr = [1, 2, 3];\n```",
+    "expectedAnswer": "**Mutating (modifies the original array in place):**\n```js\narr.push(4);      // adds to end, returns new LENGTH (4), arr is now [1,2,3,4]\narr.unshift(0);   // adds to beginning, returns new length\narr.splice(1, 0, 99); // inserts at index, returns removed items\n```\n\n**Non-mutating (returns a new array, original is untouched):**\n```js\nconst newArr = arr.concat([4]);       // [1,2,3,4], arr unchanged\nconst newArr = [...arr, 4];           // spread operator, arr unchanged\nconst newArr = arr.toSpliced(1, 0, 99); // ES2023, arr unchanged\n```\n\n**Key point:** `push()` does NOT return a new array — it returns the new **length** of the array. This is a common mistake:\n```js\nconst result = arr.push(4); // result === 4 (length!), NOT [1,2,3,4]\n```\nIn React/functional patterns always prefer non-mutating variants.",
+    "tags": ["javascript", "basics", "arrays", "mutation"],
+    "questionType": "text",
+    "difficulty": [2, 3, 4],
+    "hash": "js-array-add",
+    "createdAt": "2026-05-05T08:01:00.000Z",
+    "updatedAt": "2026-05-05T08:01:00.000Z"
+  },
+  {
+    "id": "c3d4e5f6-a7b8-9012-cdef-012345678901",
+    "question": "What is wrong with the following code? What will `doubled` contain and why?\n\n```js\nconst numbers = [1, 2, 3];\nconst doubled = numbers.map(n => {\n  n * 2;\n});\nconsole.log(doubled);\n```",
+    "expectedAnswer": "`doubled` will be `[undefined, undefined, undefined]`.\n\n**The problem:** the arrow function uses a **block body** (`{ }`) but has **no `return` statement**. A function without an explicit `return` returns `undefined` implicitly.\n\n**Fix — two correct alternatives:**\n```js\n// 1. Add explicit return\nconst doubled = numbers.map(n => {\n  return n * 2;\n});\n\n// 2. Use concise arrow body (no braces = implicit return)\nconst doubled = numbers.map(n => n * 2);\n```\n\n**Rule of thumb:** when you use `{}` in an arrow function, you must write `return`. When you omit `{}`, the expression is returned automatically.",
+    "tags": ["javascript", "basics", "arrow-functions", "map", "debugging"],
+    "questionType": "text",
+    "difficulty": [2, 3, 4],
+    "hash": "js-map-return",
+    "createdAt": "2026-05-05T08:02:00.000Z",
+    "updatedAt": "2026-05-05T08:02:00.000Z"
+  },
+  {
+    "id": "e5f6a7b8-c9d0-1234-efab-234567890123",
+    "question": "What is the difference between `var`, `let`, and `const` in JavaScript? What will the following code print and why?\n\n```js\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}\n```",
+    "expectedAnswer": "**`var` vs `let` vs `const`:**\n- `var` — function-scoped (or global), hoisted, can be re-declared\n- `let` — block-scoped, not hoisted into usable state, cannot be re-declared\n- `const` — block-scoped like `let`, but cannot be reassigned after declaration\n\n**Output of the code:** prints `3, 3, 3` — not `0, 1, 2`.\n\n**Why:** `var i` is function-scoped, so all three callbacks share the **same variable**. By the time the timeouts fire (after the loop finishes), `i` is already `3`.\n\n**Fix using `let`:**\n```js\nfor (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // prints 0, 1, 2\n}\n```\n`let` creates a **new binding** of `i` for each loop iteration, so each callback captures its own copy.",
+    "tags": ["javascript", "basics", "scope", "var", "let", "closures"],
+    "questionType": "text",
+    "difficulty": [3, 4, 5],
+    "hash": "js-var-scope",
+    "createdAt": "2026-05-05T08:03:00.000Z",
+    "updatedAt": "2026-05-05T08:03:00.000Z"
+  },
+  {
+    "id": "b7c8d9e0-f1a2-3456-bcde-345678901234",
+    "question": "What are **falsy** values in JavaScript? Given the list below, which ones are falsy?\n\n```js\n0, '', null, undefined, false, NaN, '0', [], {}, -1\n```\n\nBonus: what does `!!value` do?",
+    "expectedAnswer": "**Falsy values** (evaluate to `false` in a boolean context):\n```\n0, '', null, undefined, false, NaN\n```\n\n**Truthy** (evaluate to `true`, even if they look \"empty\"):\n```\n'0'   // non-empty string — truthy!\n[]    // empty array — truthy!\n{}    // empty object — truthy!\n-1    // any non-zero number — truthy!\n```\n\nCommon gotcha: `[] == false` is `true` (coercion), but `Boolean([])` is `true`.\n\n**`!!value`** is the double-negation trick — it converts any value to its boolean equivalent:\n```js\n!!0        // false\n!!''       // false\n!!'hello'  // true\n!![]       // true\n!!null     // false\n```\nIt's equivalent to `Boolean(value)` but shorter.",
+    "tags": ["javascript", "basics", "types", "truthy-falsy", "coercion"],
+    "questionType": "text",
+    "difficulty": [2, 3, 4],
+    "hash": "js-falsy-vals",
+    "createdAt": "2026-05-05T08:04:00.000Z",
+    "updatedAt": "2026-05-05T08:04:00.000Z"
+  }
+]
